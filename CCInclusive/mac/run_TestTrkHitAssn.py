@@ -18,25 +18,21 @@ for x in xrange(len(sys.argv)-1):
 
 # Specify IO mode
 my_proc.set_io_mode(fmwk.storage_manager.kREAD)
-my_proc.enable_filter(True)
 
 # Specify output root file name
-my_proc.set_ana_output_file("TestMCTruth_ana_out.root");
+my_proc.set_ana_output_file("TestTrkHitAssn_ana_out.root");
 
 # Attach an analysis unit ... here we use a base class which does nothing.
 # Replace with your analysis unit if you wish.
-
-my_proc.add_process(fmwk.TestMCTruth())
+mymod = fmwk.TestTrkHitAssn()
+my_proc.add_process(mymod)
 
 print
 print  "Finished configuring ana_processor. Start event loop!"
 print
 
 # Let's run it.
-#the event discussed in nevis mtg 061016 is (47,1)
-#from ~/Data/larlite/mcc7_022316/scan_prodgenie_bnb_nu_uboone_mcc7_detsim_v1/scan_prodgenie_bnb_nu_uboone_mcc7_detsim_v1_all.root
-my_proc.run(47,1) 
-# my_proc.run()
+my_proc.run();
 
 # done!
 print

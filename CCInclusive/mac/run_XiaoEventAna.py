@@ -25,13 +25,15 @@ my_proc.set_ana_output_file("XiaoEventAna_out.root")
 
 # Attach an analysis unit ... here we use a base class which does nothing.
 # Replace with your analysis unit if you wish.
-my_proc.add_process(fmwk.MC_1mu1pNn0else_Filter_MCTracks())#fmwk.MC_1mu1pNn0else_Filter())
-#myfilter = fmwk.NuMuCCFilter()
-#myfilter.SetNuMuFromKaonOnly(False)
-#my_proc.add_process(myfilter)
+# my_proc.add_process(fmwk.MC_1mu1pNn0else_Filter_MCTracks())#fmwk.MC_1mu1pNn0else_Filter())
+myfilter = fmwk.NuMuCCFilter()
+myfilter.FlipFilter(False)
+# myfilter.SetNuMuFromKaonOnly(False)
+# myfilter.SetMinNuEnergy(2.4);
+my_proc.add_process(myfilter)
 myxiao = fmwk.XiaoEventAna()
 myxiao.setRunningOnData(False)
-myxiao.setInputType(fmwk.kBNBCosmic)
+myxiao.setInputType(fmwk.kBNBCosmic)#fmwk.kBNBCosmic fmwk.kCorsikaInTime
 my_proc.add_process(myxiao)
 
 print

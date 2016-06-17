@@ -310,7 +310,7 @@ namespace larlite {
         //std::cout << "(total energy) magnitude squared plus mass square sqrt is "
         //           << std::pow(std::pow(muvec.Mag(), 2) + std::pow(mumass_MEV / 1000., 2), 0.5) << std::endl;
         // std::cout << "PROTON transverse momentum component is " << pvec.Mag()*sin(thetap) << std::endl;
-        // printTruthStuff(*ev_mctruth);
+        printTruthStuff(*ev_mctruth);
 
 
 
@@ -337,7 +337,7 @@ namespace larlite {
         std::cout << "neutrino 4momentum plus mctruth neutron 4momentum minus (p + mu + bindino 4momentum) :" << std::endl;
         (nu_momentum + neutron_momentum - (p_momentum + mu_momentum + bindino_momentum) ).Print();
         std::cout << "neutrino 4momentum plus artificial neutron 4momentum minus (p + mu + bindino 4momentum) :" << std::endl;
-        (nu_momentum + neutron_4mom- (p_momentum + mu_momentum + bindino_momentum) ).Print();
+        (nu_momentum + neutron_4mom - (p_momentum + mu_momentum + bindino_momentum) ).Print();
         genieMomDiff = (nu_momentum - (p_momentum + mu_momentum + remnant_momentum + bindino_momentum) ).Vect().Mag();
 
         // std::cout<<"TRUE MUON ENERGY (which below should match): "<<true_mu_TotE*1000.<<std::endl;
@@ -349,13 +349,13 @@ namespace larlite {
     void TestMCTruth::printTruthStuff(const event_mctruth &mctruth) {
         // std::cout << "TRUE NEUTRINO ENERGY IS "
         //           << mctruth.at(0).GetNeutrino().Nu().Trajectory().front().E() << " GEV." << std::endl;
-        std::cout << "----- LISTING ALL MCTRUTH PARTICLES IN EVENT, Skipping status != 0 or 1 or 15:" << std::endl;
-        TVector3 numom(0., 0., 0.);
-        TVector3 daughtmoms(0., 0., 0.);
+        std::cout << "----- LISTING ALL MCTRUTH PARTICLES IN EVENT:" << std::endl;
+        TLorentzVector numom(0., 0., 0., 0.);
+        TLorentzVector daughtmoms(0., 0., 0., 0.);
         for (auto const& particle : mctruth.at(0).GetParticles()) {
 
             // Only particles with status code 1 are relevant
-            if ( particle.StatusCode() != 1 && particle.StatusCode() != 0 && particle.StatusCode() != 15    ) continue;
+            // if ( particle.StatusCode() != 1 && particle.StatusCode() != 0 && particle.StatusCode() != 15    ) continue;
 
             // //Note: this KE is in units of GEV!
             // double KE = particle.Trajectory().at(0).E() - particle.Mass();
@@ -364,23 +364,27 @@ namespace larlite {
                       << " and PDG " << particle.PdgCode()
                       << " has TOTAL ENERGY " << particle.Trajectory().at(0).E() << " GEV."
                       << " and MASS " << particle.Mass() << std::endl;
-            std::cout << " This particle's 3-Momentum magnitude is "
-                      << particle.Trajectory().at(0).Momentum().Vect().Mag() << std::endl;
+            std::cout << " This particle's 4-Momentum is " << std::endl;
+            particle.Trajectory().at(0).Momentum().Print();
+            // std::cout << " This particle's 3-Momentum magnitude is "
+            //           << particle.Trajectory().at(0).Momentum().Vect().Mag() << std::endl;
 
             if (particle.StatusCode() == 0 && particle.PdgCode() == 14)
-                numom = particle.Trajectory().at(0).Momentum().Vect();
+                numom = particle.Trajectory().at(0).Momentum();
             if (particle.StatusCode() == 1 || particle.StatusCode() == 15)
-                daughtmoms += particle.Trajectory().at(0).Momentum().Vect();
+                daughtmoms += particle.Trajectory().at(0).Momentum();
             // particle.Trajectory().at(0).Momentum().Vect().Print();
             // if(particle.StatusCode() == 15){
             //   std::cout<<"Particle with status code 15 has this momentum:"<<std::endl;
             //   particle.Trajectory().at(0).Momentum().Vect().Print();
             // }
         }
-        std::cout << "Summary: neutrino momentum:" << std::endl;
+        std::cout << "Summary: neutrino 4momentum:" << std::endl;
         numom.Print();
-        std::cout << "sum of status 1 and 15 momenta:" << std::endl;
+        std::cout << "sum of status 1 and 15 4momenta:" << std::endl;
         daughtmoms.Print();
+
+        std::cout << "----- DONE PRINTING TRUTH STUFF FOR THIS EVENT" << std::endl;
     }
 
     bool TestMCTruth::finalize() {

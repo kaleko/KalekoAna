@@ -1,9 +1,9 @@
 /**
- * \file NuMuCCFilter.h
+ * \file QuickMikePlot.h
  *
  * \ingroup CCInclusive
- * 
- * \brief Class def header for a class NuMuCCFilter
+ *
+ * \brief Class def header for a class QuickMikePlot
  *
  * @author davidkaleko
  */
@@ -12,69 +12,65 @@
 
     @{*/
 
-#ifndef LARLITE_NUMUCCFILTER_H
-#define LARLITE_NUMUCCFILTER_H
+#ifndef LARLITE_QUICKMIKEPLOT_H
+#define LARLITE_QUICKMIKEPLOT_H
 
 #include "Analysis/ana_base.h"
+#include "TTree.h"
 #include "GeoAlgo/GeoAABox.h"
 #include "LArUtil/Geometry.h"
+#include "GeoAlgo/GeoSphere.h"
 
 namespace larlite {
   /**
-     \class NuMuCCFilter
+     \class QuickMikePlot
      User custom analysis class made by SHELL_USER_NAME
    */
-  class NuMuCCFilter : public ana_base{
-  
+  class QuickMikePlot : public ana_base {
+
   public:
 
     /// Default constructor
-    NuMuCCFilter(){ 
-      _name="NuMuCCFilter"; 
-      _fout=0;
-    _keep_only_numu_from_kaons = false;
-    _min_nu_energy = 0.;
-    _flip = false;
-  }
+    QuickMikePlot() { _name = "QuickMikePlot"; _fout = 0; _tree = 0;}
 
     /// Default destructor
-    virtual ~NuMuCCFilter(){}
-
+    virtual ~QuickMikePlot() {}
     virtual bool initialize();
-
     virtual bool analyze(storage_manager* storage);
-
     virtual bool finalize();
 
-    void SetNuMuFromKaonOnly(bool flag){ _keep_only_numu_from_kaons = flag; }
-    void SetMinNuEnergy(double minE) { _min_nu_energy = minE; }
-    void FlipFilter(bool flag) { _flip = flag; }
-    
+
   protected:
-    
+    TTree *_tree;
+    bool _CCNC;
+    int _nupdg;
+    int _fndecay;
+    double _true_nu_E;
+    double _true_mu_E;
+    double _true_mu_len;
+    bool _nu_infidvol;
+
+
+
+    // Sphere around neutrino vertex
+    geoalgo::Sphere _nu_sphere;
+
     // Fiducial volume box
     geoalgo::AABox _fidvolBox;
     double fidvol_dist;
     double fidvol_dist_y;
-    double fidvol_dist_x;
-    double fidvol_dist_z;
-    size_t total_events;
-    size_t kept_events;
 
-    bool _keep_only_numu_from_kaons;
-    double _min_nu_energy;
 
-    bool _flip;
   };
 }
 #endif
 
 //**************************************************************************
-// 
+//
 // For Analysis framework documentation, read Manual.pdf here:
 //
 // http://microboone-docdb.fnal.gov:8080/cgi-bin/ShowDocument?docid=3183
 //
 //**************************************************************************
 
-/** @} */ // end of doxygen group 
+/** @} */ // end of doxygen group

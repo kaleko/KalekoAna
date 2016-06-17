@@ -6,13 +6,14 @@
 #include "DataFormat/mctruth.h"
 #include "DataFormat/mcflux.h"
 
-
-
 namespace larlite {
 
     bool XiaoEventAna::initialize() {
 
         _nu_finder = XiaoNuFinder();
+        _myspline = TrackMomentumSplines();
+        _nu_E_calc = NuEnergyCalc();
+
         if (_filetype == kINPUT_FILE_TYPE_MAX) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("DID NOT SET INPUT FILE TYPE!"));
             return false;
@@ -61,6 +62,8 @@ namespace larlite {
             _tree->Branch("n_associated_tracks", &_n_associated_tracks, "n_associated_tracks/I");
             _tree->Branch("longest_trk_len", &_longest_trk_len, "longest_trk_len/D");
             _tree->Branch("longest_trk_theta", &_longest_trk_theta, "longest_trk_theta/D");
+            _tree->Branch("longest_trk_MCS_mom", &_longest_trk_MCS_mom, "longest_trk_MCS_mom/D");
+            _tree->Branch("nu_E_estimate", &_nu_E_estimate, "nu_E_estimate/D");
         }
 
         return true;
@@ -84,6 +87,8 @@ namespace larlite {
         _n_associated_tracks = 0;
         _longest_trk_len = -999.;
         _longest_trk_theta = -999.;
+        _longest_trk_MCS_mom = -999.;
+        _nu_E_estimate = -999.;
     }
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
@@ -137,17 +142,34 @@ namespace larlite {
 
 
         // Try to find a neutrino vertex in this event... return a reco vertex,
-        // and a std::vector (length two) of tracks that are associated with that vertex
-        std::pair<larlite::vertex, std::vector<larlite::track> > reco_neutrino;
+        // and a std::vector of tracks that are associated with that vertex
+        // std::pair<larlite::vertex, std::vector<larlite::track> > reco_neutrino;
+        KalekoNuItxn_t reco_neutrino;
         try {
             reco_neutrino = _nu_finder.findNeutrino(ev_track, ev_calo, ass_calo_v, ev_vtx, ev_opflash);
         }
         catch (...) {
+            ///////// TEMP
+            // auto ev_mctruth = storage->get_data<event_mctruth>("generator");
+            // if (!ev_mctruth) {
+            //     print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mctruth!"));
+            //     return false;
+            // }
+            // if (ev_mctruth->size() != 1) {
+            //     print(larlite::msg::kERROR, __FUNCTION__, Form("MCTruth size doesn't equal one!"));
+            //     return false;
+            // }
+            // auto const& nuvtx = ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position();
+            // std::cout << " no neutrino reconstructed! tchain index is " << storage->get_index() << std::endl;
+            // std::cout<<"    with true nu vtx ("<<nuvtx.X()<<","<<nuvtx.Y()<<","<<nuvtx.Z()<<")"<<std::endl;
+            // std::cout<<"    and true nu energy of "<<ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().E()<<std::endl;
+            // /////////// END TEMP
             return false;
         }
 
-        _n_associated_tracks = (int)reco_neutrino.second.size();
 
+        _n_associated_tracks = (int)reco_neutrino.second.size();
+        larlite::mcnu mcnu;
         // If we found a vertex and we are running over MC, let's check if it is accurate
         if (!_running_on_data) {
             auto ev_mctruth = storage->get_data<event_mctruth>("generator");
@@ -173,7 +195,8 @@ namespace larlite {
             // std::cout << "The reconstructed vertex is at : " << thevertexsphere.Center() << std::endl;
             // std::cout << "The true vertex is at : "
             //           <<::geoalgo::Vector(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position()) << std::endl;
-            auto const& mcnu = ev_mctruth->at(0).GetNeutrino();
+            // auto const& mcnu = ev_mctruth->at(0).GetNeutrino();
+            mcnu = ev_mctruth->at(0).GetNeutrino();
             _true_nu_E =            mcnu.Nu().Trajectory().front().E();
             _true_nu_pdg =          mcnu.Nu().PdgCode();
             _true_nu_CCNC =         mcnu.CCNC();
@@ -190,12 +213,14 @@ namespace larlite {
         }
 
         // Quick loop over associated track lengths to find the longest one:
-        for (auto const& asstd_trk : reco_neutrino.second)
+        for (auto const& asstd_trk_pair : reco_neutrino.second) {
+            auto const &asstd_trk = asstd_trk_pair.second;
             if ( asstd_trk.Length() > _longest_trk_len ) {
                 _longest_trk_len = asstd_trk.Length();
                 _longest_trk_theta = asstd_trk.Theta();
+                _longest_trk_MCS_mom = _myspline.GetMuMomentum(asstd_trk.Length());
             }
-
+        }
 
 
         // Some ttree entries are only for events with ==2 tracks associated with the vertex:
@@ -211,10 +236,10 @@ namespace larlite {
 
             // Now that we found a neutrino interaction with ==2 tracks, let's pick which track is the muon and which is the proton
             // then store some ttree variables about each
-            auto const &mutrack = reco_neutrino.second.at(0).Length() > reco_neutrino.second.at(1).Length() ?
-                                  reco_neutrino.second.at(0)          : reco_neutrino.second.at(1);
-            auto const &ptrack  = reco_neutrino.second.at(0).Length() > reco_neutrino.second.at(1).Length() ?
-                                  reco_neutrino.second.at(1)          : reco_neutrino.second.at(0);
+            auto const &mutrack = reco_neutrino.second.at(0).second.Length() > reco_neutrino.second.at(1).second.Length() ?
+                                  reco_neutrino.second.at(0).second          : reco_neutrino.second.at(1).second;
+            auto const &ptrack  = reco_neutrino.second.at(0).second.Length() > reco_neutrino.second.at(1).second.Length() ?
+                                  reco_neutrino.second.at(1).second          : reco_neutrino.second.at(0).second;
 
             _mu_contained = _fidvolBox.Contain(::geoalgo::Vector(mutrack.Vertex())) &&
                             _fidvolBox.Contain(::geoalgo::Vector(mutrack.End()));
@@ -239,8 +264,23 @@ namespace larlite {
 
         }
 
+        _nu_E_estimate = _nu_E_calc.ComputeEnuNTracksFromPID(reco_neutrino);
         _tree->Fill();
         passed_events++;
+
+
+        // if (_nu_E_estimate > 4 && _fndecay > 11 ) {
+        //     std::cout << "-- found event with true Nu E < 2.4 (" << _true_nu_E << ") "
+        //               << "and estimated nu E > 2.4 (" << _nu_E_estimate << ")." << std::endl;
+        //     std::cout << "  - the true vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", mcnu.Nu().Trajectory().front().Position().X()
+        //               , mcnu.Nu().Trajectory().front().Position().Y()
+        //               , mcnu.Nu().Trajectory().front().Position().Z()) << std::endl;
+        //     std::cout << "  - the reco vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", reco_neutrino.first.X()
+        //               , reco_neutrino.first.Y()
+        //               , reco_neutrino.first.Z()) << std::endl;
+        //     std::cout << "  - and the ttree index is " << storage->get_index() << std::endl;
+        // }
+
         return true;
     }
 
@@ -259,6 +299,8 @@ namespace larlite {
             _hcorrect_ID->Write();
             _tree->Write();
         }
+
+        _nu_finder.printNumbers();
 
         return true;
     }

@@ -27,8 +27,23 @@ namespace larlite {
 		                ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
 		                ::larutil::Geometry::GetME()->DetLength() - fidvol_dist_z);
 
+		_PID_filler = KalekoPIDFiller();
+
+		_tot_requests = 0;
+		_n_evts_with_flash_in_bgw = 0;
+		_n_evts_viable_vertex = 0;
+		_n_successful_flashmatch = 0;
+
 	}
 
+	void XiaoNuFinder::printNumbers() {
+		std::cout << "------ XiaoNuFinder printing numbers:" << std::endl;
+		std::cout << " _tot_requests = " << _tot_requests << std::endl;
+		std::cout << " _n_evts_with_flash_in_bgw = " << _n_evts_with_flash_in_bgw << std::endl;
+		std::cout << " _n_evts_viable_vertex = " << _n_evts_viable_vertex << std::endl;
+		std::cout << " _n_successful_flashmatch = " << _n_successful_flashmatch << std::endl;
+
+	}
 
 	double XiaoNuFinder::flashDistZ(const track & longest_track, const double flash_z) {
 
@@ -206,14 +221,20 @@ namespace larlite {
 		return true;
 	}
 
-	std::pair<larlite::vertex, std::vector<larlite::track> > XiaoNuFinder::findNeutrino(const event_track *ev_track,
+	// std::pair<larlite::vertex, std::vector<larlite::track> > XiaoNuFinder::findNeutrino(const event_track *ev_track,
+	//         const event_calorimetry *ev_calo,
+	//         const larlite::AssSet_t & ass_calo_v,
+	//         const event_vertex *ev_vtx,
+	//         const event_opflash *ev_opflash) {
+	KalekoNuItxn_t XiaoNuFinder::findNeutrino(const event_track *ev_track,
 	        const event_calorimetry *ev_calo,
 	        const larlite::AssSet_t & ass_calo_v,
 	        const event_vertex *ev_vtx,
 	        const event_opflash *ev_opflash) {
 
+		_tot_requests++;
 
-		std::pair<larlite::vertex, std::vector<larlite::track> > result;
+		KalekoNuItxn_t result;
 
 		if (!setBGWTimes()) {
 			print(larlite::msg::kERROR,
@@ -226,7 +247,9 @@ namespace larlite {
 		opflash theflash;
 		bool _flash_in_bgw = false;
 		for (auto const& flash : *ev_opflash) {
-
+			// std::cout<<"flash! time is "<<flash.Time()<< " (BGW is "<<BGW_mintime<<" to "<<BGW_maxtime<<")"
+			// <<" and total PE is "<<flash.TotalPE()<<" (cut is on 50) "
+			// <<" with Z position "<<flash.ZCenter()<<std::endl;
 			if (flash.Time() > BGW_mintime && flash.Time() < BGW_maxtime && flash.TotalPE() > 50.) {
 				_flash_in_bgw = true;
 				// Keep track of the brightest flash in the BGW
@@ -235,8 +258,8 @@ namespace larlite {
 			}
 		}
 		// Require there is at least one >50 PE flash inside of BGW
-		if (!_flash_in_bgw) throw std::exception();
-
+		// if (!_flash_in_bgw) throw std::exception();
+		_n_evts_with_flash_in_bgw++;
 
 		// Loop over vertices.
 		// For each vertex in fiducial volume, loop over reco tracks
@@ -251,8 +274,9 @@ namespace larlite {
 			::geoalgo::Sphere vtx_sphere = getVertexSphere(vtx);
 
 			// Make sure vertex is in fiducial volume
+			// std::cout << "this vertex is at " << vtx_sphere.Center() << std::endl;
 			if (!_fidvolBox.Contain(vtx_sphere.Center())) continue;
-
+			// std::cout << "this vertex is at " << vtx_sphere.Center() << std::endl;
 			// Loop over tracks, store index of the ones associated with this vertex
 			std::vector<size_t> associated_track_idx_vec;
 			associated_track_idx_vec.clear();
@@ -260,8 +284,12 @@ namespace larlite {
 
 			for (size_t i = 0; i < ev_track->size(); ++i) {
 				auto const trk = ev_track->at(i);
-
+				// std::cout << " - this track starts at "
+				//           << Form("(%0.2f,%0.2f,%0.2f)", trk.Vertex().X(), trk.Vertex().Y(), trk.Vertex().Z())
+				//           << " and ends at " << Form("(%0.2f,%0.2f,%0.2f)", trk.End().X(), trk.End().Y(), trk.End().Z())
+				//           << std::endl;
 				if ( trackAssociatedWithVtx(trk, vtx_sphere) ) {
+					// std::cout << " -- this track was associated with this vtx!" << std::endl;
 					associated_track_idx_vec.push_back(i);
 
 					if ( flashDistZ(trk, theflash.ZCenter()) < 70. )
@@ -269,7 +297,7 @@ namespace larlite {
 				}
 
 			} //done looping over tracks
-
+			// std::cout<<"_at_least_one_track_matches_flash == "<<_at_least_one_track_matches_flash<<std::endl;
 			// Require at least one vertex-associated track matches the BGW flash
 			// (and, in there too is that there exists at least 1 such track)
 
@@ -288,8 +316,11 @@ namespace larlite {
 				                associated_track_idx_vec,
 				                ev_track,
 				                ev_calo,
-				                ass_calo_v)) throw std::exception();
-					
+				                ass_calo_v)) {
+					// std::cout << "MICHEL MID LOLOLOL" << std::endl;
+					throw std::exception();
+				}
+
 				// Now let's add in the minimum angle cut that Xiao uses:
 				// Now that we found a neutrino interaction,
 				// there is now an additional cut requiring the dot product between the two track directions
@@ -316,10 +347,10 @@ namespace larlite {
 				//Woohoo we have passed Michel cutting and minimum angle cutting. Let's store the result
 				n_viable_vertices++;
 				result.first = vtx;
-				std::vector<track> temp;
+				std::vector< std::pair<KalekoPID_t, track> > temp;
 				temp.clear();
-				temp.push_back(track1);
-				temp.push_back(track2);
+				temp.push_back(std::make_pair(kKALEKO_PID_MAX, track1));
+				temp.push_back(std::make_pair(kKALEKO_PID_MAX, track2));
 				result.second = temp;
 			}// End mult == 2
 
@@ -329,10 +360,10 @@ namespace larlite {
 
 				n_viable_vertices++;
 				result.first = vtx;
-				std::vector<track> temp;
+				std::vector< std::pair<KalekoPID_t, track> > temp;
 				temp.clear();
 				for (size_t i = 0; i < associated_track_idx_vec.size(); ++i)
-					temp.push_back(ev_track->at(associated_track_idx_vec[i]));
+					temp.push_back(std::make_pair(kKALEKO_PID_MAX, ev_track->at(associated_track_idx_vec[i])));
 				result.second = temp;
 			}// End mult > 2
 
@@ -340,7 +371,26 @@ namespace larlite {
 
 		// If this event doesn't contain any possible neutrino vertices that pass cuts
 		// Or if it contains several, throw that out too! (KALEKO)
+		// std::cout << "n_viable_vertices = " << n_viable_vertices << std::endl;
 		if (n_viable_vertices != 1) throw std::exception();
+		_n_evts_viable_vertex++;
+
+		//temp
+		_viable_vtx_has_matched_flash = false;
+		for (auto const& trkpair : result.second) {
+			auto const &trk = trkpair.second;
+			if ( flashDistZ(trk, theflash.ZCenter()) < 70. )
+				_viable_vtx_has_matched_flash = true;
+		}
+		if (_viable_vtx_has_matched_flash)
+			_n_successful_flashmatch++;
+
+		/// Fill a PID value for each of the tracks in the interaction
+		if ( !_PID_filler.fillKalekoPIDs(result) ) {
+			print(larlite::msg::kERROR, __FUNCTION__, Form("Failed filling PIDs for some reason!"));
+			throw std::exception();
+		}
+
 
 		return result;
 	}

@@ -296,5 +296,75 @@ namespace larlite {
     return muEguess;
   }
 
+  double NuEnergyCalc::ComputeEnuNTracksFromPID(const KalekoNuItxn_t itxn) {
+
+    bool debug = false;
+    double tot_nu_energy = 0.;
+    // Loop over associated tracks.
+    // They are not necessarily pointing in the correct direction ...
+    // Assume the start/end point closest to the interaction vertex is the start of the track
+    if (debug) std::cout << ":::NuEnergyCalc::: looping over " << itxn.second.size() << " tracks ... " << std::endl;
+    for (size_t itrk = 0; itrk < itxn.second.size(); ++itrk) {
+      auto const& track = itxn.second.at(itrk).second;
+      double itrklen = track.Length();
+      bool trkcontained = _fidvolBox.Contain(track.Vertex()) && _fidvolBox.Contain(track.End());
+      if (itxn.second.at(itrk).first == kKalekoMuon) {
+        if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a muon " << std::endl;
+        if (trkcontained) {
+          tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
+          if (debug) std::cout << " :::NuEnergyCalc::: this track contained. added spline energy of "
+                                 << _myspline.GetMuMomentum(itrklen) / 1000. + 0.106 << std::endl;
+        }
+        else {
+          if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
+          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track);
+          if (mcs_energy > 0) {
+            tot_nu_energy += mcs_energy + 0.106;
+            if (debug) std::cout << " :::NuEnergyCalc::: MCS worked fine (length = " << itrklen
+                                   << ". adding in energy of " << mcs_energy + 0.106 << std::endl;
+          }
+          else {
+            tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
+            if (debug) std::cout << " :::NuEnergyCalc::: MCS failed. using tracklength contained. adding "
+                                   << _myspline.GetMuMomentum(itrklen) / 1000. + 0.106 << std::endl;
+          }
+        }
+      }
+      else if (itxn.second.at(itrk).first == kKalekoChargedPion) {
+        if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a pion " << std::endl;
+        if (trkcontained) {
+          tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
+          if (debug) std::cout << " :::NuEnergyCalc::: this track contained. added spline energy of "
+                                 << _myspline.GetMuMomentum(itrklen) / 1000. + 0.140 << std::endl;
+        }
+        else {
+          if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
+          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track);
+          if (mcs_energy > 0) {
+            tot_nu_energy += mcs_energy + 0.140;
+            if (debug) std::cout << " :::NuEnergyCalc::: MCS worked fine. adding in energy of " << mcs_energy + 0.140 << std::endl;
+          }
+          else {
+            tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
+            if (debug) std::cout << " :::NuEnergyCalc::: MCS failed. using tracklength contained. adding "
+                                   << _myspline.GetMuMomentum(itrklen) / 1000. + 0.146 << std::endl;
+          }
+        }
+      }
+      else if (itxn.second.at(itrk).first == kKalekoProton) {
+        if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a proton " << std::endl;
+        tot_nu_energy += _myspline.GetPMomentum(itrklen) / 1000.;
+        if (debug) std::cout << " :::NuEnergyCalc::: adding in energy from spline: "
+                               << _myspline.GetPMomentum(itrklen) / 1000. << std::endl;
+      }
+      else {
+        std::cerr << "UHHH NuEnergyCalc::ComputeEnuNTracksFromPID was handed tracks that didn't have PIDs associated." << std::endl;
+        return -1.;
+      } // end if no PID
+    } // end loop over tracks
+
+    return tot_nu_energy;
+  } // end computeenuNtracksfromPID
 }
+
 #endif

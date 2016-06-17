@@ -33,12 +33,16 @@
 #include "TH2.h"
 #include "TTree.h"
 #include "CCInclusiveConstants.h"
+#include "TrackMomentumSplines.h"
+#include "NuEnergyCalc.h"
+
 
 namespace larlite {
   /**
      \class XiaoEventAna
      User custom analysis class made by SHELL_USER_NAME
    */
+
   class XiaoEventAna : public ana_base {
 
   public:
@@ -54,7 +58,7 @@ namespace larlite {
       _tree = 0;
       _filetype = kINPUT_FILE_TYPE_MAX;
     }
-  
+
     /// Default destructor
     virtual ~XiaoEventAna() {}
 
@@ -71,6 +75,8 @@ namespace larlite {
   protected:
 
     XiaoNuFinder _nu_finder;
+    TrackMomentumSplines _myspline;
+    NuEnergyCalc _nu_E_calc;
 
     void resetTTreeVars();
 
@@ -112,6 +118,9 @@ namespace larlite {
 
     double _longest_trk_len;
     double _longest_trk_theta;
+    double _longest_trk_MCS_mom;
+    double _nu_E_estimate;
+
 
   };
 }

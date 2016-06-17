@@ -43,6 +43,8 @@ namespace larlite {
 
     bool NuMuCCFilter::analyze(storage_manager* storage) {
 
+        bool ret = true;
+
         //Grab the MCTruth
         auto ev_mctruth = storage->get_data<event_mctruth>("generator");
         if (!ev_mctruth) {
@@ -60,15 +62,19 @@ namespace larlite {
 
         // Require the neutrino interaction is inside the fiducial volume
         if (!_fidvolBox.Contain(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position()))
-            return false;
+            ret = false;
 
         // Require interactino is CC and neutrino pdg is numu
         if (ev_mctruth->at(0).GetNeutrino().CCNC() || ev_mctruth->at(0).GetNeutrino().Nu().PdgCode() != 14)
-            return false;
+            ret = false;
+
+        // Require neutrino true energy be above minimum energy (default value of this energy is 0)
+        if (ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().E() < _min_nu_energy )
+            ret = false;
 
         // If this filter toggled to only look at numuCC from kaons, read in the mcflux to determine neutrino ancestry
         // and throw out this event if neutrino doesn't have fndecay == 5 (K+ --> numu + mu+)
-        if(_keep_only_numu_from_kaons){
+        if (_keep_only_numu_from_kaons) {
 
             auto ev_mcflux = storage->get_data<event_mcflux>("generator");
             if (!ev_mcflux) {
@@ -81,17 +87,18 @@ namespace larlite {
                 return false;
             }
 
-            if( ev_mcflux->at(0).fndecay != 5 ) return false;
+            if ( ev_mcflux->at(0).fndecay != 5 ) ret = false;
 
         }
 
-        kept_events++;
+        if ( (!_flip && ret) || (_flip && !ret) ) kept_events++;
 
-        return true;
+        return _flip ? !ret : ret;
     }
 
     bool NuMuCCFilter::finalize() {
-        std::cout << "NuMuCCFilter has _keep_only_numu_from_kaons set to "<<_keep_only_numu_from_kaons<<"."<<std::endl;
+        std::cout << "NuMuCCFilter has _keep_only_numu_from_kaons set to " << _keep_only_numu_from_kaons << "." << std::endl;
+        std::cout << "NuMuCCFilter has _flip set to " << _flip << "." << std::endl;
         std::cout << "NuMuCCFilter: Total events = " << total_events << std::endl;
         std::cout << "NuMuCCFilter: Final kept events = " << kept_events << std::endl;
 
