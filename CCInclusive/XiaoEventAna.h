@@ -121,6 +121,9 @@ namespace larlite {
     double _longest_trk_MCS_mom;
     double _nu_E_estimate;
 
+    double _true_nu_x;
+    double _true_nu_y;
+    double _true_nu_z;
 
   };
 }

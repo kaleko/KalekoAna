@@ -64,6 +64,9 @@ namespace larlite {
             _tree->Branch("longest_trk_theta", &_longest_trk_theta, "longest_trk_theta/D");
             _tree->Branch("longest_trk_MCS_mom", &_longest_trk_MCS_mom, "longest_trk_MCS_mom/D");
             _tree->Branch("nu_E_estimate", &_nu_E_estimate, "nu_E_estimate/D");
+            _tree->Branch("true_nu_x", &_true_nu_x, "true_nu_x/D");
+            _tree->Branch("true_nu_y", &_true_nu_y, "true_nu_y/D");
+            _tree->Branch("true_nu_z", &_true_nu_z, "true_nu_z/D");
         }
 
         return true;
@@ -89,6 +92,9 @@ namespace larlite {
         _longest_trk_theta = -999.;
         _longest_trk_MCS_mom = -999.;
         _nu_E_estimate = -999.;
+        _true_nu_x = -999.;
+                _true_nu_y = -999.;
+                        _true_nu_z = -999.;
     }
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
@@ -203,6 +209,9 @@ namespace larlite {
             _true_nu_mode =         mcnu.Mode();
             _true_lepton_pdg =      mcnu.Lepton().PdgCode();
             _true_lepton_momentum = mcnu.Lepton().Trajectory().front().Momentum().Vect().Mag();
+            _true_nu_x            = mcnu.Nu().Trajectory().front().Position().X();
+            _true_nu_y            = mcnu.Nu().Trajectory().front().Position().Y();
+            _true_nu_z            = mcnu.Nu().Trajectory().front().Position().Z();
 
             ::geoalgo::Sphere thevertexsphere(reco_neutrino.first.X(),
                                               reco_neutrino.first.Y(),
