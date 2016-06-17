@@ -9,6 +9,7 @@ if len(sys.argv) < 2:
 
 from larlite import larlite as fmwk
 
+
 # Create ana_processor instance
 my_proc = fmwk.ana_processor()
 
@@ -34,6 +35,7 @@ my_proc.add_process(myfilter)
 myxiao = fmwk.XiaoEventAna()
 myxiao.setRunningOnData(False)
 myxiao.setInputType(fmwk.kBNBCosmic)#fmwk.kBNBCosmic fmwk.kCorsikaInTime
+print fmwk.kBNBCosmic
 my_proc.add_process(myxiao)
 
 print
@@ -41,7 +43,7 @@ print "Finished configuring ana_processor. Start event loop!"
 print
 
 # Let's run it.
-my_proc.run()
+#my_proc.run()
 
 # done!
 print
