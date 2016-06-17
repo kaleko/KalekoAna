@@ -33,7 +33,7 @@ namespace larlite {
 
 		kcal = 0.0022;
 
-		minLength = 100;
+		minLength = 100.;
 		maxLength = 1350.0;
 
 	}
