@@ -20,7 +20,7 @@ endif
 #
 # Define directories to be compile upon a global "make"...
 #
-SUBDIRS := ERToolStuff TrackStudy scratch_ana EventFilters #LArSoftImport NuEnergyStuff ERToolStuff SoftwareTrigger RecoEmulator #ADD_NEW_SUBDIR ... do not remove this comment from this line
+SUBDIRS := LArSoftImport CCInclusive #ERToolStuff TrackStudy scratch_ana EventFilters #LArSoftImport NuEnergyStuff ERToolStuff SoftwareTrigger RecoEmulator #ADD_NEW_SUBDIR ... do not remove this comment from this line
 #SignalSelection
 #UBSensInterface
 #CutStudy
