@@ -258,7 +258,7 @@ namespace larlite {
 			}
 		}
 		// Require there is at least one >50 PE flash inside of BGW
-		// if (!_flash_in_bgw) throw std::exception();
+		if (!_flash_in_bgw) throw std::exception();
 		_n_evts_with_flash_in_bgw++;
 
 		// Loop over vertices.
@@ -375,15 +375,15 @@ namespace larlite {
 		if (n_viable_vertices != 1) throw std::exception();
 		_n_evts_viable_vertex++;
 
-		//temp
-		_viable_vtx_has_matched_flash = false;
-		for (auto const& trkpair : result.second) {
-			auto const &trk = trkpair.second;
-			if ( flashDistZ(trk, theflash.ZCenter()) < 70. )
-				_viable_vtx_has_matched_flash = true;
-		}
-		if (_viable_vtx_has_matched_flash)
-			_n_successful_flashmatch++;
+		// //temp
+		// _viable_vtx_has_matched_flash = false;
+		// for (auto const& trkpair : result.second) {
+		// 	auto const &trk = trkpair.second;
+		// 	if ( flashDistZ(trk, theflash.ZCenter()) < 70. )
+		// 		_viable_vtx_has_matched_flash = true;
+		// }
+		// if (_viable_vtx_has_matched_flash)
+		// 	_n_successful_flashmatch++;
 
 		/// Fill a PID value for each of the tracks in the interaction
 		if ( !_PID_filler.fillKalekoPIDs(result) ) {
