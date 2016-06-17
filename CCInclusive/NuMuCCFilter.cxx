@@ -66,8 +66,8 @@ namespace larlite {
         // AND neutrino energy is above cutoff threshold (default threshold is 0)
         if (_fidvolBox.Contain(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position()) 
             && !ev_mctruth->at(0).GetNeutrino().CCNC() 
-            && ev_mctruth->at(0).GetNeutrino().Nu().PdgCode() != 14
-            && ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().E() < _min_nu_energy)
+            && ev_mctruth->at(0).GetNeutrino().Nu().PdgCode() == 14
+            && ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().E() > _min_nu_energy)
             ret = true;
 
         // If this filter toggled to only look at numuCC from kaons, read in the mcflux to determine neutrino ancestry
