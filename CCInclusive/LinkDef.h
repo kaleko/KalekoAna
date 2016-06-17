@@ -25,8 +25,14 @@
 #pragma link C++ class larlite::XiaoNuFinder+;
 
 #pragma link C++ class larlite::TestPPiCalo+;
+#pragma link C++ class larlite::QuickMikePlot+;
+#pragma link C++ class larlite::TestTrkHitAssn+;
+#pragma link C++ class larlite::KalekoPIDFiller+;
 //ADD_NEW_CLASS ... do not change this line
 #endif
+
+
+
 
 
 
