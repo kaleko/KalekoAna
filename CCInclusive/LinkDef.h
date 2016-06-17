@@ -9,6 +9,8 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+#pragma link C++ enum larlite::InputFileType_t+;
+
 #pragma link C++ class larlite::EfficiencyStudy+;
 #pragma link C++ class larlite::TrackMomentumSplines+;
 #pragma link C++ class larlite::NuEnergyCalc+;
