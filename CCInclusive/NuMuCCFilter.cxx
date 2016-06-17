@@ -43,7 +43,7 @@ namespace larlite {
 
     bool NuMuCCFilter::analyze(storage_manager* storage) {
 
-        bool ret = true;
+        bool ret = false;
 
         //Grab the MCTruth
         auto ev_mctruth = storage->get_data<event_mctruth>("generator");
@@ -61,16 +61,14 @@ namespace larlite {
         }
 
         // Require the neutrino interaction is inside the fiducial volume
-        if (!_fidvolBox.Contain(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position()))
-            ret = false;
-
-        // Require interactino is CC and neutrino pdg is numu
-        if (ev_mctruth->at(0).GetNeutrino().CCNC() || ev_mctruth->at(0).GetNeutrino().Nu().PdgCode() != 14)
-            ret = false;
-
-        // Require neutrino true energy be above minimum energy (default value of this energy is 0)
-        if (ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().E() < _min_nu_energy )
-            ret = false;
+        // AND interaction is CC
+        // AND pdg is numu (14)
+        // AND neutrino energy is above cutoff threshold (default threshold is 0)
+        if (_fidvolBox.Contain(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position()) 
+            && !ev_mctruth->at(0).GetNeutrino().CCNC() 
+            && ev_mctruth->at(0).GetNeutrino().Nu().PdgCode() != 14
+            && ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().E() < _min_nu_energy)
+            ret = true;
 
         // If this filter toggled to only look at numuCC from kaons, read in the mcflux to determine neutrino ancestry
         // and throw out this event if neutrino doesn't have fndecay == 5 (K+ --> numu + mu+)
@@ -87,7 +85,7 @@ namespace larlite {
                 return false;
             }
 
-            if ( ev_mcflux->at(0).fndecay != 5 ) ret = false;
+            if ( ev_mcflux->at(0).fndecay >= 10  ) ret = true;
 
         }
 
