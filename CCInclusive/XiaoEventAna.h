@@ -117,6 +117,7 @@ namespace larlite {
     int _n_associated_tracks;
 
     double _longest_trk_len;
+    double _second_longest_trk_len;
     double _longest_trk_theta;
     double _longest_trk_MCS_mom;
     double _nu_E_estimate;
@@ -125,6 +126,8 @@ namespace larlite {
     double _true_nu_y;
     double _true_nu_z;
 
+    double _dist_reco_true_vtx;
+    double _max_tracks_dotprod;
   };
 }
 #endif
