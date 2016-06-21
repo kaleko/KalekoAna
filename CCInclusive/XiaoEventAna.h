@@ -128,6 +128,7 @@ namespace larlite {
 
     double _dist_reco_true_vtx;
     double _max_tracks_dotprod;
+    double _longest_tracks_dotprod;
   };
 }
 #endif

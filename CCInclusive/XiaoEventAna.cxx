@@ -70,6 +70,7 @@ namespace larlite {
             _tree->Branch("true_nu_z", &_true_nu_z, "true_nu_z/D");
 	    _tree->Branch("dist_reco_true_vtx",&_dist_reco_true_vtx,"dist_reco_true_vtx/D");
 	    _tree->Branch("max_tracks_dotprod",&_max_tracks_dotprod,"max_tracks_dotprod/D");
+	    _tree->Branch("longest_tracks_dotprod",&_longest_tracks_dotprod,"longest_tracks_dotprod/D");
         }
 
         return true;
@@ -101,6 +102,7 @@ namespace larlite {
                         _true_nu_z = -999.;
 			_dist_reco_true_vtx = -999.;
 			_max_tracks_dotprod = -999.;
+			_longest_tracks_dotprod = -999.;
     }
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
@@ -228,6 +230,8 @@ namespace larlite {
             _hcorrect_ID->Fill(_correct_ID);
         }
 
+	            auto const &geovtx = ::geoalgo::Vector(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
+	auto longest_trackdir = ::geoalgo::Vector(0.,0.,0.);
         // Quick loop over associated track lengths to find the longest one:
         for (auto const& asstd_trk_pair : reco_neutrino.second) {
             auto const &asstd_trk = asstd_trk_pair.second;
@@ -235,24 +239,41 @@ namespace larlite {
                 _longest_trk_len = asstd_trk.Length();
                 _longest_trk_theta = asstd_trk.Theta();
                 _longest_trk_MCS_mom = _myspline.GetMuMomentum(asstd_trk.Length());
+		longest_trackdir = ::geoalgo::Vector(asstd_trk.Vertex()).SqDist(geovtx) <
+		  ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
+		  ::geoalgo::Vector(asstd_trk.VertexDirection()) :
+		  ::geoalgo::Vector(asstd_trk.EndDirection()) * -1.;
+
             }
         }
+	auto second_longest_trackdir = ::geoalgo::Vector(0.,0.,0.);
 	// Another quick loop to find the second longest one
         for (auto const& asstd_trk_pair : reco_neutrino.second) {
             auto const &asstd_trk = asstd_trk_pair.second;
 	    // Skip the already-found longest track
 	    if(asstd_trk.Length() == _longest_trk_len) continue;
-            if ( asstd_trk.Length() > _second_longest_trk_len ) 
+            if ( asstd_trk.Length() > _second_longest_trk_len ) {
                 _second_longest_trk_len = asstd_trk.Length();
+		second_longest_trackdir = ::geoalgo::Vector(asstd_trk.Vertex()).SqDist(geovtx) <
+		  ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
+		  ::geoalgo::Vector(asstd_trk.VertexDirection()) :
+		  ::geoalgo::Vector(asstd_trk.EndDirection()) * -1.;
+	    }
         }
+	
+	// Find the dot product of directions between the longest two tracks
+	longest_trackdir.Normalize();
+	second_longest_trackdir.Normalize();
+	_longest_tracks_dotprod = longest_trackdir.Dot(second_longest_trackdir);
+
 	// Loop over all track combinations  and compute the highest absolute value of dot product
 	// of directions to try to select broken track MIDs
-	auto const &recogeovtx = ::geoalgo::Vector(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
+
 	for (auto const& asstd_trk_pair1 : reco_neutrino.second) {
 	  auto const &asstd_trk1 = asstd_trk_pair1.second;
 	  
-	  auto track1dir = ::geoalgo::Vector(asstd_trk1.Vertex()).SqDist(recogeovtx) <
-	    ::geoalgo::Vector(asstd_trk1.End()).SqDist(recogeovtx) ?
+	  auto track1dir = ::geoalgo::Vector(asstd_trk1.Vertex()).SqDist(geovtx) <
+	    ::geoalgo::Vector(asstd_trk1.End()).SqDist(geovtx) ?
 	    ::geoalgo::Vector(asstd_trk1.VertexDirection()) :
 	    ::geoalgo::Vector(asstd_trk1.EndDirection()) * -1.;
 	  
@@ -261,8 +282,8 @@ namespace larlite {
 	    // Don't compare a track to itself.. doing this by Length because I'm stupid
 	    if(asstd_trk1.Length() == asstd_trk2.Length()) continue;
 
-            auto track2dir = ::geoalgo::Vector(asstd_trk2.Vertex()).SqDist(recogeovtx) <
-	      ::geoalgo::Vector(asstd_trk2.End()).SqDist(recogeovtx) ?
+            auto track2dir = ::geoalgo::Vector(asstd_trk2.Vertex()).SqDist(geovtx) <
+	      ::geoalgo::Vector(asstd_trk2.End()).SqDist(geovtx) ?
 	      ::geoalgo::Vector(asstd_trk2.VertexDirection()) :
 	      ::geoalgo::Vector(asstd_trk2.EndDirection()) * -1.;
 	   
@@ -298,7 +319,7 @@ namespace larlite {
             // There is now an additional cut requiring the dot product between the two track directions
             // is less than 0.95, to reduce broken tracks being recod as 2track events (cosmic background)
             // Make a unit TVector3 for each of the two tracks, ensuring each are pointing away from the vertex
-            auto const &geovtx = ::geoalgo::Vector(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
+	    //            auto const &geovtx = ::geoalgo::Vector(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
             auto mudir = ::geoalgo::Vector(mutrack.Vertex()).SqDist(geovtx) <
                          ::geoalgo::Vector(mutrack.End()).SqDist(geovtx) ?
                          ::geoalgo::Vector(mutrack.VertexDirection()) :
@@ -317,9 +338,9 @@ namespace larlite {
         _tree->Fill();
         passed_events++;
 
-	/*
-        if (_nu_E_estimate > 3 && !_correct_ID ) {
-	  std::cout<<"--- FOUND EVENT WITH _nu_E_estimate > 3 and !_correctID --- "<<std::endl;
+	
+        if (_nu_E_estimate > 3 && _correct_ID && _second_longest_trk_len > 16.) {
+	  std::cout<<"--- FOUND EVENT WITH _nu_E_estimate > 3 and _correctID and scnd_long_trklen > 16 --- "<<std::endl;
             std::cout << "  - the true vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", mcnu.Nu().Trajectory().front().Position().X()
                       , mcnu.Nu().Trajectory().front().Position().Y()
                       , mcnu.Nu().Trajectory().front().Position().Z()) << std::endl;
@@ -327,12 +348,9 @@ namespace larlite {
                       , reco_neutrino.first.Y()
                       , reco_neutrino.first.Z()) << std::endl;
             std::cout << "  - and the ttree index is " << storage->get_index() << std::endl;
-	    std::cout << "  - The associated track lengths are: "<<std::endl;
-	    for(auto const& trkPIDpair : reco_neutrino.second){
-	      std::cout<<"     "<<trkPIDpair.second.Length()<<"cm"<<std::endl;
-	    }
+	    std::cout << "  - _max_tracks_dotprod is "<<_max_tracks_dotprod<<std::endl;
         }
-	*/
+	
 	return true;
     }
 
