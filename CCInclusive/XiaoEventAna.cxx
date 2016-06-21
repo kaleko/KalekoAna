@@ -61,12 +61,15 @@ namespace larlite {
             _tree->Branch("true_lepton_momentum", &_true_lepton_momentum, "true_lepton_momentum/D");
             _tree->Branch("n_associated_tracks", &_n_associated_tracks, "n_associated_tracks/I");
             _tree->Branch("longest_trk_len", &_longest_trk_len, "longest_trk_len/D");
+            _tree->Branch("second_longest_trk_len", &_second_longest_trk_len, "second_longest_trk_len/D");
             _tree->Branch("longest_trk_theta", &_longest_trk_theta, "longest_trk_theta/D");
             _tree->Branch("longest_trk_MCS_mom", &_longest_trk_MCS_mom, "longest_trk_MCS_mom/D");
             _tree->Branch("nu_E_estimate", &_nu_E_estimate, "nu_E_estimate/D");
             _tree->Branch("true_nu_x", &_true_nu_x, "true_nu_x/D");
             _tree->Branch("true_nu_y", &_true_nu_y, "true_nu_y/D");
             _tree->Branch("true_nu_z", &_true_nu_z, "true_nu_z/D");
+	    _tree->Branch("dist_reco_true_vtx",&_dist_reco_true_vtx,"dist_reco_true_vtx/D");
+	    _tree->Branch("max_tracks_dotprod",&_max_tracks_dotprod,"max_tracks_dotprod/D");
         }
 
         return true;
@@ -89,12 +92,15 @@ namespace larlite {
         _true_lepton_momentum = -999.;
         _n_associated_tracks = 0;
         _longest_trk_len = -999.;
+        _second_longest_trk_len = -999.;
         _longest_trk_theta = -999.;
         _longest_trk_MCS_mom = -999.;
         _nu_E_estimate = -999.;
         _true_nu_x = -999.;
                 _true_nu_y = -999.;
                         _true_nu_z = -999.;
+			_dist_reco_true_vtx = -999.;
+			_max_tracks_dotprod = -999.;
     }
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
@@ -109,7 +115,7 @@ namespace larlite {
             return false;
         }
         if (!ev_vtx->size()) {
-            print(larlite::msg::kERROR, __FUNCTION__, Form("Zero reconstructed vertices in this event!"));
+	  //print(larlite::msg::kERROR, __FUNCTION__, Form("Zero reconstructed vertices in this event!"));
             return false;
         }
 
@@ -119,7 +125,7 @@ namespace larlite {
             return false;
         }
         if (!ev_track->size()) {
-            print(larlite::msg::kERROR, __FUNCTION__, Form("Zero reconstructed tracks in this event!"));
+	  //print(larlite::msg::kERROR, __FUNCTION__, Form("Zero reconstructed tracks in this event!"));
             return false;
         }
         auto ev_opflash = storage->get_data<event_opflash>("opflashSat");
@@ -212,11 +218,12 @@ namespace larlite {
             _true_nu_x            = mcnu.Nu().Trajectory().front().Position().X();
             _true_nu_y            = mcnu.Nu().Trajectory().front().Position().Y();
             _true_nu_z            = mcnu.Nu().Trajectory().front().Position().Z();
-
+	    TVector3 reco_vtx_tvec= TVector3(reco_neutrino.first.X(),reco_neutrino.first.Y(),reco_neutrino.first.Z());
+	    _dist_reco_true_vtx   = (mcnu.Nu().Trajectory().front().Position().Vect() - reco_vtx_tvec).Mag();
             ::geoalgo::Sphere thevertexsphere(reco_neutrino.first.X(),
                                               reco_neutrino.first.Y(),
                                               reco_neutrino.first.Z(),
-                                              3.0);
+                                              5.0);
             _correct_ID = thevertexsphere.Contain(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position());
             _hcorrect_ID->Fill(_correct_ID);
         }
@@ -230,6 +237,39 @@ namespace larlite {
                 _longest_trk_MCS_mom = _myspline.GetMuMomentum(asstd_trk.Length());
             }
         }
+	// Another quick loop to find the second longest one
+        for (auto const& asstd_trk_pair : reco_neutrino.second) {
+            auto const &asstd_trk = asstd_trk_pair.second;
+	    // Skip the already-found longest track
+	    if(asstd_trk.Length() == _longest_trk_len) continue;
+            if ( asstd_trk.Length() > _second_longest_trk_len ) 
+                _second_longest_trk_len = asstd_trk.Length();
+        }
+	// Loop over all track combinations  and compute the highest absolute value of dot product
+	// of directions to try to select broken track MIDs
+	auto const &recogeovtx = ::geoalgo::Vector(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
+	for (auto const& asstd_trk_pair1 : reco_neutrino.second) {
+	  auto const &asstd_trk1 = asstd_trk_pair1.second;
+	  
+	  auto track1dir = ::geoalgo::Vector(asstd_trk1.Vertex()).SqDist(recogeovtx) <
+	    ::geoalgo::Vector(asstd_trk1.End()).SqDist(recogeovtx) ?
+	    ::geoalgo::Vector(asstd_trk1.VertexDirection()) :
+	    ::geoalgo::Vector(asstd_trk1.EndDirection()) * -1.;
+	  
+	  for (auto const& asstd_trk_pair2 : reco_neutrino.second) {
+            auto const &asstd_trk2 = asstd_trk_pair2.second;
+	    // Don't compare a track to itself.. doing this by Length because I'm stupid
+	    if(asstd_trk1.Length() == asstd_trk2.Length()) continue;
+
+            auto track2dir = ::geoalgo::Vector(asstd_trk2.Vertex()).SqDist(recogeovtx) <
+	      ::geoalgo::Vector(asstd_trk2.End()).SqDist(recogeovtx) ?
+	      ::geoalgo::Vector(asstd_trk2.VertexDirection()) :
+	      ::geoalgo::Vector(asstd_trk2.EndDirection()) * -1.;
+	   
+	    if(fabs(track1dir.Dot(track2dir)) > _max_tracks_dotprod)
+	      _max_tracks_dotprod = fabs(track1dir.Dot(track2dir));
+	  }
+	}
 
 
         // Some ttree entries are only for events with ==2 tracks associated with the vertex:
@@ -277,20 +317,23 @@ namespace larlite {
         _tree->Fill();
         passed_events++;
 
-
-        // if (_nu_E_estimate > 4 && _fndecay > 11 ) {
-        //     std::cout << "-- found event with true Nu E < 2.4 (" << _true_nu_E << ") "
-        //               << "and estimated nu E > 2.4 (" << _nu_E_estimate << ")." << std::endl;
-        //     std::cout << "  - the true vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", mcnu.Nu().Trajectory().front().Position().X()
-        //               , mcnu.Nu().Trajectory().front().Position().Y()
-        //               , mcnu.Nu().Trajectory().front().Position().Z()) << std::endl;
-        //     std::cout << "  - the reco vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", reco_neutrino.first.X()
-        //               , reco_neutrino.first.Y()
-        //               , reco_neutrino.first.Z()) << std::endl;
-        //     std::cout << "  - and the ttree index is " << storage->get_index() << std::endl;
-        // }
-
-        return true;
+	/*
+        if (_nu_E_estimate > 3 && !_correct_ID ) {
+	  std::cout<<"--- FOUND EVENT WITH _nu_E_estimate > 3 and !_correctID --- "<<std::endl;
+            std::cout << "  - the true vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", mcnu.Nu().Trajectory().front().Position().X()
+                      , mcnu.Nu().Trajectory().front().Position().Y()
+                      , mcnu.Nu().Trajectory().front().Position().Z()) << std::endl;
+            std::cout << "  - the reco vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", reco_neutrino.first.X()
+                      , reco_neutrino.first.Y()
+                      , reco_neutrino.first.Z()) << std::endl;
+            std::cout << "  - and the ttree index is " << storage->get_index() << std::endl;
+	    std::cout << "  - The associated track lengths are: "<<std::endl;
+	    for(auto const& trkPIDpair : reco_neutrino.second){
+	      std::cout<<"     "<<trkPIDpair.second.Length()<<"cm"<<std::endl;
+	    }
+        }
+	*/
+	return true;
     }
 
 
