@@ -15,6 +15,7 @@ namespace larlite {
         _tree->Branch("recocosyangle", &recocosyangle, "recocosyangle/F");
         _tree->Branch("flipped", &flipped, "flipped/O");
         _tree->Branch("nrecotracks", &nrecotracks, "nrecotracks/I");
+        _tree->Branch("nmctracks", &nmctracks, "nmctracks/I");
         _tree->Branch("mclength", &mclength, "mclength/F");
         _tree->Branch("mctheta", &mctheta, "mctheta/F");
         _tree->Branch("mcphi", &mcphi, "mcphi/F");
@@ -39,6 +40,7 @@ namespace larlite {
         recocosyangle = -999.;
         flipped = false;
         nrecotracks = -1;
+        nmctracks = -1;
         mclength = -1.;
         recolength = -1.;
         startptdiff = -1.;
@@ -58,35 +60,38 @@ namespace larlite {
             print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mctrack!"));
             return false;
         }
-        if (ev_mct->size() != 1) {
-            print(larlite::msg::kERROR, __FUNCTION__, Form("# of mctracks in event != 1"));
-            return false;
-        }
 
         ///Read in reco tracks
-        auto ev_track = storage->get_data<event_track>("recoemu");
+        auto ev_track = storage->get_data<event_track>("pandoraNuPMA");
         if (!ev_track) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, track!"));
             return false;
         }
 
         nrecotracks = ev_track->size();
+        nmctracks = ev_mct->size();
 
-        auto &mct = ev_mct->at(0);
-        mccosyangle = mct.Start().Momentum().Vect().Y() / mct.Start().Momentum().Vect().Mag();
-        mclength = -1.*(mct.End().Position() - mct.Start().Position()).Mag();
-        mcstart_x = mct.Start().Position().X();
-        mcstart_y = mct.Start().Position().Y();
-        mcstart_z = mct.Start().Position().Z();
-        mctheta = (mct.back().Position().Vect() - mct.front().Position().Vect()).Theta();
-        mcphi =  (mct.back().Position().Vect() - mct.front().Position().Vect()).Phi();
-
+        if (ev_mct->size() != 1) {
+            print(larlite::msg::kERROR, __FUNCTION__, Form("# of mctracks in event != 1"));
+            _tree->Fill();
+            return false;
+        }
 
         if (!ev_track->size()) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("track exists but has zero size!"));
             _tree->Fill();
             return false;
         }
+
+        auto &mct = ev_mct->at(0);
+        mccosyangle = mct.Start().Momentum().Vect().Y() / mct.Start().Momentum().Vect().Mag();
+        mclength = -1.*(mct.back().Position() - mct.front().Position()).Mag();
+        mcstart_x = mct.Start().Position().X();
+        mcstart_y = mct.Start().Position().Y();
+        mcstart_z = mct.Start().Position().Z();
+        mctheta = (mct.back().Position().Vect() - mct.front().Position().Vect()).Theta();
+        mcphi =  (mct.back().Position().Vect() - mct.front().Position().Vect()).Phi();
+
 
         auto &track = ev_track->at(0);
         recocosyangle = track.DirectionAtPoint(0).Y() / track.DirectionAtPoint(0).Mag();

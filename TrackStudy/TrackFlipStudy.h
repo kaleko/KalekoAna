@@ -58,6 +58,7 @@ namespace larlite {
     float recolength;
     bool flipped;
     int nrecotracks;
+    int nmctracks;
     float startptdiff;
     float startanglediff;
     float mctheta;
