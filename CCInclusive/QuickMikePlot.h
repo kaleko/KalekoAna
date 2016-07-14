@@ -50,6 +50,10 @@ namespace larlite {
     double _true_mu_len;
     bool _nu_infidvol;
 
+    double _nu_vtx_x;
+    double _nu_vtx_y;
+    double _nu_vtx_z;
+
 
 
     // Sphere around neutrino vertex
