@@ -22,20 +22,20 @@ my_proc.set_io_mode(fmwk.storage_manager.kREAD)
 my_proc.enable_filter(True)
 
 # Specify output root file name
-my_proc.set_ana_output_file("XiaoEventAna_out.root")
+my_proc.set_ana_output_file("XiaoEventAna_out_NOFILTER.root")
 
 # Attach an analysis unit ... here we use a base class which does nothing.
 # Replace with your analysis unit if you wish.
 # my_proc.add_process(fmwk.MC_1mu1pNn0else_Filter_MCTracks())#fmwk.MC_1mu1pNn0else_Filter())
 myfilter = fmwk.NuMuCCFilter()
-myfilter.FlipFilter(False)
+myfilter.FlipFilter(True)
 # myfilter.SetNuMuFromKaonOnly(False)
 # myfilter.SetMinNuEnergy(2.4);
-my_proc.add_process(myfilter)
+#my_proc.add_process(myfilter)
 myxiao = fmwk.XiaoEventAna()
 myxiao.setRunningOnData(False)
 myxiao.setInputType(fmwk.kBNBCosmic)#fmwk.kBNBCosmic fmwk.kCorsikaInTime
-print fmwk.kBNBCosmic
+myxiao.setVtxSphereRadius(4.0)
 my_proc.add_process(myxiao)
 
 print
@@ -43,7 +43,7 @@ print "Finished configuring ana_processor. Start event loop!"
 print
 
 # Let's run it.
-#my_proc.run()
+my_proc.run()
 
 # done!
 print
