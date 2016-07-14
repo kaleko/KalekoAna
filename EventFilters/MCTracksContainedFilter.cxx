@@ -16,6 +16,9 @@ namespace larlite {
 		     ::larutil::Geometry::GetME()->DetHalfHeight(),
 		     ::larutil::Geometry::GetME()->DetLength());
     
+    kept_events = 0;
+    total_events = 0;
+
     return true;
   }
   
@@ -28,17 +31,22 @@ namespace larlite {
       return false;
     }
 
+    total_events++;
+
     //Make sure all MC tracks are fully contained
     for (auto &track : *ev_mctrack)
       if ( !isFullyContained(track) ) return false;
     
     //Looks like you want to keep this event.
+    kept_events++;
     return true;
 
   }
 
   bool MCTracksContainedFilter::finalize() {
 
+    std::cout<<"MCTracksContainedFilter: "<<total_events<<" total events, "<<kept_events<<" kept events."<<std::endl;
+    
     return true;
   }
 

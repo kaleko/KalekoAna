@@ -60,6 +60,9 @@ namespace larlite {
     //Geometry algo instance
     geoalgo::AABox _myGeoAABox;
 
+    size_t total_events;
+    size_t kept_events;
+
   };
 }
 #endif
