@@ -21,9 +21,11 @@
 #pragma link C++ class larlite::MCShowerStudy+;
 #pragma link C++ class larlite::MCTrackStudy+;
 #pragma link C++ class larlite::ShowerProfileValidation+;
+#pragma link C++ class larlite::FindEventByRunSubrunEvt+;
 //ADD_NEW_CLASS ... do not change this line
 
 #endif
+
 
 
 
