@@ -57,6 +57,7 @@ namespace larlite {
       _running_on_data = false;
       _tree = 0;
       _filetype = kINPUT_FILE_TYPE_MAX;
+      _vtx_sphere_radius = 3.;
     }
 
     /// Default destructor
@@ -72,11 +73,15 @@ namespace larlite {
 
     void setInputType(InputFileType_t filetype) { _filetype = filetype; }
 
+    void setVtxSphereRadius(double myradius) { _vtx_sphere_radius = myradius; }
+    
   protected:
 
     XiaoNuFinder _nu_finder;
     TrackMomentumSplines _myspline;
     NuEnergyCalc _nu_E_calc;
+
+    double _vtx_sphere_radius;
 
     void resetTTreeVars();
 
@@ -129,6 +134,7 @@ namespace larlite {
     double _dist_reco_true_vtx;
     double _max_tracks_dotprod;
     double _longest_tracks_dotprod;
+    double _longest_tracks_dotprod_trkendpoints;
   };
 }
 #endif
