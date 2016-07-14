@@ -54,6 +54,8 @@ namespace larlite {
 
 		void printNumbers();
 
+		void setVtxSphereRadius(double myradius) { _vtx_sphere_radius = myradius; }
+
 	protected:
 
 		double flashDistZ(const track &longest_track, const double flash_z);
@@ -90,6 +92,8 @@ namespace larlite {
 		size_t _n_evts_viable_vertex;
 		size_t _n_successful_flashmatch;
 bool _viable_vtx_has_matched_flash;
+
+double _vtx_sphere_radius;
 	};
 
 }

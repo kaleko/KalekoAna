@@ -34,6 +34,8 @@ namespace larlite {
 		_n_evts_viable_vertex = 0;
 		_n_successful_flashmatch = 0;
 
+		_vtx_sphere_radius = 3.;
+
 	}
 
 	void XiaoNuFinder::printNumbers() {
@@ -72,10 +74,16 @@ namespace larlite {
 
 		::geoalgo::Vector trkstart = ::geoalgo::Vector( trk.Vertex() );
 		::geoalgo::Vector trkend   = ::geoalgo::Vector( trk.End()    );
-
+		//std::cout<<vtx_sphere.Center()<<std::endl;
+		// if ( (vtx_sphere.Center() - ::geoalgo::Vector(20.72, 53.45, 513.21)).Length() < 1.) {
+		// 	std::cout << "This track starts here: " << trkstart << std::endl;
+		// 	std::cout << " and ends here; " << trkend << std::endl;
+		// }
 		// If this track doesn't start/end near the reco vertex, ignore it
 		if ( !vtx_sphere.Contain(trkstart) && !vtx_sphere.Contain(trkend) )
 			return false;
+		// if ( (vtx_sphere.Center() - ::geoalgo::Vector(20.72, 53.45, 513.21)).Length() < 1.)
+		// 	std::cout << " THIS TRACK IS ASSOCIATED WITH VERTEX!!" << std::endl;
 
 		return true;
 	}
@@ -185,7 +193,7 @@ namespace larlite {
 
 		::geoalgo::Sphere vtx_sphere;
 		::geoalgo::Vector vertex = ::geoalgo::Vector(vtx.X(), vtx.Y(), vtx.Z());
-		vtx_sphere.Radius(3.); //3cm sphere around each vertex
+		vtx_sphere.Radius(_vtx_sphere_radius); //3cm (default) sphere around each vertex
 		vtx_sphere.Center(vertex);
 
 		return vtx_sphere;
