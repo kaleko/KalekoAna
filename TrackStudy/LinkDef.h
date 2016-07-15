@@ -11,9 +11,11 @@
 
 //#pragma link C++ class larlite::TrackEnergyPlots+;
 #pragma link C++ class larlite::TrackFlipStudy+;
+#pragma link C++ class larlite::TrackDataMCComp+;
 //ADD_NEW_CLASS ... do not change this line
 
 #endif
+
 
 
 
