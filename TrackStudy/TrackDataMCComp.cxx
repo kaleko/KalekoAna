@@ -35,6 +35,7 @@ namespace larlite {
         if (!_mctrack_tree) {
             _mctrack_tree = new TTree("mctrk_tree", "mctrk_tree");
             _mctrack_tree->Branch("mctrk_len", &_mctrk_len, "mctrk_len/D");
+            _mctrack_tree->Branch("mctrk_origin", &_mctrk_origin, "mctrk_origin/I");
             _mctrack_tree->Branch("mctrk_start_x", &_mctrk_start_x, "mctrk_start_x/D");
             _mctrack_tree->Branch("mctrk_start_y", &_mctrk_start_y, "mctrk_start_y/D");
             _mctrack_tree->Branch("mctrk_start_z", &_mctrk_start_z, "mctrk_start_z/D");
@@ -76,6 +77,7 @@ namespace larlite {
                 if ( mct.Origin() == 1 ) _n_mctracks_neutrino++;
                 else _n_mctracks_cosmic++;
 
+                _mctrk_origin = mct.Origin();
                 _mctrk_start_x = mct.front().Position().Vect().X();
                 _mctrk_start_y = mct.front().Position().Vect().Y();
                 _mctrk_start_z = mct.front().Position().Vect().Z();

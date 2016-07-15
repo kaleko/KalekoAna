@@ -84,7 +84,9 @@ namespace larlite {
 
     // This tree is filled once per mctrack
     TTree *_mctrack_tree;
-    // Length of track
+    // Origin of MCTrack (cosmic, neutrino generator)
+    int _mctrk_origin;
+    // Length of mctrack
     double _mctrk_len;
     // Start vtx of mctrack
     double _mctrk_start_x;
