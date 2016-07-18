@@ -50,7 +50,7 @@ namespace larlite {
             _tree->Branch("true_nu_E", &_true_nu_E, "true_nu_E/D");
             _tree->Branch("true_nu_CCNC", &_true_nu_CCNC, "true_nu_CCNC/O");
             _tree->Branch("true_nu_mode", &_true_nu_mode, "true_nu_mode/I");
-            _tree->Branch("mu_contained", &_mu_contained, "mu_contained/O");
+            _tree->Branch("longest_trk_contained", &_longest_trk_contained, "longest_trk_contained/O");
             _tree->Branch("p_phi", &_p_phi, "p_phi/D");
             _tree->Branch("mu_phi", &_mu_phi, "mu_phi/D");
             _tree->Branch("correct_ID", &_correct_ID, "correct_ID/O");
@@ -73,6 +73,9 @@ namespace larlite {
             _tree->Branch("max_tracks_dotprod", &_max_tracks_dotprod, "max_tracks_dotprod/D");
             _tree->Branch("longest_tracks_dotprod", &_longest_tracks_dotprod, "longest_tracks_dotprod/D");
             _tree->Branch("longest_tracks_dotprod_trkendpoints", &_longest_tracks_dotprod_trkendpoints, "longest_tracks_dotprod_trkendpoints/D");
+            _tree->Branch("longest_track_end_x", &_longest_track_end_x, "longest_track_end_x/D");
+            _tree->Branch("longest_track_end_y", &_longest_track_end_y, "longest_track_end_y/D");
+            _tree->Branch("longest_track_end_z", &_longest_track_end_z, "longest_track_end_z/D");
         }
 
         return true;
@@ -84,7 +87,7 @@ namespace larlite {
         _correct_ID = false;
         _mu_phi = -999.;
         _p_phi = -999.;
-        _mu_contained = false;
+        _longest_trk_contained = false;
         _true_nu_E = -999.;
         _true_nu_pdg = -999;
         _true_nu_CCNC = false;
@@ -106,6 +109,9 @@ namespace larlite {
         _max_tracks_dotprod = -999.;
         _longest_tracks_dotprod = -999.;
         _longest_tracks_dotprod_trkendpoints = -999.;
+        _longest_track_end_x = -999.;
+        _longest_track_end_y = -999.;
+        _longest_track_end_z = -999.;
     }
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
@@ -188,6 +194,7 @@ namespace larlite {
         larlite::mcnu mcnu;
         // If we found a vertex and we are running over MC, let's check if it is accurate
         if (!_running_on_data) {
+
             auto ev_mctruth = storage->get_data<event_mctruth>("generator");
             if (!ev_mctruth) {
                 print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mctruth!"));
@@ -250,6 +257,12 @@ namespace larlite {
                                              ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
                                              ::geoalgo::Vector(asstd_trk.End() - asstd_trk.Vertex()) :
                                              ::geoalgo::Vector(asstd_trk.Vertex() - asstd_trk.End());
+                _longest_trk_contained = _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.Vertex())) &&
+                                         _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.End()));
+
+                _longest_track_end_x = asstd_trk.End().X();
+                _longest_track_end_y = asstd_trk.End().Y();
+                _longest_track_end_z = asstd_trk.End().Z();
             }
         }
         auto second_longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
@@ -325,8 +338,6 @@ namespace larlite {
             auto const &ptrack  = reco_neutrino.second.at(0).second.Length() > reco_neutrino.second.at(1).second.Length() ?
                                   reco_neutrino.second.at(1).second          : reco_neutrino.second.at(0).second;
 
-            _mu_contained = _fidvolBox.Contain(::geoalgo::Vector(mutrack.Vertex())) &&
-                            _fidvolBox.Contain(::geoalgo::Vector(mutrack.End()));
             _mu_phi = ::geoalgo::Vector(mutrack.VertexDirection()).Phi();
             _p_phi  = ::geoalgo::Vector( ptrack.VertexDirection()).Phi();
 

@@ -74,7 +74,7 @@ namespace larlite {
     void setInputType(InputFileType_t filetype) { _filetype = filetype; }
 
     void setVtxSphereRadius(double myradius) { _vtx_sphere_radius = myradius; }
-    
+
   protected:
 
     XiaoNuFinder _nu_finder;
@@ -110,7 +110,7 @@ namespace larlite {
     bool   _correct_ID;
     double _mu_phi;
     double _p_phi;
-    double _mu_contained;
+    double _longest_trk_contained;
     double _true_nu_E;
     int    _true_nu_pdg;
     bool   _true_nu_CCNC;
@@ -135,6 +135,10 @@ namespace larlite {
     double _max_tracks_dotprod;
     double _longest_tracks_dotprod;
     double _longest_tracks_dotprod_trkendpoints;
+
+    double _longest_track_end_x;
+    double _longest_track_end_y;
+    double _longest_track_end_z;
   };
 }
 #endif
