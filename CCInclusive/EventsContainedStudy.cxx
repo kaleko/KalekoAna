@@ -12,17 +12,7 @@ namespace larlite {
 
 	bool EventsContainedStudy::initialize() {
 
-		double fidvol_dist = 5.;
-		double fidvol_dist_y = 5.;
-
-		//Box here is TPC
-		_fidvolBox.Min( 0 + fidvol_dist,
-		                -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-		                0 + fidvol_dist);
-
-		_fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist,
-		                ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-		                ::larutil::Geometry::GetME()->DetLength() - fidvol_dist);
+		_fidvolBox = FidVolBox();
 
 		_evts_pass_filter = 0;
 		_evts_fully_contained = 0;

@@ -12,31 +12,7 @@ namespace larlite {
 
         total_events = 0;
         kept_events = 0;
-
-        // fidvol_dist = 5.;//10.;
-        // fidvol_dist_y = 5.;//20.;
-
-        // //Box here is TPC
-        // _fidvolBox.Min( 0 + fidvol_dist,
-        //                 -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-        //                 0 + fidvol_dist);
-
-        // _fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist,
-        //                 ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-        //                 ::larutil::Geometry::GetME()->DetLength() - fidvol_dist);
-
-        fidvol_dist_x = 20.;
-        fidvol_dist_y = 20.;
-        fidvol_dist_z = 10.;
-
-        //Box here is TPC
-        _fidvolBox.Min( 0 + fidvol_dist_x,
-                        -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-                        0 + fidvol_dist_z);
-
-        _fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist_x,
-                        ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-                        ::larutil::Geometry::GetME()->DetLength() - fidvol_dist_z);
+        _fidvolBox = FidVolBox();
 
         return true;
     }
@@ -64,10 +40,10 @@ namespace larlite {
         // AND interaction is CC
         // AND pdg is numu (14)
         // AND neutrino energy is above cutoff threshold (default threshold is 0)
-        if (_fidvolBox.Contain(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position()) 
-            && !ev_mctruth->at(0).GetNeutrino().CCNC() 
-            && ev_mctruth->at(0).GetNeutrino().Nu().PdgCode() == 14
-            && ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().E() > _min_nu_energy)
+        if (_fidvolBox.Contain(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position())
+                && !ev_mctruth->at(0).GetNeutrino().CCNC()
+                && ev_mctruth->at(0).GetNeutrino().Nu().PdgCode() == 14
+                && ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().E() > _min_nu_energy)
             ret = true;
 
         // If this filter toggled to only look at numuCC from kaons, read in the mcflux to determine neutrino ancestry

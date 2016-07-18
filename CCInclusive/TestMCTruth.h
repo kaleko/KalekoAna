@@ -17,7 +17,7 @@
 
 #include "Analysis/ana_base.h"
 #include "GeoAlgo/GeoAABox.h"
-#include "LArUtil/Geometry.h"
+#include "FidVolBox.h"
 #include "DataFormat/mctruth.h"
 #include "TH2.h"
 #include "TH1.h"
@@ -52,8 +52,6 @@ namespace larlite {
 
         // Fiducial volume box
         geoalgo::AABox _fidvolBox;
-        double fidvol_dist;
-        double fidvol_dist_y;
 
         size_t evt_counter;
         size_t kept_events;

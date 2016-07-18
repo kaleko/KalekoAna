@@ -18,19 +18,8 @@ namespace larlite {
 
         myspline = new TrackMomentumSplines();
 
-
-        double fidvol_dist = 10.;
-        double fidvol_dist_y = 20.;
-
         //Box here is TPC
-        _myGeoAABox.Min( 0 + fidvol_dist,
-                         -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-                         0 + fidvol_dist);
-
-        _myGeoAABox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist,
-                         ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-                         ::larutil::Geometry::GetME()->DetLength() - fidvol_dist);
-
+        _myGeoAABox = FidVolBox();
 
         return true;
     }
@@ -88,7 +77,7 @@ namespace larlite {
 
         double depE = (thetrack.front().E() - thetrack.back().E()) / 1000.;
         double splineE = _testing_protons ?
-                        myspline->GetPMomentum(tracklen) / 1000. : myspline->GetMuMomentum(tracklen) / 1000.;
+                         myspline->GetPMomentum(tracklen) / 1000. : myspline->GetMuMomentum(tracklen) / 1000.;
 
         _h->Fill(depE, splineE);
 

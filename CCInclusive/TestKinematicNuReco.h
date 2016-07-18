@@ -18,7 +18,7 @@
 #include "Analysis/ana_base.h"
 #include "TTree.h"
 #include "TVector3.h"
-#include "LArUtil/Geometry.h"
+#include "FidVolBox.h"
 #include "NuEnergyCalc.h"
 #include "TrackMomentumSplines.h"
 #include "TrackMomentumCalculator.h"

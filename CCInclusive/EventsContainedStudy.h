@@ -16,7 +16,7 @@
 #define LARLITE_EVENTSCONTAINEDSTUDY_H
 
 #include "Analysis/ana_base.h"
-#include "LArUtil/Geometry.h"
+#include "FidVolBox.h"
 #include "TH1.h"
 #include "GeoAlgo/GeoAABox.h"
 #include "GeoAlgo/GeoSphere.h"

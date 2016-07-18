@@ -18,7 +18,7 @@
 #include "Analysis/ana_base.h"
 #include "TTree.h"
 #include "GeoAlgo/GeoAABox.h"
-#include "LArUtil/Geometry.h"
+#include "FidVolBox.h"
 #include "GeoAlgo/GeoSphere.h"
 
 namespace larlite {
@@ -54,15 +54,11 @@ namespace larlite {
     double _nu_vtx_y;
     double _nu_vtx_z;
 
-
-
     // Sphere around neutrino vertex
     geoalgo::Sphere _nu_sphere;
 
     // Fiducial volume box
     geoalgo::AABox _fidvolBox;
-    double fidvol_dist;
-    double fidvol_dist_y;
 
 
   };

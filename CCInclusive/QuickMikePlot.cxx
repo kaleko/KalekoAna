@@ -10,17 +10,7 @@ namespace larlite {
 
     bool QuickMikePlot::initialize() {
 
-        fidvol_dist = 10.;
-        fidvol_dist_y = 20.;
-
-        //Box here is TPC
-        _fidvolBox.Min( 0 + fidvol_dist,
-                        -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-                        0 + fidvol_dist);
-
-        _fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist,
-                        ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-                        ::larutil::Geometry::GetME()->DetLength() - fidvol_dist);
+        _fidvolBox = FidVolBox();
 
         _tree = new TTree("tree", "tree");
         _tree->Branch("true_nu_E", &_true_nu_E, "true_nu_E/D");
@@ -30,9 +20,9 @@ namespace larlite {
         _tree->Branch("CCNC", &_CCNC, "CCNC/O");
         _tree->Branch("nu_invidvol", &_nu_infidvol, "nu_infidvol/O");
         _tree->Branch("nupdg", &_nupdg, "nupdg/I");
-        _tree->Branch("nu_vtx_x",&_nu_vtx_x,"nu_vtx_x/D");
-        _tree->Branch("nu_vtx_y",&_nu_vtx_y,"nu_vtx_y/D");
-        _tree->Branch("nu_vtx_z",&_nu_vtx_z,"nu_vtx_z/D");
+        _tree->Branch("nu_vtx_x", &_nu_vtx_x, "nu_vtx_x/D");
+        _tree->Branch("nu_vtx_y", &_nu_vtx_y, "nu_vtx_y/D");
+        _tree->Branch("nu_vtx_z", &_nu_vtx_z, "nu_vtx_z/D");
 
         return true;
     }
@@ -47,8 +37,8 @@ namespace larlite {
         _true_mu_len = -999.;
         _nu_infidvol = false;
         _nu_vtx_x = -999.;
-_nu_vtx_y = -999.;
-_nu_vtx_z = -999.;
+        _nu_vtx_y = -999.;
+        _nu_vtx_z = -999.;
 
         auto ev_mctruth = storage->get_data<event_mctruth>("generator");
         if (!ev_mctruth) {
@@ -68,8 +58,8 @@ _nu_vtx_z = -999.;
         _nupdg = ev_mctruth->at(0).GetNeutrino().Nu().PdgCode();
         _nu_infidvol = _fidvolBox.Contain(nu_vtx);
         _nu_vtx_x = nu_vtx.X();
-                _nu_vtx_y = nu_vtx.Y();
-                        _nu_vtx_z = nu_vtx.Z();
+        _nu_vtx_y = nu_vtx.Y();
+        _nu_vtx_z = nu_vtx.Z();
 
 
         auto ev_mctrack = storage->get_data<event_mctrack>("mcreco");

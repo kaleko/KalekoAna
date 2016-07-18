@@ -11,18 +11,7 @@ namespace larlite {
         total_events = 0;
         kept_events = 0;
 
-        fidvol_dist = 5.;//10.;
-        fidvol_dist_y = 5.;//20.;
-
-        //Box here is TPC
-        _fidvolBox.Min( 0 + fidvol_dist,
-                        -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-                        0 + fidvol_dist);
-
-        _fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist,
-                        ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-                        ::larutil::Geometry::GetME()->DetLength() - fidvol_dist);
-
+        _fidvolBox = FidVolBox();
         return true;
     }
 

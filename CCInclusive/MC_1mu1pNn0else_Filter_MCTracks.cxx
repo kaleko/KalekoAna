@@ -14,29 +14,8 @@ namespace larlite {
         kept_events = 0;
         kaleko_ctr = 0;
 
-        // fidvol_dist = 5.; //10
-        // fidvol_dist_y = 5.; //20
-
-        // //Box here is TPC
-        // _fidvolBox.Min( 0 + fidvol_dist,
-        //                 -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-        //                 0 + fidvol_dist);
-
-        // _fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist,
-        //                 ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-        //                 ::larutil::Geometry::GetME()->DetLength() - fidvol_dist);
-        fidvol_dist_x = 20.;
-        fidvol_dist_y = 20.;
-        fidvol_dist_z = 10.;
-
-        //Box here is TPC
-        _fidvolBox.Min( 0 + fidvol_dist_x,
-                        -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-                        0 + fidvol_dist_z);
-
-        _fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist_x,
-                        ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-                        ::larutil::Geometry::GetME()->DetLength() - fidvol_dist_z);
+        _fidvolBox = FidVolBox();
+        
         return true;
     }
 

@@ -20,7 +20,7 @@
 #include "NuEnergyCalc.h"
 #include "GeoAlgo/GeoAABox.h"
 #include "GeoAlgo/GeoVector.h"
-#include "LArUtil/Geometry.h"
+#include "FidVolBox.h"
 
 namespace larlite {
   /**

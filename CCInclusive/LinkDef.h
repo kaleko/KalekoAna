@@ -30,8 +30,10 @@
 #pragma link C++ class larlite::QuickMikePlot+;
 #pragma link C++ class larlite::TestTrkHitAssn+;
 #pragma link C++ class larlite::KalekoPIDFiller+;
+#pragma link C++ class larlite::FidVolBox+;
 //ADD_NEW_CLASS ... do not change this line
 #endif
+
 
 
 

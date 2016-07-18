@@ -9,18 +9,7 @@ namespace larlite {
 
     bool TestKinematicNuReco::initialize() {
 
-      
-        double fidvol_dist = 5.;
-        double fidvol_dist_y = 5.;
-
-        //Box here is TPC
-        _fidvolBox.Min( 0 + fidvol_dist,
-                        -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-                        0 + fidvol_dist);
-
-        _fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist,
-                        ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-                        ::larutil::Geometry::GetME()->DetLength() - fidvol_dist);
+        _fidvolBox = FidVolBox();
 
         if (!_tree) {
             _tree = new TTree("tree", "tree");
@@ -136,7 +125,7 @@ namespace larlite {
         //                        thetamu, thetap,
         //                        p_mctrack.front().Momentum().Vect().Mag());
         //     avg_quad_mu_E += computed_E;
-            // std::cout<<" n_KE = "<<n_KE<<", computed E = "<<computed_E<<std::endl;
+        // std::cout<<" n_KE = "<<n_KE<<", computed E = "<<computed_E<<std::endl;
         // }
         // avg_quad_mu_E /= 11.;
         _reco_mu_E_quadratic = mycalc->ComputeEmu1mu1pQuadraticIterative(938. + 25., p_mctrack.front().E(),
@@ -145,7 +134,7 @@ namespace larlite {
 
 
         _mu_contained = _fidvolBox.Contain(mu_mctrack.front().Position().Vect()) &&
-        _fidvolBox.Contain(mu_mctrack.back().Position().Vect());
+                        _fidvolBox.Contain(mu_mctrack.back().Position().Vect());
 
         _true_mu_len = (mu_mctrack.front().Position().Vect() - mu_mctrack.back().Position().Vect()).Mag();
 

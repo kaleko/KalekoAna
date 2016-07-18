@@ -21,7 +21,7 @@
 #include "TMath.h"
 #include "TVector3.h"
 #include "GeoAlgo/GeoAABox.h"
-#include "LArUtil/Geometry.h"
+#include "FidVolBox.h"
 #include "CCInclusiveConstants.h"
 #include "TrackMomentumSplines.h"
 #include "TrackMomentumCalculator.h"
@@ -38,20 +38,7 @@ namespace larlite {
 
         /// Default constructor
         NuEnergyCalc() {
-
-            fidvol_dist_x = 20.;
-            fidvol_dist_y = 20.;
-            fidvol_dist_z = 10.;
-
-            //Box here is TPC
-            _fidvolBox.Min( 0 + fidvol_dist_x,
-                            -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-                            0 + fidvol_dist_z);
-
-            _fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist_x,
-                            ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-                            ::larutil::Geometry::GetME()->DetLength() - fidvol_dist_z);
-
+            _fidvolBox = FidVolBox();
             _myspline = TrackMomentumSplines();
             _tmc = TrackMomentumCalculator();
         };
@@ -104,9 +91,6 @@ namespace larlite {
     private:
         // Fiducial volume box
         geoalgo::AABox _fidvolBox;
-        double fidvol_dist_y;
-        double fidvol_dist_x;
-        double fidvol_dist_z;
 
         TrackMomentumSplines _myspline;
         TrackMomentumCalculator _tmc;

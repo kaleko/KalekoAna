@@ -13,19 +13,7 @@ namespace larlite {
 
     mycalc = new NuEnergyCalc();
 
-
-    double fidvol_dist = 10.;
-    double fidvol_dist_y = 20.;
-
-    //Box here is TPC
-    _myGeoAABox.Min( 0 + fidvol_dist,
-                     -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-                     0 + fidvol_dist);
-
-    _myGeoAABox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist,
-                     ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-                     ::larutil::Geometry::GetME()->DetLength() - fidvol_dist);
-
+    _myGeoAABox = FidVolBox();
 
     return true;
   }
@@ -77,7 +65,7 @@ namespace larlite {
 
     double muon_mass_GEV = 0.10566;
     double mu_depE = mutrack.front().E() - mutrack.back().E();
-    double eccqe = mycalc->ComputeECCQE(mu_depE + muon_mass_GEV*1000., mu_dir, false);
+    double eccqe = mycalc->ComputeECCQE(mu_depE + muon_mass_GEV * 1000., mu_dir, false);
     double nu_E_true = neutrino.Nu().Trajectory().front().E();
 
     _h->Fill(nu_E_true, eccqe);

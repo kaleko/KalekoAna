@@ -18,8 +18,8 @@
 #include "Analysis/ana_base.h"
 #include "GeoAlgo/GeoVector.h"
 #include "GeoAlgo/GeoAABox.h"
-#include "LArUtil/Geometry.h"
 #include "DataFormat/track.h"
+#include "FidVolBox.h"
 
 namespace larlite {
   /**

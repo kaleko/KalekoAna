@@ -9,17 +9,7 @@ namespace larlite {
 
     bool TestMCTruth::initialize() {
 
-        fidvol_dist = 10.;
-        fidvol_dist_y = 20.;
-
-        //Box here is TPC
-        _fidvolBox.Min( 0 + fidvol_dist,
-                        -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-                        0 + fidvol_dist);
-
-        _fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist,
-                        ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-                        ::larutil::Geometry::GetME()->DetLength() - fidvol_dist);
+        _fidvolBox = FidVolBox();
 
         evt_counter = 0;
         kept_events = 0;
