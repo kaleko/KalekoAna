@@ -110,7 +110,7 @@ namespace larlite {
     bool   _correct_ID;
     double _mu_phi;
     double _p_phi;
-    double _longest_trk_contained;
+    bool _longest_trk_contained;
     double _true_nu_E;
     int    _true_nu_pdg;
     bool   _true_nu_CCNC;
