@@ -27,7 +27,6 @@
 #include "GeoAlgo/GeoVector.h"
 #include "GeoAlgo/GeoSphere.h"
 #include "GeoAlgo/GeoAABox.h"
-#include "LArUtil/Geometry.h"
 #include "XiaoNuFinder.h"
 #include "TH1.h"
 #include "TH2.h"
@@ -35,6 +34,7 @@
 #include "CCInclusiveConstants.h"
 #include "TrackMomentumSplines.h"
 #include "NuEnergyCalc.h"
+#include "FidVolBox.h"
 
 
 namespace larlite {
@@ -89,9 +89,7 @@ namespace larlite {
 
     size_t total_events;
     size_t passed_events;
-    double fidvol_dist_x;
-    double fidvol_dist_y;
-    double fidvol_dist_z;
+
     // double BGW_mintime;
     // double BGW_maxtime;
 

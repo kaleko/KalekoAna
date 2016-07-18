@@ -22,9 +22,9 @@
 #include "GeoAlgo/GeoVector.h"
 #include "GeoAlgo/GeoSphere.h"
 #include "GeoAlgo/GeoAABox.h"
-#include "LArUtil/Geometry.h"
 #include "CCInclusiveConstants.h"
- #include "KalekoPIDFiller.h"
+#include "KalekoPIDFiller.h"
+#include "FidVolBox.h"
 
 /**
    \class XiaoNuFinder
@@ -75,9 +75,6 @@ namespace larlite {
 
 		InputFileType_t _filetype;
 
-		double fidvol_dist_x;
-		double fidvol_dist_y;
-		double fidvol_dist_z;
 		double BGW_mintime;
 		double BGW_maxtime;
 
@@ -91,9 +88,9 @@ namespace larlite {
 		size_t _n_evts_with_flash_in_bgw;
 		size_t _n_evts_viable_vertex;
 		size_t _n_successful_flashmatch;
-bool _viable_vtx_has_matched_flash;
+		bool _viable_vtx_has_matched_flash;
 
-double _vtx_sphere_radius;
+		double _vtx_sphere_radius;
 	};
 
 }

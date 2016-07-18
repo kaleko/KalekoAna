@@ -14,19 +14,8 @@ namespace larlite {
 
 		_filetype = kINPUT_FILE_TYPE_MAX;
 
-		fidvol_dist_x = 20.;
-		fidvol_dist_y = 20.;
-		fidvol_dist_z = 10.;
-
-		//Box here is TPC
-		_fidvolBox.Min( 0 + fidvol_dist_x,
-		                -(::larutil::Geometry::GetME()->DetHalfHeight()) + fidvol_dist_y,
-		                0 + fidvol_dist_z);
-
-		_fidvolBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - fidvol_dist_x,
-		                ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y,
-		                ::larutil::Geometry::GetME()->DetLength() - fidvol_dist_z);
-
+		_fidvolBox = FidVolBox();
+		
 		_PID_filler = KalekoPIDFiller();
 
 		_tot_requests = 0;
@@ -182,7 +171,7 @@ namespace larlite {
 
 		// Final tagging (docdb 5724 slide 7):
 		if ( ( (vertex_dedx > far_dedx && vertex_dedx > 2.5 && far_dedx < 4.) ||
-		        far_max_y > ::larutil::Geometry::GetME()->DetHalfHeight() - fidvol_dist_y ) &&
+		        far_max_y > _fidvolBox.Max()[1] ) &&
 		        short_trk.Length() < 30. )
 			return true;
 
