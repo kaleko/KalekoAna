@@ -6,10 +6,14 @@ namespace larlite{
 
 	FidVolBox::FidVolBox(){
 
-		double fidvol_dist_x = 10.;
-		double fidvol_dist_y = 25.;
-		double fidvol_dist_zmin = 10.;
-		double fidvol_dist_z = 27.;
+		double fidvol_dist_x = 20.;
+		double fidvol_dist_y = 26.5;
+		double fidvol_dist_zmin = 20.;
+		double fidvol_dist_z = 36.8;
+
+		// DetHalfHeight is 116.5
+		// DetHalfWidth  is 128.175
+		// DetLength     is 1036.8
 
 		//Box here is TPC
 		Min( 0 + fidvol_dist_x,

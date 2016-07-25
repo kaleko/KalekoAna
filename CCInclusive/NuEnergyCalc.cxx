@@ -317,16 +317,21 @@ namespace larlite {
         }
         else {
           if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
-          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track);
-          if (mcs_energy > 0) {
-            tot_nu_energy += mcs_energy + 0.106;
+          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track) + 0.106;
+
+          //New addition: if range energy is more than MCS energy, then always use range energy!
+          // there's no way range energy is going to overestimate.
+          double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
+          if (spline_energy > mcs_energy) tot_nu_energy += spline_energy;
+          else if (mcs_energy > 0) {
+            tot_nu_energy += mcs_energy;
             if (debug) std::cout << " :::NuEnergyCalc::: MCS worked fine (length = " << itrklen
                                    << ". adding in energy of " << mcs_energy + 0.106 << std::endl;
           }
           else {
-            tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
-            if (debug) std::cout << " :::NuEnergyCalc::: MCS failed. using tracklength contained. adding "
-                                   << _myspline.GetMuMomentum(itrklen) / 1000. + 0.106 << std::endl;
+            std::cout<<"SHOULD NEVER GET HERE"<<std::endl;
+            // if (debug) std::cout << " :::NuEnergyCalc::: MCS failed. using tracklength contained. adding "
+            //                        << _myspline.GetMuMomentum(itrklen) / 1000. + 0.106 << std::endl;
           }
         }
       }
@@ -339,15 +344,20 @@ namespace larlite {
         }
         else {
           if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
-          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track);
-          if (mcs_energy > 0) {
-            tot_nu_energy += mcs_energy + 0.140;
+          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track) + 0.140;
+
+          //New addition: if range energy is more than MCS energy, then always use range energy!
+          // there's no way range energy is going to overestimate.
+          double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
+          if (spline_energy > mcs_energy) tot_nu_energy += spline_energy;
+          else if (mcs_energy > 0) {
+            tot_nu_energy += mcs_energy;
             if (debug) std::cout << " :::NuEnergyCalc::: MCS worked fine. adding in energy of " << mcs_energy + 0.140 << std::endl;
           }
           else {
-            tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
-            if (debug) std::cout << " :::NuEnergyCalc::: MCS failed. using tracklength contained. adding "
-                                   << _myspline.GetMuMomentum(itrklen) / 1000. + 0.146 << std::endl;
+            std::cout<<"SHOULD NEVER GET HERE (pion loop)"<<std::endl;
+            // if (debug) std::cout << " :::NuEnergyCalc::: MCS failed. using tracklength contained. adding "
+            //                        << _myspline.GetMuMomentum(itrklen) / 1000. + 0.146 << std::endl;
           }
         }
       }
