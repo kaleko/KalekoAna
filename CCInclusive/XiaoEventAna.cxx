@@ -12,6 +12,7 @@ namespace larlite {
 
         _nu_finder = XiaoNuFinder();
         _myspline = TrackMomentumSplines();
+        _MCScalc = TrackMomentumCalculator();
         _nu_E_calc = NuEnergyCalc();
 
         if (_filetype == kINPUT_FILE_TYPE_MAX) {
@@ -20,13 +21,22 @@ namespace larlite {
         }
         _nu_finder.setInputType(_filetype);
         _nu_finder.setVtxSphereRadius(_vtx_sphere_radius);
-
+        setBGWTimes();
         // myspline = new TrackMomentumSplines();
 
         total_events = 0;
         passed_events = 0;
 
         _fidvolBox = FidVolBox();
+
+        //Box here is TPC
+        _tpcBox.Min( 1,
+                     -(::larutil::Geometry::GetME()->DetHalfHeight()) + 1,
+                     1);
+
+        _tpcBox.Max( 2 * (::larutil::Geometry::GetME()->DetHalfWidth()) - 1,
+                     ::larutil::Geometry::GetME()->DetHalfHeight() - 1,
+                     ::larutil::Geometry::GetME()->DetLength() - 1);
 
         // _hmult = new TH1F("hmult", "Track Multiplicity", 10, -0.5, 9.5);
         // _hdedx = new TH2D("hdedx", "End dEdx vs Start dEdx;End dEdx;Start dEdx", 50, 0, 20, 50, 0, 20);
@@ -40,12 +50,17 @@ namespace larlite {
             _tree->Branch("true_nu_CCNC", &_true_nu_CCNC, "true_nu_CCNC/O");
             _tree->Branch("true_nu_mode", &_true_nu_mode, "true_nu_mode/I");
             _tree->Branch("longest_trk_contained", &_longest_trk_contained, "longest_trk_contained/O");
+            _tree->Branch("all_trks_contained", &_all_trks_contained, "all_trks_contained/O");
             _tree->Branch("p_phi", &_p_phi, "p_phi/D");
             _tree->Branch("mu_phi", &_mu_phi, "mu_phi/D");
             _tree->Branch("correct_ID", &_correct_ID, "correct_ID/O");
             _tree->Branch("mu_end_dedx", &_mu_end_dedx, "mu_end_dedx/D");
             _tree->Branch("mu_start_dedx", &_mu_start_dedx, "mu_start_dedx/D");
             _tree->Branch("fndecay", &_fndecay, "fndecay/I");
+            _tree->Branch("fppdxdz", &_fppdxdz, "fppdxdz/D");
+            _tree->Branch("fppdydz", &_fppdydz, "fppdydz/D");
+            _tree->Branch("fpppz", &_fpppz, "fpppz/D");
+            _tree->Branch("fppenergy", &_fppenergy, "fppenergy/D");
             _tree->Branch("mu_p_dirdot", &_mu_p_dirdot, "mu_p_dirdot/D");
             _tree->Branch("true_lepton_pdg", &_true_lepton_pdg, "true_lepton_pdg/I");
             _tree->Branch("true_lepton_momentum", &_true_lepton_momentum, "true_lepton_momentum/D");
@@ -54,6 +69,7 @@ namespace larlite {
             _tree->Branch("second_longest_trk_len", &_second_longest_trk_len, "second_longest_trk_len/D");
             _tree->Branch("longest_trk_theta", &_longest_trk_theta, "longest_trk_theta/D");
             _tree->Branch("longest_trk_MCS_mom", &_longest_trk_MCS_mom, "longest_trk_MCS_mom/D");
+            _tree->Branch("longest_trk_spline_mom", &_longest_trk_spline_mom, "longest_trk_spline_mom/D");
             _tree->Branch("nu_E_estimate", &_nu_E_estimate, "nu_E_estimate/D");
             _tree->Branch("true_nu_x", &_true_nu_x, "true_nu_x/D");
             _tree->Branch("true_nu_y", &_true_nu_y, "true_nu_y/D");
@@ -65,8 +81,42 @@ namespace larlite {
             _tree->Branch("longest_track_end_x", &_longest_track_end_x, "longest_track_end_x/D");
             _tree->Branch("longest_track_end_y", &_longest_track_end_y, "longest_track_end_y/D");
             _tree->Branch("longest_track_end_z", &_longest_track_end_z, "longest_track_end_z/D");
+            _tree->Branch("brightest_BSW_flash_PE", &_brightest_BSW_flash_PE, "brightest_BSW_flash_PE/D");
+            _tree->Branch("BSW_flash_z_range", &_BSW_flash_z_range, "BSW_flash_z_range/D");
+
         }
 
+
+        return true;
+    }
+
+
+    bool XiaoEventAna::setBGWTimes() {
+
+        if (_filetype == kINPUT_FILE_TYPE_MAX) {
+            print(larlite::msg::kERROR, __FUNCTION__, Form("DID NOT SET INPUT FILE TYPE!"));
+            return false;
+        }
+        else if ( _filetype == kOnBeam ) {
+            BGW_mintime = 3.3;
+            BGW_maxtime = 4.9;
+        }
+        else if ( _filetype == kOffBeam ) {
+            BGW_mintime = 3.65;
+            BGW_maxtime = 5.25;
+        }
+        else if ( _filetype == kCorsikaInTime ) {
+            BGW_mintime = 3.2;
+            BGW_maxtime = 4.8;
+        }
+        else if ( _filetype == kBNBOnly ) {
+            BGW_mintime = 3.55;
+            BGW_maxtime = 5.15;
+        }
+        else if ( _filetype == kBNBCosmic ) {
+            BGW_mintime = 3.55;
+            BGW_maxtime = 5.15;
+        }
         return true;
     }
 
@@ -77,6 +127,7 @@ namespace larlite {
         _mu_phi = -999.;
         _p_phi = -999.;
         _longest_trk_contained = false;
+        _all_trks_contained = false;
         _true_nu_E = -999.;
         _true_nu_pdg = -999;
         _true_nu_CCNC = false;
@@ -90,6 +141,7 @@ namespace larlite {
         _second_longest_trk_len = -999.;
         _longest_trk_theta = -999.;
         _longest_trk_MCS_mom = -999.;
+        _longest_trk_spline_mom = -999.;
         _nu_E_estimate = -999.;
         _true_nu_x = -999.;
         _true_nu_y = -999.;
@@ -101,6 +153,12 @@ namespace larlite {
         _longest_track_end_x = -999.;
         _longest_track_end_y = -999.;
         _longest_track_end_z = -999.;
+        _brightest_BSW_flash_PE = -999.;
+        _BSW_flash_z_range = -999.;
+        _fppdxdz = -999.;
+        _fppdydz = -999.;
+        _fpppz = -999.;
+        _fppenergy = -999.;
     }
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
@@ -179,6 +237,18 @@ namespace larlite {
             return false;
         }
 
+        // Store TTree variables that have to do with the flashes in the BSW
+        double min_z_flash = 999999.;
+        double max_z_flash = -999999.;
+        _brightest_BSW_flash_PE = -999.;
+        _BSW_flash_z_range = -999.;
+        for (auto const& flash : *ev_opflash) {
+            if (flash.Time() > BGW_mintime && flash.Time() < BGW_maxtime) {
+                if ( flash.TotalPE() > _brightest_BSW_flash_PE ) _brightest_BSW_flash_PE = flash.TotalPE();
+                if ( flash.ZWidth() > _BSW_flash_z_range ) _BSW_flash_z_range = flash.ZWidth();
+            }
+        }
+
         _n_associated_tracks = (int)reco_neutrino.second.size();
         larlite::mcnu mcnu;
         // If we found a vertex and we are running over MC, let's check if it is accurate
@@ -204,6 +274,10 @@ namespace larlite {
                 return false;
             }
             _fndecay = ev_mcflux->at(0).fndecay;
+            _fppdxdz = ev_mcflux->at(0).fppdxdz;
+            _fppdydz = ev_mcflux->at(0).fppdydz;
+            _fpppz = ev_mcflux->at(0).fpppz;
+            _fppenergy = ev_mcflux->at(0).fppenergy;
             // std::cout << "The reconstructed vertex is at : " << thevertexsphere.Center() << std::endl;
             // std::cout << "The true vertex is at : "
             //           <<::geoalgo::Vector(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position()) << std::endl;
@@ -231,13 +305,19 @@ namespace larlite {
         auto const &geovtx = ::geoalgo::Vector(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
         auto longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
         auto longest_trackdir_endpoints = ::geoalgo::Vector(0., 0., 0.);
+        _all_trks_contained = true;
         // Quick loop over associated track lengths to find the longest one:
         for (auto const& asstd_trk_pair : reco_neutrino.second) {
             auto const &asstd_trk = asstd_trk_pair.second;
+            bool contained = _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.Vertex())) &&
+                             _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.End()));
+            if (!contained) _all_trks_contained = false;
+
             if ( asstd_trk.Length() > _longest_trk_len ) {
                 _longest_trk_len = asstd_trk.Length();
                 _longest_trk_theta = asstd_trk.Theta();
-                _longest_trk_MCS_mom = _myspline.GetMuMomentum(asstd_trk.Length());
+                _longest_trk_spline_mom = _myspline.GetMuMomentum(asstd_trk.Length());
+                _longest_trk_MCS_mom = _MCScalc.GetMomentumMultiScatterLLHD(asstd_trk);
                 longest_trackdir = ::geoalgo::Vector(asstd_trk.Vertex()).SqDist(geovtx) <
                                    ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
                                    ::geoalgo::Vector(asstd_trk.VertexDirection()) :
@@ -246,8 +326,7 @@ namespace larlite {
                                              ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
                                              ::geoalgo::Vector(asstd_trk.End() - asstd_trk.Vertex()) :
                                              ::geoalgo::Vector(asstd_trk.Vertex() - asstd_trk.End());
-                _longest_trk_contained = _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.Vertex())) &&
-                                         _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.End()));
+                _longest_trk_contained = contained;
 
                 _longest_track_end_x = asstd_trk.End().X();
                 _longest_track_end_y = asstd_trk.End().Y();
@@ -368,6 +447,23 @@ namespace larlite {
         //     // std::cout << "  - longest track info: " << std::endl;
         //     // std::cout << "    -"
         // }
+
+
+        /// TEMP
+        // if (_nu_E_estimate < 2.5 && _true_nu_E > 2.5 && _correct_ID) {
+
+        //     std::cout << "Index is " << storage->get_index() << ", correct ID is: " << _correct_ID
+        //               << ", estimate E: " << _nu_E_estimate
+        //               << ", true E: " << _true_nu_E << std::endl;
+        //     std::cout << " >> reco vtx is (" << reco_neutrino.first.X() << ","
+        //               << reco_neutrino.first.Y() << "," << reco_neutrino.first.Z() << ")" << std::endl;
+        //     std::cout << " >> _longest_tracks_dotprod_trkendpoints is " << _longest_tracks_dotprod_trkendpoints << std::endl;
+        //     std::cout << std::endl;
+        //     return true;
+        // }
+        // else return false;
+
+
 
         return true;
     }

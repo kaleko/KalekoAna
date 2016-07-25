@@ -35,6 +35,7 @@
 #include "TrackMomentumSplines.h"
 #include "NuEnergyCalc.h"
 #include "FidVolBox.h"
+#include "TrackMomentumCalculator.h"
 
 
 namespace larlite {
@@ -75,10 +76,13 @@ namespace larlite {
 
     void setVtxSphereRadius(double myradius) { _vtx_sphere_radius = myradius; }
 
+    bool setBGWTimes();
+
   protected:
 
     XiaoNuFinder _nu_finder;
     TrackMomentumSplines _myspline;
+    TrackMomentumCalculator _MCScalc;
     NuEnergyCalc _nu_E_calc;
 
     double _vtx_sphere_radius;
@@ -90,11 +94,13 @@ namespace larlite {
     size_t total_events;
     size_t passed_events;
 
-    // double BGW_mintime;
-    // double BGW_maxtime;
+    double BGW_mintime;
+    double BGW_maxtime;
 
     // // Fiducial volume box
     geoalgo::AABox _fidvolBox;
+
+    geoalgo::AABox _tpcBox;
 
     // TH1F *_hmult;
     // TH2D *_hdedx;
@@ -109,6 +115,7 @@ namespace larlite {
     double _mu_phi;
     double _p_phi;
     bool _longest_trk_contained;
+    bool _all_trks_contained;
     double _true_nu_E;
     int    _true_nu_pdg;
     bool   _true_nu_CCNC;
@@ -116,6 +123,10 @@ namespace larlite {
     int    _true_lepton_pdg;
     double _true_lepton_momentum;
     int    _fndecay;
+    double _fppdxdz;
+    double _fppdydz;
+    double _fpppz;
+    double _fppenergy;
     double _mu_p_dirdot;
     int _n_associated_tracks;
 
@@ -123,6 +134,7 @@ namespace larlite {
     double _second_longest_trk_len;
     double _longest_trk_theta;
     double _longest_trk_MCS_mom;
+    double _longest_trk_spline_mom;
     double _nu_E_estimate;
 
     double _true_nu_x;
@@ -137,6 +149,11 @@ namespace larlite {
     double _longest_track_end_x;
     double _longest_track_end_y;
     double _longest_track_end_z;
+
+    double _brightest_BSW_flash_PE;
+    double _BSW_flash_z_range;
+
+    double _dist_vtx_to_TPC;
   };
 }
 #endif
