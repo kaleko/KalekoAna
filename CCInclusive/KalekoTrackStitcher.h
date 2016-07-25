@@ -35,6 +35,7 @@ namespace larlite {
       _fout = 0;
       _base_producer = "";
       _match_producer = "";
+      _output_producer = "";
       _debug_tree = 0;
     }
 
@@ -51,6 +52,8 @@ namespace larlite {
 
     void setMatchProducer(std::string producer) { _match_producer = producer; }
 
+    void setOutputProducer(std::string producer) { _output_producer = producer; }
+
   protected:
 
     bool tracksMatched(const larlite::track &base_trk, const larlite::track &match_candidate );
@@ -62,14 +65,21 @@ namespace larlite {
 
     std::string _base_producer;
     std::string _match_producer;
+    std::string _output_producer;
 
     geoalgo::GeoAlgo _geoalg;
+
+    // Map of base track index to matched track index
+    std::map<size_t,size_t> idx_map;
 
     TTree *_debug_tree;
     double _dotprod;
     double _infdist;
     double _startdist;
     double _enddist;
+    double _endprojdist;
+    double _startprojdist;
+    double _baselen;
 
   };
 }
