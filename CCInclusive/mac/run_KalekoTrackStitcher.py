@@ -27,8 +27,8 @@ my_proc.set_io_mode(fmwk.storage_manager.kBOTH)
 my_proc.enable_filter(True)
 
 # Specify output root file name
-my_proc.set_ana_output_file("kalekotrackstitcher_ana_out.root")
-my_proc.set_output_file("test_saved_tracks.root")
+my_proc.set_ana_output_file("kalekotrackstitcher_debug_ana_out.root")
+my_proc.set_output_file("kalekotrackstitcher_stitchedtracks.root")
 
 my_proc.set_data_to_read(fmwk.data.kTrack,base_producer)
 my_proc.set_data_to_read(fmwk.data.kTrack,match_producer)

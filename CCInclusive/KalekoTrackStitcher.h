@@ -56,10 +56,12 @@ namespace larlite {
 
   protected:
 
-    bool tracksMatched(const larlite::track &base_trk, const larlite::track &match_candidate );
+    // pair: (whether the two tracks are matched, whether to flip the match_candidate downstream)
+    std::pair<bool,bool> tracksMatched(const larlite::track &base_trk, const larlite::track &match_candidate );
 
     larlite::track stitchTracks(const larlite::track &base_trk,
-                                const larlite::track &match_candidate );
+                                const larlite::track &match_candidate,
+                                bool flip_match_candidate );
 
     bool trackViable(const larlite::track &trk);
 
@@ -69,8 +71,8 @@ namespace larlite {
 
     geoalgo::GeoAlgo _geoalg;
 
-    // Map of base track index to matched track index
-    std::map<size_t,size_t> idx_map;
+    // Map of base track index to pair(matched track index,whether to flip matched track)
+    std::map<size_t,std::pair<size_t,bool>> idx_map;
 
     TTree *_debug_tree;
     double _dotprod;
