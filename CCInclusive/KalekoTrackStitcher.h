@@ -18,6 +18,7 @@
 #include "Analysis/ana_base.h"
 #include "DataFormat/track.h"
 #include "TTree.h"
+#include "TH1.h"
 #include "GeoAlgo/GeoAlgo.h"
 
 namespace larlite {
@@ -37,6 +38,7 @@ namespace larlite {
       _match_producer = "";
       _output_producer = "";
       _debug_tree = 0;
+      _h_lendiff = 0;
     }
 
     /// Default destructor
@@ -82,6 +84,8 @@ namespace larlite {
     double _endprojdist;
     double _startprojdist;
     double _baselen;
+
+    TH1F *_h_lendiff;
 
   };
 }

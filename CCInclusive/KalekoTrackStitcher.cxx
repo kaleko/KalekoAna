@@ -30,6 +30,9 @@ namespace larlite {
 
         _geoalg = geoalgo::GeoAlgo();
 
+        if (!_h_lendiff)
+            _h_lendiff = new TH1F("h_lendiff", "After Stitch Len - Before Stitch Len", 1000, -10, 500);
+
         return true;
     }
 
@@ -117,6 +120,10 @@ namespace larlite {
                                  ev_match_track->at(it->second.first),
                                  it->second.second)
                 );
+                double before_len = (ev_base_track->at(base_idx).End() - ev_base_track->at(base_idx).Vertex()).Mag();
+                double after_len = (ev_stitched_track->back().End() - ev_stitched_track->back().Vertex()).Mag();
+                _h_lendiff->Fill(after_len - before_len);
+
             }
 
             // If not
@@ -135,6 +142,7 @@ namespace larlite {
             if (_debug_tree) {
                 _fout->cd();
                 _debug_tree->Write();
+                _h_lendiff->Write();
             }
         }
 
@@ -253,17 +261,17 @@ namespace larlite {
                 ::geoalgo::Vector ipt = ::geoalgo::Vector(match_candidate.LocationAtPoint(i));
                 auto pt = _geoalg.ClosestPt(base_line_seg, ipt);
                 // If the point is before the front of the trajectory
-                if (pt.SqDist(::geoalgo::Vector(base_trk.Vertex())) < 0.001 ) 
+                if (pt.SqDist(::geoalgo::Vector(base_trk.Vertex())) < 0.001 )
                     geotraj.insert(geotraj.begin(), ipt);
-                
+
                 // If the point is after the end of the trajectory
-                else if (pt.SqDist(::geoalgo::Vector(base_trk.End())) < 0.001 ) 
+                else if (pt.SqDist(::geoalgo::Vector(base_trk.End())) < 0.001 )
                     geotraj.push_back(ipt);
-                
+
                 // If the point is overlapping the already existing base track
-                else 
+                else
                     continue;
-                
+
             }
         }
 
@@ -281,7 +289,7 @@ namespace larlite {
                                           geotraj.at(i + 1).at(1) - geotraj.at(i).at(1),
                                           geotraj.at(i + 1).at(2) - geotraj.at(i).at(2)));
         }
-      
+
         return result;
     }
 
