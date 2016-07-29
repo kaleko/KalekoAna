@@ -1,17 +1,18 @@
-base_producer = "pandoraNuPMA"
-match_producer = "trackkalmanhit"
-out_producer = "Kaleko%sPlus%s" % (base_producer,match_producer)
-
-
 
 import sys
 
-if len(sys.argv) < 2:
+if len(sys.argv) != 5:
     msg = '\n'
-    msg += "Usage 1: %s $INPUT_ROOT_FILE(s)\n" % sys.argv[0]
+    msg += "Usage 1: %s base_producer match_producer input_root_file output_root_file\n" % sys.argv[0]
     msg += '\n'
     sys.stderr.write(msg)
     sys.exit(1)
+
+
+base_producer = sys.argv[1]
+match_producer = sys.argv[2]
+out_producer = "Kaleko%sPlus%s" % (base_producer,match_producer)
+
 
 from larlite import larlite as fmwk
 
@@ -19,16 +20,15 @@ from larlite import larlite as fmwk
 my_proc = fmwk.ana_processor()
 
 # Set input root file
-for x in xrange(len(sys.argv) - 1):
-    my_proc.add_input_file(sys.argv[x + 1])
+my_proc.add_input_file(sys.argv[3])
 
 # Specify IO mode
 my_proc.set_io_mode(fmwk.storage_manager.kBOTH)
 my_proc.enable_filter(True)
 
 # Specify output root file name
-my_proc.set_ana_output_file("kalekotrackstitcher_debug_ana_out.root")
-my_proc.set_output_file("kalekotrackstitcher_stitchedtracks.root")
+my_proc.set_ana_output_file("dummy_output")
+my_proc.set_output_file(sys.argv[4])
 
 my_proc.set_data_to_read(fmwk.data.kTrack,base_producer)
 my_proc.set_data_to_read(fmwk.data.kTrack,match_producer)
