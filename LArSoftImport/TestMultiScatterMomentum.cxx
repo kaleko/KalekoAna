@@ -14,6 +14,7 @@ namespace larlite {
             _ana_tree = new TTree("ana_tree", "ana_tree");
             _ana_tree->Branch("true_mom", &_true_mom, "true_mom/D");
             _ana_tree->Branch("mcs_reco_mom", &_mcs_reco_mom, "mcs_reco_mom/D");
+            _ana_tree->Branch("mcs_reco_mom_backwards", &_mcs_reco_mom_backwards, "mcs_reco_mom_backwards/D");
             _ana_tree->Branch("true_len", &_true_length, "true_len/D");
             _ana_tree->Branch("reco_len", &_reco_length, "reco_len/D");
             _ana_tree->Branch("mu_contained", &_mu_contained, "mu_contained/O");
@@ -38,6 +39,7 @@ namespace larlite {
 
         _true_mom = -999.;
         _mcs_reco_mom = -999.;
+        _mcs_reco_mom_backwards = -999.;
         _true_length = -999.;
         _reco_length = -999.;
         _mu_contained = false;
@@ -73,7 +75,12 @@ namespace larlite {
 
             /// Extract Reco TTree info from the one track
             auto const& trk = ev_track->at(0);
-            _mcs_reco_mom = _tmc.GetMomentumMultiScatterLLHD(trk);
+            // Decide if track needs to be flipped or not
+            bool flip = (trk.Vertex() - mct.front().Position().Vect()).Mag() >
+                        (trk.End() - mct.front().Position().Vect()).Mag() ?
+                        true : false;
+            _mcs_reco_mom = _tmc.GetMomentumMultiScatterLLHD(trk, flip);
+            _mcs_reco_mom_backwards = _tmc.GetMomentumMultiScatterLLHD(trk, !flip);
             _reco_length = trk.Length();
         }
 

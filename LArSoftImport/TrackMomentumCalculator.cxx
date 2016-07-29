@@ -831,8 +831,9 @@ namespace larlite {
 
 	}
 
-Double_t TrackMomentumCalculator::GetMomentumMultiScatterLLHD( const larlite::track &trk )
+	Double_t TrackMomentumCalculator::GetMomentumMultiScatterLLHD( const larlite::track &trk, bool flip )
 	{
+
 		Double_t p = -1.0;
 
 		std::vector<Float_t> recoX; std::vector<Float_t> recoY; std::vector<Float_t> recoZ;
@@ -841,16 +842,25 @@ Double_t TrackMomentumCalculator::GetMomentumMultiScatterLLHD( const larlite::tr
 
 		Int_t n_points = trk.NumberTrajectoryPoints();
 
-		for ( Int_t i = 0; i < n_points; i++ )
-		{
-			const TVector3 &pos = trk.LocationAtPoint(i);
+		if (!flip) {
+			for ( Int_t i = 0; i < n_points; i++ )
+			{
+				const TVector3 &pos = trk.LocationAtPoint(i);
 
-			recoX.push_back( pos.X() ); recoY.push_back( pos.Y() ); recoZ.push_back( pos.Z() );
+				recoX.push_back( pos.X() ); recoY.push_back( pos.Y() ); recoZ.push_back( pos.Z() );
 
-			// cout << " posX, Y, Z : " << pos.X() << ", " << pos.Y() << ", " << pos.Z() << endl; getchar();
+				// cout << " posX, Y, Z : " << pos.X() << ", " << pos.Y() << ", " << pos.Z() << endl; getchar();
+
+			}
+		}
+		else {
+			for ( Int_t i = n_points - 1; i >= 0; i-- )
+			{
+				const TVector3 &pos = trk.LocationAtPoint(i);
+				recoX.push_back( pos.X() ); recoY.push_back( pos.Y() ); recoZ.push_back( pos.Z() );
+			}
 
 		}
-
 		Int_t my_steps = recoX.size();
 
 		if ( my_steps < 2 ) return -1.0;
@@ -920,139 +930,139 @@ Double_t TrackMomentumCalculator::GetMomentumMultiScatterLLHD( const larlite::tr
 	}
 
 	// Double_t TrackMomentumCalculator::GetMomentumMultiScatterChi2( const larlite::mctrack &trk ){
-	// 	  Double_t p = -1.0; 
-    
- //    std::vector<Float_t> recoX; std::vector<Float_t> recoY; std::vector<Float_t> recoZ;
-    
- //    recoX.clear(); recoY.clear(); recoZ.clear();
-                  
- //    Int_t n_points = trk.size();
-        
- //    for ( Int_t i=0; i<n_points; i++ )
- //      {
- //        const TVector3 &pos = trk[i].Position().Vect();
-        
- //        recoX.push_back( pos.X() ); recoY.push_back( pos.Y() ); recoZ.push_back( pos.Z() ); 
-        
- //        // cout << " posX, Y, Z : " << pos.X() << ", " << pos.Y() << ", " << pos.Z() << endl;
-        
- //      }
-    
- //    Int_t my_steps = recoX.size();
-    
- //    if ( my_steps<2 ) return -1.0;
-    
- //    Int_t check0 = GetRecoTracks( recoX, recoY, recoZ );
-    
- //    if ( check0!=0 ) return -1.0;
-    
- //    seg_size = steps_size;
-    
- //    Int_t check1 = GetSegTracks2( recoX, recoY, recoZ );
-    
- //    if ( check1!=0 ) return -1.0;
-        
- //    Int_t seg_steps = segx.size();
-    
- //    if ( seg_steps<2 ) return -1;
-    
- //    Int_t seg_steps0 = seg_steps-1;
-    
- //    Double_t recoL = segL.at(seg_steps0);
-    
- //    if ( seg_steps<2 || recoL<minLength || recoL>maxLength ) return -1;
-        
- //    Double_t mean = 666.0; Double_t rms = 666.0; Double_t rmse = 666.0;
-    
- //    nmeas = 0; Double_t max1=-999.0; Double_t min1=+999.0;
-    
- //    for ( Int_t j=0; j<n_steps; j++ )
- //      {
- //        Double_t trial = steps.at( j );
-        
- //        GetDeltaThetaRMS( mean, rms, rmse, trial );
-        
- //        // cout << mean << ",  " << rms << ", " << rmse << ", " << trial << endl;
-    
- //        xmeas[ nmeas ] = trial;
-    
- //        ymeas[ nmeas ] = rms;
-    
- //        eymeas[ nmeas ] = sqrt( pow( rmse, 2.0 ) + pow( 0.05*rms, 2.0 ) ); // <--- conservative syst. error to fix chi^{2} behaviour !!!
-    
- //        // ymeas[ nmeas ] = 10.0; eymeas[ nmeas ] = 1.0; // <--- for debugging !
-    
- //        if ( min1>ymeas[ nmeas ] ) min1=ymeas[ nmeas ];
-    
- //        if ( max1<ymeas[ nmeas ] ) max1=ymeas[ nmeas ];
-    
- //        nmeas++;
-    
- //      }
-    
- //    gr_meas = new TGraphErrors( nmeas, xmeas, ymeas, 0, eymeas );
-                  
- //    gr_meas->SetTitle( "(#Delta#theta)_{rms} versus material thickness; Material thickness in cm; (#Delta#theta)_{rms} in mrad" );
-    
- //    gr_meas->SetLineColor( kBlack ); gr_meas->SetMarkerColor( kBlack ); gr_meas->SetMarkerStyle( 20 ); gr_meas->SetMarkerSize( 1.2 ); 
-    
- //    gr_meas->GetXaxis()->SetLimits( ( steps.at( 0 )-steps.at( 0 ) ), ( steps.at( n_steps-1 )+steps.at( 0 ) ) );
-    
- //    gr_meas->SetMinimum( 0.0 );
-    
- //    gr_meas->SetMaximum( 1.80*max1 );
-    
- //    // c1->cd();
-    
- //    // gr_meas->Draw( "APEZ" );
-    
- //    // c1->Update();
-    
- //    // c1->WaitPrimitive();
-    
- //    ROOT::Minuit2::Minuit2Minimizer *mP = new ROOT::Minuit2::Minuit2Minimizer( );
-    
- //    ROOT::Math::Functor FCA( &my_mcs_chi2, 2 ); 
-    
- //    mP->SetFunction( FCA );
-        
-    
- //    mP->SetLimitedVariable( 1, "#delta#theta", 0.0, 1.0, 0.0, 45.0 ); 
-         
- //    mP->SetMaxFunctionCalls( 1.E9 );
-    
- //    mP->SetMaxIterations( 1.E9 );
-    
- //    mP->SetTolerance( 0.01 );
-    
- //    mP->SetStrategy( 2 );
-    
- //    mP->SetErrorDef( 1.0 );
-    
- //    bool mstatus = mP->Minimize();
-    
- //    mP->Hesse();
-    
- //    const double *pars = mP->X();  
-    
- //    const double *erpars = mP->Errors(); 
-    
- //    Double_t deltap = ( recoL*kcal )/2.0;
-    
- //    p_mcs = pars[0]+deltap;
-                            
- //    p_mcs_e = erpars[0];
-    
- //    if ( mstatus ) p = p_mcs;
-    
- //    else p = -1.0;
-    
- //    chi2 = mP->MinValue(); 
-    
- //    delete mP;
-    
- //    return p;
-    
+	// 	  Double_t p = -1.0;
+
+//    std::vector<Float_t> recoX; std::vector<Float_t> recoY; std::vector<Float_t> recoZ;
+
+//    recoX.clear(); recoY.clear(); recoZ.clear();
+
+//    Int_t n_points = trk.size();
+
+//    for ( Int_t i=0; i<n_points; i++ )
+//      {
+//        const TVector3 &pos = trk[i].Position().Vect();
+
+//        recoX.push_back( pos.X() ); recoY.push_back( pos.Y() ); recoZ.push_back( pos.Z() );
+
+//        // cout << " posX, Y, Z : " << pos.X() << ", " << pos.Y() << ", " << pos.Z() << endl;
+
+//      }
+
+//    Int_t my_steps = recoX.size();
+
+//    if ( my_steps<2 ) return -1.0;
+
+//    Int_t check0 = GetRecoTracks( recoX, recoY, recoZ );
+
+//    if ( check0!=0 ) return -1.0;
+
+//    seg_size = steps_size;
+
+//    Int_t check1 = GetSegTracks2( recoX, recoY, recoZ );
+
+//    if ( check1!=0 ) return -1.0;
+
+//    Int_t seg_steps = segx.size();
+
+//    if ( seg_steps<2 ) return -1;
+
+//    Int_t seg_steps0 = seg_steps-1;
+
+//    Double_t recoL = segL.at(seg_steps0);
+
+//    if ( seg_steps<2 || recoL<minLength || recoL>maxLength ) return -1;
+
+//    Double_t mean = 666.0; Double_t rms = 666.0; Double_t rmse = 666.0;
+
+//    nmeas = 0; Double_t max1=-999.0; Double_t min1=+999.0;
+
+//    for ( Int_t j=0; j<n_steps; j++ )
+//      {
+//        Double_t trial = steps.at( j );
+
+//        GetDeltaThetaRMS( mean, rms, rmse, trial );
+
+//        // cout << mean << ",  " << rms << ", " << rmse << ", " << trial << endl;
+
+//        xmeas[ nmeas ] = trial;
+
+//        ymeas[ nmeas ] = rms;
+
+//        eymeas[ nmeas ] = sqrt( pow( rmse, 2.0 ) + pow( 0.05*rms, 2.0 ) ); // <--- conservative syst. error to fix chi^{2} behaviour !!!
+
+//        // ymeas[ nmeas ] = 10.0; eymeas[ nmeas ] = 1.0; // <--- for debugging !
+
+//        if ( min1>ymeas[ nmeas ] ) min1=ymeas[ nmeas ];
+
+//        if ( max1<ymeas[ nmeas ] ) max1=ymeas[ nmeas ];
+
+//        nmeas++;
+
+//      }
+
+//    gr_meas = new TGraphErrors( nmeas, xmeas, ymeas, 0, eymeas );
+
+//    gr_meas->SetTitle( "(#Delta#theta)_{rms} versus material thickness; Material thickness in cm; (#Delta#theta)_{rms} in mrad" );
+
+//    gr_meas->SetLineColor( kBlack ); gr_meas->SetMarkerColor( kBlack ); gr_meas->SetMarkerStyle( 20 ); gr_meas->SetMarkerSize( 1.2 );
+
+//    gr_meas->GetXaxis()->SetLimits( ( steps.at( 0 )-steps.at( 0 ) ), ( steps.at( n_steps-1 )+steps.at( 0 ) ) );
+
+//    gr_meas->SetMinimum( 0.0 );
+
+//    gr_meas->SetMaximum( 1.80*max1 );
+
+//    // c1->cd();
+
+//    // gr_meas->Draw( "APEZ" );
+
+//    // c1->Update();
+
+//    // c1->WaitPrimitive();
+
+//    ROOT::Minuit2::Minuit2Minimizer *mP = new ROOT::Minuit2::Minuit2Minimizer( );
+
+//    ROOT::Math::Functor FCA( &my_mcs_chi2, 2 );
+
+//    mP->SetFunction( FCA );
+
+
+//    mP->SetLimitedVariable( 1, "#delta#theta", 0.0, 1.0, 0.0, 45.0 );
+
+//    mP->SetMaxFunctionCalls( 1.E9 );
+
+//    mP->SetMaxIterations( 1.E9 );
+
+//    mP->SetTolerance( 0.01 );
+
+//    mP->SetStrategy( 2 );
+
+//    mP->SetErrorDef( 1.0 );
+
+//    bool mstatus = mP->Minimize();
+
+//    mP->Hesse();
+
+//    const double *pars = mP->X();
+
+//    const double *erpars = mP->Errors();
+
+//    Double_t deltap = ( recoL*kcal )/2.0;
+
+//    p_mcs = pars[0]+deltap;
+
+//    p_mcs_e = erpars[0];
+
+//    if ( mstatus ) p = p_mcs;
+
+//    else p = -1.0;
+
+//    chi2 = mP->MinValue();
+
+//    delete mP;
+
+//    return p;
+
 	// }
 
 }

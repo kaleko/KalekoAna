@@ -52,6 +52,7 @@ namespace larlite {
     TTree* _ana_tree;
     double _true_mom;
     double _mcs_reco_mom;
+    double _mcs_reco_mom_backwards;
     double _true_length;
     double _reco_length;
     bool _mu_contained;
