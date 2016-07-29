@@ -308,6 +308,14 @@ namespace larlite {
       auto const& track = itxn.second.at(itrk).second;
       double itrklen = track.Length();
       bool trkcontained = _fidvolBox.Contain(track.Vertex()) && _fidvolBox.Contain(track.End());
+
+
+      auto const &geovtx = ::geoalgo::Vector(itxn.first.X(), itxn.first.Y(), itxn.first.Z());
+      bool flip_trk = ::geoalgo::Vector(track.Vertex()).SqDist(geovtx) <
+                      ::geoalgo::Vector(track.End()).SqDist(geovtx) ?
+                      false : true;
+
+
       if (itxn.second.at(itrk).first == kKalekoMuon) {
         if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a muon " << std::endl;
         if (trkcontained) {
@@ -317,7 +325,7 @@ namespace larlite {
         }
         else {
           if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
-          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track) + 0.106;
+          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track,flip_trk) + 0.106;
 
           //New addition: if range energy is more than MCS energy, then always use range energy!
           // there's no way range energy is going to overestimate.
@@ -329,7 +337,7 @@ namespace larlite {
                                    << ". adding in energy of " << mcs_energy + 0.106 << std::endl;
           }
           else {
-            std::cout<<"SHOULD NEVER GET HERE"<<std::endl;
+            std::cout << "SHOULD NEVER GET HERE" << std::endl;
             // if (debug) std::cout << " :::NuEnergyCalc::: MCS failed. using tracklength contained. adding "
             //                        << _myspline.GetMuMomentum(itrklen) / 1000. + 0.106 << std::endl;
           }
@@ -344,7 +352,7 @@ namespace larlite {
         }
         else {
           if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
-          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track) + 0.140;
+          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track,flip_trk) + 0.140;
 
           //New addition: if range energy is more than MCS energy, then always use range energy!
           // there's no way range energy is going to overestimate.
@@ -355,7 +363,7 @@ namespace larlite {
             if (debug) std::cout << " :::NuEnergyCalc::: MCS worked fine. adding in energy of " << mcs_energy + 0.140 << std::endl;
           }
           else {
-            std::cout<<"SHOULD NEVER GET HERE (pion loop)"<<std::endl;
+            std::cout << "SHOULD NEVER GET HERE (pion loop)" << std::endl;
             // if (debug) std::cout << " :::NuEnergyCalc::: MCS failed. using tracklength contained. adding "
             //                        << _myspline.GetMuMomentum(itrklen) / 1000. + 0.146 << std::endl;
           }
