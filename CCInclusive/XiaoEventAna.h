@@ -131,11 +131,13 @@ namespace larlite {
     int _n_associated_tracks;
 
     double _longest_trk_len;
+    double _longest_trk_cosy;
     double _second_longest_trk_len;
     double _longest_trk_theta;
     double _longest_trk_MCS_mom;
     double _longest_trk_spline_mom;
     double _nu_E_estimate;
+    double _longest_trk_avg_calo;
 
     double _true_nu_x;
     double _true_nu_y;
@@ -154,6 +156,8 @@ namespace larlite {
     double _BSW_flash_z_range;
 
     double _dist_vtx_to_TPC;
+
+    double _longest_trk_dot_truemuondir;
   };
 }
 #endif

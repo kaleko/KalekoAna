@@ -66,11 +66,13 @@ namespace larlite {
             _tree->Branch("true_lepton_momentum", &_true_lepton_momentum, "true_lepton_momentum/D");
             _tree->Branch("n_associated_tracks", &_n_associated_tracks, "n_associated_tracks/I");
             _tree->Branch("longest_trk_len", &_longest_trk_len, "longest_trk_len/D");
+            _tree->Branch("longest_trk_cosy", &_longest_trk_cosy, "longest_trk_cosy/D");
             _tree->Branch("second_longest_trk_len", &_second_longest_trk_len, "second_longest_trk_len/D");
             _tree->Branch("longest_trk_theta", &_longest_trk_theta, "longest_trk_theta/D");
             _tree->Branch("longest_trk_MCS_mom", &_longest_trk_MCS_mom, "longest_trk_MCS_mom/D");
             _tree->Branch("longest_trk_spline_mom", &_longest_trk_spline_mom, "longest_trk_spline_mom/D");
             _tree->Branch("nu_E_estimate", &_nu_E_estimate, "nu_E_estimate/D");
+            _tree->Branch("longest_trk_avg_calo", &_longest_trk_avg_calo, "longest_trk_avg_calo/D");
             _tree->Branch("true_nu_x", &_true_nu_x, "true_nu_x/D");
             _tree->Branch("true_nu_y", &_true_nu_y, "true_nu_y/D");
             _tree->Branch("true_nu_z", &_true_nu_z, "true_nu_z/D");
@@ -83,7 +85,7 @@ namespace larlite {
             _tree->Branch("longest_track_end_z", &_longest_track_end_z, "longest_track_end_z/D");
             _tree->Branch("brightest_BSW_flash_PE", &_brightest_BSW_flash_PE, "brightest_BSW_flash_PE/D");
             _tree->Branch("BSW_flash_z_range", &_BSW_flash_z_range, "BSW_flash_z_range/D");
-
+            _tree->Branch("longest_trk_dot_truemuondir", &_longest_trk_dot_truemuondir, "longest_trk_dot_truemuondir/D");
         }
 
 
@@ -142,6 +144,7 @@ namespace larlite {
         _longest_trk_theta = -999.;
         _longest_trk_MCS_mom = -999.;
         _longest_trk_spline_mom = -999.;
+        _longest_trk_avg_calo = -999.;
         _nu_E_estimate = -999.;
         _true_nu_x = -999.;
         _true_nu_y = -999.;
@@ -159,6 +162,7 @@ namespace larlite {
         _fppdydz = -999.;
         _fpppz = -999.;
         _fppenergy = -999.;
+        _longest_trk_dot_truemuondir = -999.;
     }
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
@@ -177,6 +181,7 @@ namespace larlite {
             return false;
         }
 
+//KalekopandoraNuPMAPlustrackalmanhit
         auto ev_track = storage->get_data<event_track>("pandoraNuPMA");
         if (!ev_track) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, track!"));
@@ -250,57 +255,7 @@ namespace larlite {
         }
 
         _n_associated_tracks = (int)reco_neutrino.second.size();
-        larlite::mcnu mcnu;
-        // If we found a vertex and we are running over MC, let's check if it is accurate
-        if (!_running_on_data) {
 
-            auto ev_mctruth = storage->get_data<event_mctruth>("generator");
-            if (!ev_mctruth) {
-                print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mctruth!"));
-                return false;
-            }
-            if (ev_mctruth->size() != 1) {
-                print(larlite::msg::kERROR, __FUNCTION__, Form("MCTruth size doesn't equal one!"));
-                return false;
-            }
-            auto ev_mcflux = storage->get_data<event_mcflux>("generator");
-            if (!ev_mcflux) {
-                print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mcflux!"));
-                return false;
-            }
-            // Require exactly one neutrino interaction
-            if (ev_mcflux->size() != 1) {
-                print(larlite::msg::kINFO, __FUNCTION__, Form("ev_mcflux size is not 1!"));
-                return false;
-            }
-            _fndecay = ev_mcflux->at(0).fndecay;
-            _fppdxdz = ev_mcflux->at(0).fppdxdz;
-            _fppdydz = ev_mcflux->at(0).fppdydz;
-            _fpppz = ev_mcflux->at(0).fpppz;
-            _fppenergy = ev_mcflux->at(0).fppenergy;
-            // std::cout << "The reconstructed vertex is at : " << thevertexsphere.Center() << std::endl;
-            // std::cout << "The true vertex is at : "
-            //           <<::geoalgo::Vector(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position()) << std::endl;
-            // auto const& mcnu = ev_mctruth->at(0).GetNeutrino();
-            mcnu = ev_mctruth->at(0).GetNeutrino();
-            _true_nu_E =            mcnu.Nu().Trajectory().front().E();
-            _true_nu_pdg =          mcnu.Nu().PdgCode();
-            _true_nu_CCNC =         mcnu.CCNC();
-            _true_nu_mode =         mcnu.Mode();
-            _true_lepton_pdg =      mcnu.Lepton().PdgCode();
-            _true_lepton_momentum = mcnu.Lepton().Trajectory().front().Momentum().Vect().Mag();
-            _true_nu_x            = mcnu.Nu().Trajectory().front().Position().X();
-            _true_nu_y            = mcnu.Nu().Trajectory().front().Position().Y();
-            _true_nu_z            = mcnu.Nu().Trajectory().front().Position().Z();
-            TVector3 reco_vtx_tvec = TVector3(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
-            _dist_reco_true_vtx   = (mcnu.Nu().Trajectory().front().Position().Vect() - reco_vtx_tvec).Mag();
-            ::geoalgo::Sphere thevertexsphere(reco_neutrino.first.X(),
-                                              reco_neutrino.first.Y(),
-                                              reco_neutrino.first.Z(),
-                                              5.0);
-            _correct_ID = thevertexsphere.Contain(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position());
-            _hcorrect_ID->Fill(_correct_ID);
-        }
 
         auto const &geovtx = ::geoalgo::Vector(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
         auto longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
@@ -315,9 +270,10 @@ namespace larlite {
 
             if ( asstd_trk.Length() > _longest_trk_len ) {
                 _longest_trk_len = asstd_trk.Length();
+
                 _longest_trk_theta = asstd_trk.Theta();
                 _longest_trk_spline_mom = _myspline.GetMuMomentum(asstd_trk.Length());
-                _longest_trk_MCS_mom = _MCScalc.GetMomentumMultiScatterLLHD(asstd_trk);
+
                 longest_trackdir = ::geoalgo::Vector(asstd_trk.Vertex()).SqDist(geovtx) <
                                    ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
                                    ::geoalgo::Vector(asstd_trk.VertexDirection()) :
@@ -328,9 +284,42 @@ namespace larlite {
                                              ::geoalgo::Vector(asstd_trk.Vertex() - asstd_trk.End());
                 _longest_trk_contained = contained;
 
+                bool flip_longest_trk = ::geoalgo::Vector(asstd_trk.Vertex()).SqDist(geovtx) <
+                                        ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
+                                        false : true;
+
+                _longest_trk_MCS_mom = _MCScalc.GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk);
+
                 _longest_track_end_x = asstd_trk.End().X();
                 _longest_track_end_y = asstd_trk.End().Y();
                 _longest_track_end_z = asstd_trk.End().Z();
+
+
+                // Choose the calo object for this track by the one
+                // with the most number of hits in the dEdx vector
+                // (this is how analysis tree does it)
+                int long_track_idx = -1;
+                for (size_t i = 0; i < ev_track->size(); ++i) {
+                    auto const& trk = ev_track->at(i);
+                    if (trk.ID() == asstd_trk.ID()) {
+                        long_track_idx = i;
+                        break;
+                    }
+                }
+                if (long_track_idx == -1) {
+                    std::cout << "ERROR ERROR ERROR DIDNT FIND LONGEST TRACK INDEX BY ID" << std::endl;
+                    return false;
+                }
+                size_t tmp_nhits = 0;
+                for (size_t i = 0; i < 3; ++i)
+                    if (ev_calo->at(ass_calo_v[long_track_idx][i]).dEdx().size() > tmp_nhits) {
+                        auto const& thecalo = ev_calo->at(ass_calo_v[long_track_idx][i]);
+                        tmp_nhits = thecalo.dEdx().size();
+                        _longest_trk_avg_calo = 0;
+                        for (size_t j = 0; j < tmp_nhits; ++j)
+                            _longest_trk_avg_calo += thecalo.dEdx().at(j);
+                        _longest_trk_avg_calo /= tmp_nhits;
+                    }
             }
         }
         auto second_longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
@@ -355,6 +344,7 @@ namespace larlite {
 
         // Find the dot product of directions between the longest two tracks
         longest_trackdir.Normalize();
+        _longest_trk_cosy = longest_trackdir.at(1);
         second_longest_trackdir.Normalize();
         _longest_tracks_dotprod = longest_trackdir.Dot(second_longest_trackdir);
         longest_trackdir_endpoints.Normalize();
@@ -428,6 +418,74 @@ namespace larlite {
         }
 
         _nu_E_estimate = _nu_E_calc.ComputeEnuNTracksFromPID(reco_neutrino);
+
+
+        larlite::mcnu mcnu;
+        // If we found a vertex and we are running over MC, let's check if it is accurate
+        if (!_running_on_data) {
+
+            auto ev_mctruth = storage->get_data<event_mctruth>("generator");
+            if (!ev_mctruth) {
+                print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mctruth!"));
+                return false;
+            }
+            if (ev_mctruth->size() != 1) {
+                print(larlite::msg::kERROR, __FUNCTION__, Form("MCTruth size doesn't equal one!"));
+                return false;
+            }
+            auto ev_mcflux = storage->get_data<event_mcflux>("generator");
+            if (!ev_mcflux) {
+                print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mcflux!"));
+                return false;
+            }
+            // Require exactly one neutrino interaction
+            if (ev_mcflux->size() != 1) {
+                print(larlite::msg::kINFO, __FUNCTION__, Form("ev_mcflux size is not 1!"));
+                return false;
+            }
+            _fndecay = ev_mcflux->at(0).fndecay;
+            _fppdxdz = ev_mcflux->at(0).fppdxdz;
+            _fppdydz = ev_mcflux->at(0).fppdydz;
+            _fpppz = ev_mcflux->at(0).fpppz;
+            _fppenergy = ev_mcflux->at(0).fppenergy;
+            // std::cout << "The reconstructed vertex is at : " << thevertexsphere.Center() << std::endl;
+            // std::cout << "The true vertex is at : "
+            //           <<::geoalgo::Vector(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position()) << std::endl;
+            // auto const& mcnu = ev_mctruth->at(0).GetNeutrino();
+            mcnu = ev_mctruth->at(0).GetNeutrino();
+            _true_nu_E =            mcnu.Nu().Trajectory().front().E();
+            _true_nu_pdg =          mcnu.Nu().PdgCode();
+            _true_nu_CCNC =         mcnu.CCNC();
+            _true_nu_mode =         mcnu.Mode();
+            _true_lepton_pdg =      mcnu.Lepton().PdgCode();
+            _true_lepton_momentum = mcnu.Lepton().Trajectory().front().Momentum().Vect().Mag();
+            _true_nu_x            = mcnu.Nu().Trajectory().front().Position().X();
+            _true_nu_y            = mcnu.Nu().Trajectory().front().Position().Y();
+            _true_nu_z            = mcnu.Nu().Trajectory().front().Position().Z();
+            TVector3 reco_vtx_tvec = TVector3(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
+            _dist_reco_true_vtx   = (mcnu.Nu().Trajectory().front().Position().Vect() - reco_vtx_tvec).Mag();
+            ::geoalgo::Sphere thevertexsphere(reco_neutrino.first.X(),
+                                              reco_neutrino.first.Y(),
+                                              reco_neutrino.first.Z(),
+                                              5.0);
+            _correct_ID = thevertexsphere.Contain(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position());
+            _hcorrect_ID->Fill(_correct_ID);
+
+            ::geoalgo::Vector true_mu_dir = ::geoalgo::Vector(mcnu.Lepton().Trajectory().front().Momentum().Vect());
+            true_mu_dir.Normalize();
+            _longest_trk_dot_truemuondir = longest_trackdir.Dot(true_mu_dir);
+        }
+
+
+
+        // Only apply second longest trk len cut and collinearity cut for ==2 associated tracks
+        if (_n_associated_tracks != 2) {
+            _second_longest_trk_len = 999.;
+            _max_tracks_dotprod = 999.;
+            _longest_tracks_dotprod = 999.;
+            _longest_tracks_dotprod_trkendpoints = 999.;
+        }
+
         _tree->Fill();
         passed_events++;
 
