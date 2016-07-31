@@ -20,7 +20,7 @@ outdir = sys.argv[5]
 
 # Create ana_processor instance
 my_proc = fmwk.ana_processor()
-my_proc.set_verbosity(fmwk.msg.kDEBUG)
+#my_proc.set_verbosity(fmwk.msg.kDEBUG)
 
 # Set input root file
 for x in xrange(len(sys.argv) - 6):
@@ -80,7 +80,7 @@ print "Finished configuring ana_processor. Start event loop!"
 print
 
 # Let's run it.
-my_proc.run(0,50)
+my_proc.run()
 
 # done!
 print
