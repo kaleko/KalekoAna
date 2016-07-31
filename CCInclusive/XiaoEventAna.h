@@ -59,6 +59,10 @@ namespace larlite {
       _tree = 0;
       _filetype = kINPUT_FILE_TYPE_MAX;
       _vtx_sphere_radius = 3.;
+      _track_producer = "pandoraNuPMA";
+      _vtx_producer = "pmtrack";
+      _calo_producer = _track_producer + "calo";
+
     }
 
     /// Default destructor
@@ -78,8 +82,18 @@ namespace larlite {
 
     bool setBGWTimes();
 
+    void setTrackProducer(std::string prod) { _track_producer = prod; }
+
+    void setVtxProducer(std::string prod) { _vtx_producer = prod; }
+
+    void setCaloProducer(std::string prod) { _calo_producer = prod; }
+
   protected:
 
+    std::string _track_producer;
+    std::string _vtx_producer;
+    std::string _calo_producer;
+    
     XiaoNuFinder _nu_finder;
     TrackMomentumSplines _myspline;
     TrackMomentumCalculator _MCScalc;

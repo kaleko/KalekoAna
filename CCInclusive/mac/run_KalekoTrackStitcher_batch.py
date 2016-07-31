@@ -51,8 +51,9 @@ for ifile in xrange(n_final_files):
 	these_infiles = infiles[ifile*n_in_per_final:(ifile*n_in_per_final+n_in_per_final)]
 	for infile in these_infiles:
 		infilelist.append(basedir+infile)
-
-	outfilename = 'stitched_tracks_%s_file%d.root'%(out_producer,ifile)
+		
+	# i ahve no fucking idea why but the name stitcked_tracks_%s blah blah segfaults but fuckme doesn't
+	outfilename = 'fuckme_%s_file%d.root'%(out_producer,ifile)
 	print
 	print "Attempting to run over %d files to file %s..."%(len(infilelist),outfilename)
 	print

@@ -171,7 +171,7 @@ namespace larlite {
 
         resetTTreeVars();
 
-        auto ev_vtx = storage->get_data<event_vertex>("pmtrack");
+        auto ev_vtx = storage->get_data<event_vertex>(_vtx_producer);
         if (!ev_vtx) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, vertex!"));
             return false;
@@ -182,7 +182,7 @@ namespace larlite {
         }
 
 //KalekopandoraNuPMAPlustrackalmanhit
-        auto ev_track = storage->get_data<event_track>("pandoraNuPMA");
+        auto ev_track = storage->get_data<event_track>(_track_producer);
         if (!ev_track) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, track!"));
             return false;
@@ -201,9 +201,15 @@ namespace larlite {
             return false;
         }
         event_calorimetry* ev_calo = nullptr;
-        auto const& ass_calo_v = storage->find_one_ass(ev_track->id(),
+	//        auto const& ass_calo_v = storage->find_one_ass(ev_track->id(),
+	//                                 ev_calo,
+	//                                 Form("%scalo", ev_track->name().c_str()));
+	std::string track_calo_prod = _calo_producer.substr(0,_calo_producer.find("calo"));
+	larlite::product_id myid(data::kTrack,track_calo_prod);
+	//	std::cout<<"looking for id with track producer "<< _track_producer<<" and calo producer "<<_calo_producer<<std::endl;
+        auto const& ass_calo_v = storage->find_one_ass(myid,
                                  ev_calo,
-                                 Form("%scalo", ev_track->name().c_str()));
+                                 _calo_producer);
 
         if (!ev_calo) {
             std::cerr << "no event_calorimetry!" << std::endl;
