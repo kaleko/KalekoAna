@@ -15,14 +15,14 @@ namespace larlite {
 		_filetype = kINPUT_FILE_TYPE_MAX;
 
 		_fidvolBox = FidVolBox();
-		
+
 		_PID_filler = KalekoPIDFiller();
 
 		_tot_requests = 0;
 		_n_evts_with_flash_in_bgw = 0;
 		_n_evts_viable_vertex = 0;
 		_n_successful_flashmatch = 0;
-
+		_n_total_neutrinos = 0;
 		_vtx_sphere_radius = 3.;
 
 	}
@@ -32,7 +32,9 @@ namespace larlite {
 		std::cout << " _tot_requests = " << _tot_requests << std::endl;
 		std::cout << " _n_evts_with_flash_in_bgw = " << _n_evts_with_flash_in_bgw << std::endl;
 		std::cout << " _n_evts_viable_vertex = " << _n_evts_viable_vertex << std::endl;
-		std::cout << " _n_successful_flashmatch = " << _n_successful_flashmatch << std::endl;
+		std::cout << "  --> note: this many events have a neutrino, but events can have more than 1 neutrino now!" << std::endl;
+		std::cout << " _n_total_neutrinos = "<<_n_total_neutrinos<<std::endl;
+		// std::cout << " _n_successful_flashmatch = " << _n_successful_flashmatch << std::endl;
 
 	}
 
@@ -223,7 +225,7 @@ namespace larlite {
 	//         const larlite::AssSet_t & ass_calo_v,
 	//         const event_vertex *ev_vtx,
 	//         const event_opflash *ev_opflash) {
-	KalekoNuItxn_t XiaoNuFinder::findNeutrino(const event_track *ev_track,
+	std::vector<larlite::KalekoNuItxn_t> XiaoNuFinder::findNeutrino(const event_track *ev_track,
 	        const event_calorimetry *ev_calo,
 	        const larlite::AssSet_t & ass_calo_v,
 	        const event_vertex *ev_vtx,
@@ -231,7 +233,7 @@ namespace larlite {
 
 		_tot_requests++;
 
-		KalekoNuItxn_t result;
+		std::vector<larlite::KalekoNuItxn_t> results;
 
 		if (!setBGWTimes()) {
 			print(larlite::msg::kERROR,
@@ -315,7 +317,8 @@ namespace larlite {
 				                ev_calo,
 				                ass_calo_v)) {
 					// std::cout << "MICHEL MID LOLOLOL" << std::endl;
-					throw std::exception();
+					//throw std::exception();
+					continue;
 				}
 
 				// Now let's add in the minimum angle cut that Xiao uses:
@@ -326,7 +329,8 @@ namespace larlite {
 				auto const &track1 = ev_track->at(associated_track_idx_vec[0]);
 				auto const &track2 = ev_track->at(associated_track_idx_vec[1]);
 
-				auto const &geovtx = ::geoalgo::Vector(result.first.X(), result.first.Y(), result.first.Z());
+				// Was this previously a bug? "result" not initialized yet?
+				auto const &geovtx = vtx_sphere.Center();//::geoalgo::Vector(result.first.X(), result.first.Y(), result.first.Z());
 				auto track1dir = ::geoalgo::Vector(track1.Vertex()).SqDist(geovtx) <
 				                 ::geoalgo::Vector(track1.End()).SqDist(geovtx) ?
 				                 ::geoalgo::Vector(track1.VertexDirection()) :
@@ -343,12 +347,17 @@ namespace larlite {
 
 				//Woohoo we have passed Michel cutting and minimum angle cutting. Let's store the result
 				n_viable_vertices++;
+				// "result" is this reconstructed neutrino
+				KalekoNuItxn_t result;
 				result.first = vtx;
 				std::vector< std::pair<KalekoPID_t, track> > temp;
 				temp.clear();
 				temp.push_back(std::make_pair(kKALEKO_PID_MAX, track1));
 				temp.push_back(std::make_pair(kKALEKO_PID_MAX, track2));
 				result.second = temp;
+
+				// "results" is the vector of all reconstructed neutrinos found
+				results.push_back(result);
 			}// End mult == 2
 
 			// If >2 tracks are associated with the vertex, keep the event
@@ -356,12 +365,14 @@ namespace larlite {
 			         associated_track_idx_vec.size() > 2) {
 
 				n_viable_vertices++;
+				KalekoNuItxn_t result;
 				result.first = vtx;
 				std::vector< std::pair<KalekoPID_t, track> > temp;
 				temp.clear();
 				for (size_t i = 0; i < associated_track_idx_vec.size(); ++i)
 					temp.push_back(std::make_pair(kKALEKO_PID_MAX, ev_track->at(associated_track_idx_vec[i])));
 				result.second = temp;
+				results.push_back(result);
 			}// End mult > 2
 
 		} //done looping over vertices
@@ -369,8 +380,14 @@ namespace larlite {
 		// If this event doesn't contain any possible neutrino vertices that pass cuts
 		// Or if it contains several, throw that out too! (KALEKO)
 		// std::cout << "n_viable_vertices = " << n_viable_vertices << std::endl;
-		if (n_viable_vertices != 1) throw std::exception();
+		// if (n_viable_vertices != 1) throw std::exception();
+		
+
+
+		// If no neutrinos found in this event, throw exception
+		if (!results.size()) throw std::exception();
 		_n_evts_viable_vertex++;
+		_n_total_neutrinos += results.size();
 
 		// //temp
 		// _viable_vtx_has_matched_flash = false;
@@ -381,15 +398,17 @@ namespace larlite {
 		// }
 		// if (_viable_vtx_has_matched_flash)
 		// 	_n_successful_flashmatch++;
-
+		// std::cout<<"This event found "<<results.size()<<" neutrinos."<<std::endl;
 		/// Fill a PID value for each of the tracks in the interaction
-		if ( !_PID_filler.fillKalekoPIDs(result) ) {
-			print(larlite::msg::kERROR, __FUNCTION__, Form("Failed filling PIDs for some reason!"));
-			throw std::exception();
+		for (size_t i = 0; i < results.size(); ++i){
+			if ( !_PID_filler.fillKalekoPIDs(results.at(i)) ) {
+				print(larlite::msg::kERROR, __FUNCTION__, Form("Failed filling PIDs for some reason!"));
+				throw std::exception();
+			}
 		}
 
 
-		return result;
+		return results;
 	}
 }
 #endif

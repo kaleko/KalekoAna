@@ -46,11 +46,11 @@ namespace larlite {
 		/// Default destructor
 		~XiaoNuFinder() {}
 
-		KalekoNuItxn_t findNeutrino(const event_track *ev_track,
-		                            const event_calorimetry *ev_calo,
-		                            const larlite::AssSet_t & ass_calo_v,
-		                            const event_vertex *ev_vtx,
-		                            const event_opflash *ev_flash);
+		std::vector<larlite::KalekoNuItxn_t> findNeutrino(const event_track *ev_track,
+		        const event_calorimetry *ev_calo,
+		        const larlite::AssSet_t & ass_calo_v,
+		        const event_vertex *ev_vtx,
+		        const event_opflash *ev_flash);
 
 		void printNumbers();
 
@@ -88,6 +88,7 @@ namespace larlite {
 		size_t _n_evts_with_flash_in_bgw;
 		size_t _n_evts_viable_vertex;
 		size_t _n_successful_flashmatch;
+		size_t _n_total_neutrinos;
 		bool _viable_vtx_has_matched_flash;
 
 		double _vtx_sphere_radius;
