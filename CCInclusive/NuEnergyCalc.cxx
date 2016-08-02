@@ -296,27 +296,27 @@ namespace larlite {
     return muEguess;
   }
 
-  double NuEnergyCalc::ComputeEnuNTracksFromPID(const KalekoNuItxn_t itxn) {
+  double NuEnergyCalc::ComputeEnuNTracksFromPID(const KalekoNuItxn itxn) {
 
     bool debug = false;
     double tot_nu_energy = 0.;
     // Loop over associated tracks.
     // They are not necessarily pointing in the correct direction ...
     // Assume the start/end point closest to the interaction vertex is the start of the track
-    if (debug) std::cout << ":::NuEnergyCalc::: looping over " << itxn.second.size() << " tracks ... " << std::endl;
-    for (size_t itrk = 0; itrk < itxn.second.size(); ++itrk) {
-      auto const& track = itxn.second.at(itrk).second;
+    if (debug) std::cout << ":::NuEnergyCalc::: looping over " << itxn.Tracks().size() << " tracks ... " << std::endl;
+    for (size_t itrk = 0; itrk < itxn.Tracks().size(); ++itrk) {
+      auto const track = itxn.Tracks().at(itrk);
       double itrklen = track.Length();
       bool trkcontained = _fidvolBox.Contain(track.Vertex()) && _fidvolBox.Contain(track.End());
 
 
-      auto const &geovtx = ::geoalgo::Vector(itxn.first.X(), itxn.first.Y(), itxn.first.Z());
+      auto const &geovtx = ::geoalgo::Vector(itxn.Vertex().X(), itxn.Vertex().Y(), itxn.Vertex().Z());
       bool flip_trk = ::geoalgo::Vector(track.Vertex()).SqDist(geovtx) <
                       ::geoalgo::Vector(track.End()).SqDist(geovtx) ?
                       false : true;
 
 
-      if (itxn.second.at(itrk).first == kKalekoMuon) {
+      if (itxn.PIDs().at(itrk) == kKalekoMuon) {
         if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a muon " << std::endl;
         if (trkcontained) {
           tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
@@ -343,7 +343,7 @@ namespace larlite {
           }
         }
       }
-      else if (itxn.second.at(itrk).first == kKalekoChargedPion) {
+      else if (itxn.PIDs().at(itrk) == kKalekoChargedPion) {
         if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a pion " << std::endl;
         if (trkcontained) {
           tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
@@ -369,7 +369,7 @@ namespace larlite {
           }
         }
       }
-      else if (itxn.second.at(itrk).first == kKalekoProton) {
+      else if (itxn.PIDs().at(itrk) == kKalekoProton) {
         if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a proton " << std::endl;
         tot_nu_energy += _myspline.GetPMomentum(itrklen) / 1000.;
         if (debug) std::cout << " :::NuEnergyCalc::: adding in energy from spline: "

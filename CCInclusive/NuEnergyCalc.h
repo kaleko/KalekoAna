@@ -23,6 +23,7 @@
 #include "GeoAlgo/GeoAABox.h"
 #include "FidVolBox.h"
 #include "CCInclusiveConstants.h"
+#include "KalekoNuItxn.h"
 #include "TrackMomentumSplines.h"
 #include "TrackMomentumCalculator.h"
 
@@ -86,7 +87,7 @@ namespace larlite {
         /// Loop over associated tracks in interaction and their (already determined) PID info.
         /// For contained tracks use track range splines (charged pions use muon spline, protons use proton spline)
         /// If mu track exits, use multiple coloumb scattering
-        double ComputeEnuNTracksFromPID(const KalekoNuItxn_t itxn);
+        double ComputeEnuNTracksFromPID(const KalekoNuItxn itxn);
 
     private:
         // Fiducial volume box

@@ -32,6 +32,8 @@
 #pragma link C++ class larlite::KalekoPIDFiller+;
 #pragma link C++ class larlite::FidVolBox+;
 #pragma link C++ class larlite::KalekoTrackStitcher+;
+
+#pragma link C++ class larlite::KalekoNuItxn+;
 //ADD_NEW_CLASS ... do not change this line
 #endif
 

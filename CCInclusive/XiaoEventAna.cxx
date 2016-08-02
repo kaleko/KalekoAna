@@ -73,6 +73,7 @@ namespace larlite {
             _tree->Branch("longest_trk_spline_mom", &_longest_trk_spline_mom, "longest_trk_spline_mom/D");
             _tree->Branch("nu_E_estimate", &_nu_E_estimate, "nu_E_estimate/D");
             _tree->Branch("longest_trk_avg_calo", &_longest_trk_avg_calo, "longest_trk_avg_calo/D");
+            _tree->Branch("second_longest_trk_avg_calo", &_second_longest_trk_avg_calo, "second_longest_trk_avg_calo/D");
             _tree->Branch("true_nu_x", &_true_nu_x, "true_nu_x/D");
             _tree->Branch("true_nu_y", &_true_nu_y, "true_nu_y/D");
             _tree->Branch("true_nu_z", &_true_nu_z, "true_nu_z/D");
@@ -86,6 +87,7 @@ namespace larlite {
             _tree->Branch("brightest_BSW_flash_PE", &_brightest_BSW_flash_PE, "brightest_BSW_flash_PE/D");
             _tree->Branch("BSW_flash_z_range", &_BSW_flash_z_range, "BSW_flash_z_range/D");
             _tree->Branch("longest_trk_dot_truemuondir", &_longest_trk_dot_truemuondir, "longest_trk_dot_truemuondir/D");
+            _tree->Branch("n_reco_nu_in_evt", &_n_reco_nu_in_evt, "n_reco_nu_in_evt/I");
         }
 
 
@@ -145,6 +147,7 @@ namespace larlite {
         _longest_trk_MCS_mom = -999.;
         _longest_trk_spline_mom = -999.;
         _longest_trk_avg_calo = -999.;
+        _second_longest_trk_avg_calo = -999.;
         _nu_E_estimate = -999.;
         _true_nu_x = -999.;
         _true_nu_y = -999.;
@@ -163,12 +166,13 @@ namespace larlite {
         _fpppz = -999.;
         _fppenergy = -999.;
         _longest_trk_dot_truemuondir = -999.;
+        _n_reco_nu_in_evt = 0;
     }
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
 
         total_events++;
-
+        _n_reco_nu_in_evt = 0;
         resetTTreeVars();
 
         auto ev_vtx = storage->get_data<event_vertex>(_vtx_producer);
@@ -226,7 +230,7 @@ namespace larlite {
         // and a std::vector of tracks that are associated with that vertex
         // std::pair<larlite::vertex, std::vector<larlite::track> > reco_neutrino;
         // Update: code allows for multiple neutrinos in each event, so I return a vector of them
-        std::vector<KalekoNuItxn_t> reco_neutrinos;
+        std::vector<larlite::KalekoNuItxn> reco_neutrinos;
         try {
             reco_neutrinos = _nu_finder.findNeutrino(ev_track, ev_calo, ass_calo_v, ev_vtx, ev_opflash);
         }
@@ -239,8 +243,11 @@ namespace larlite {
             return false;
         }
 
+        _n_reco_nu_in_evt = reco_neutrinos.size();
+
         // Loop over the reconstructed neutrinos and fill TTree one per neutrino
         for (auto const& reco_neutrino : reco_neutrinos) {
+
             // Store TTree variables that have to do with the flashes in the BSW
             _brightest_BSW_flash_PE = -999.;
             _BSW_flash_z_range = -999.;
@@ -251,16 +258,17 @@ namespace larlite {
                 }
             }
 
-            _n_associated_tracks = (int)reco_neutrino.second.size();
+            _n_associated_tracks = (int)reco_neutrino.Tracks().size();
 
 
-            auto const &geovtx = ::geoalgo::Vector(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
+            auto const &geovtx = ::geoalgo::Vector(reco_neutrino.Vertex().X(), reco_neutrino.Vertex().Y(), reco_neutrino.Vertex().Z());
             auto longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
             auto longest_trackdir_endpoints = ::geoalgo::Vector(0., 0., 0.);
             _all_trks_contained = true;
             // Quick loop over associated track lengths to find the longest one:
-            for (auto const& asstd_trk_pair : reco_neutrino.second) {
-                auto const &asstd_trk = asstd_trk_pair.second;
+
+            for (size_t david = 0; david < reco_neutrino.Tracks().size(); david++) {
+                auto const asstd_trk = reco_neutrino.Tracks().at(david);
                 bool contained = _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.Vertex())) &&
                                  _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.End()));
                 if (!contained) _all_trks_contained = false;
@@ -292,38 +300,49 @@ namespace larlite {
                     _longest_track_end_z = asstd_trk.End().Z();
 
 
-                    // Choose the calo object for this track by the one
-                    // with the most number of hits in the dEdx vector
-                    // (this is how analysis tree does it)
-                    int long_track_idx = -1;
-                    for (size_t i = 0; i < ev_track->size(); ++i) {
-                        auto const& trk = ev_track->at(i);
-                        if (trk.ID() == asstd_trk.ID()) {
-                            long_track_idx = i;
-                            break;
-                        }
-                    }
-                    if (long_track_idx == -1) {
-                        std::cout << "ERROR ERROR ERROR DIDNT FIND LONGEST TRACK INDEX BY ID" << std::endl;
-                        return false;
-                    }
-                    size_t tmp_nhits = 0;
-                    for (size_t i = 0; i < 3; ++i)
-                        if (ev_calo->at(ass_calo_v[long_track_idx][i]).dEdx().size() > tmp_nhits) {
-                            auto const& thecalo = ev_calo->at(ass_calo_v[long_track_idx][i]);
-                            tmp_nhits = thecalo.dEdx().size();
-                            _longest_trk_avg_calo = 0;
-                            for (size_t j = 0; j < tmp_nhits; ++j)
-                                _longest_trk_avg_calo += thecalo.dEdx().at(j);
-                            _longest_trk_avg_calo /= tmp_nhits;
-                        }
+                    // // Choose the calo object for this track by the one
+                    // // with the most number of hits in the dEdx vector
+                    // // (this is how analysis tree does it)
+                    // int long_track_idx = -1;
+                    // for (size_t i = 0; i < ev_track->size(); ++i) {
+                    //     auto const& trk = ev_track->at(i);
+                    //     if (trk.ID() == asstd_trk.ID()) {
+                    //         long_track_idx = i;
+                    //         break;
+                    //     }
+                    // }
+                    // if (long_track_idx == -1) {
+                    //     std::cout << "ERROR ERROR ERROR DIDNT FIND LONGEST TRACK INDEX BY ID" << std::endl;
+                    //     return false;
+                    // }
+
+                    auto const asstd_calo = reco_neutrino.Calos().at(david);
+                    _longest_trk_avg_calo = 0;
+                    for (size_t j = 0; j < asstd_calo.dEdx().size(); ++j)
+                        _longest_trk_avg_calo += asstd_calo.dEdx().at(j);
+                    _longest_trk_avg_calo /= asstd_calo.dEdx().size();
+
+                    // size_t tmp_nhits = 0;
+
+                    // for (size_t i = 0; i < 3; ++i)
+                    //     if (ev_calo->at(ass_calo_v[long_track_idx][i]).dEdx().size() > tmp_nhits) {
+                    //         auto const& thecalo = ev_calo->at(ass_calo_v[long_track_idx][i]);
+                    //         tmp_nhits = thecalo.dEdx().size();
+                    //         _longest_trk_avg_calo = 0;
+                    //         for (size_t j = 0; j < tmp_nhits; ++j)
+                    //             _longest_trk_avg_calo += thecalo.dEdx().at(j);
+                    //         _longest_trk_avg_calo /= tmp_nhits;
+                    //     }
                 }
             }
             auto second_longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
             auto second_longest_trackdir_endpoints = ::geoalgo::Vector(0., 0., 0.);
             // Another quick loop to find the second longest one
-            for (auto const& asstd_trk_pair : reco_neutrino.second) {
-                auto const &asstd_trk = asstd_trk_pair.second;
+
+            for (size_t david = 0; david < reco_neutrino.Tracks().size(); david++) {
+                auto const asstd_trk = reco_neutrino.Tracks().at(david);
+                // for (auto const& asstd_trk_pair : reco_neutrino.second) {
+                // auto const &asstd_trk = asstd_trk_pair.second;
                 // Skip the already-found longest track
                 if (asstd_trk.Length() == _longest_trk_len) continue;
                 if ( asstd_trk.Length() > _second_longest_trk_len ) {
@@ -336,6 +355,12 @@ namespace larlite {
                                                         ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
                                                         ::geoalgo::Vector(asstd_trk.End() - asstd_trk.Vertex()) :
                                                         ::geoalgo::Vector(asstd_trk.Vertex() - asstd_trk.End());
+
+                    auto const asstd_calo = reco_neutrino.Calos().at(david);
+                    _second_longest_trk_avg_calo = 0;
+                    for (size_t j = 0; j < asstd_calo.dEdx().size(); ++j)
+                        _second_longest_trk_avg_calo += asstd_calo.dEdx().at(j);
+                    _second_longest_trk_avg_calo /= asstd_calo.dEdx().size();
                 }
             }
 
@@ -351,16 +376,16 @@ namespace larlite {
             // Loop over all track combinations  and compute the highest absolute value of dot product
             // of directions to try to select broken track MIDs
 
-            for (auto const& asstd_trk_pair1 : reco_neutrino.second) {
-                auto const &asstd_trk1 = asstd_trk_pair1.second;
+            for (auto const& asstd_trk1 : reco_neutrino.Tracks()) {
+                // auto const &asstd_trk1 = asstd_trk_pair1.second;
 
                 auto track1dir = ::geoalgo::Vector(asstd_trk1.Vertex()).SqDist(geovtx) <
                                  ::geoalgo::Vector(asstd_trk1.End()).SqDist(geovtx) ?
                                  ::geoalgo::Vector(asstd_trk1.VertexDirection()) :
                                  ::geoalgo::Vector(asstd_trk1.EndDirection()) * -1.;
 
-                for (auto const& asstd_trk_pair2 : reco_neutrino.second) {
-                    auto const &asstd_trk2 = asstd_trk_pair2.second;
+                for (auto const& asstd_trk2 : reco_neutrino.Tracks()) {
+                    // auto const &asstd_trk2 = asstd_trk_pair2.second;
                     // Don't compare a track to itself.. doing this by Length because I'm stupid
                     if (asstd_trk1.Length() == asstd_trk2.Length()) continue;
 
@@ -388,10 +413,11 @@ namespace larlite {
 
                 // Now that we found a neutrino interaction with ==2 tracks, let's pick which track is the muon and which is the proton
                 // then store some ttree variables about each
-                auto const &mutrack = reco_neutrino.second.at(0).second.Length() > reco_neutrino.second.at(1).second.Length() ?
-                                      reco_neutrino.second.at(0).second          : reco_neutrino.second.at(1).second;
-                auto const &ptrack  = reco_neutrino.second.at(0).second.Length() > reco_neutrino.second.at(1).second.Length() ?
-                                      reco_neutrino.second.at(1).second          : reco_neutrino.second.at(0).second;
+
+                auto const mutrack = reco_neutrino.Tracks().at(0).Length() > reco_neutrino.Tracks().at(1).Length() ?
+                                     reco_neutrino.Tracks().at(0)          : reco_neutrino.Tracks().at(1);
+                auto const ptrack  = reco_neutrino.Tracks().at(0).Length() > reco_neutrino.Tracks().at(1).Length() ?
+                                     reco_neutrino.Tracks().at(1)          : reco_neutrino.Tracks().at(0);
 
                 _mu_phi = ::geoalgo::Vector(mutrack.VertexDirection()).Phi();
                 _p_phi  = ::geoalgo::Vector( ptrack.VertexDirection()).Phi();
@@ -459,11 +485,11 @@ namespace larlite {
                 _true_nu_x            = mcnu.Nu().Trajectory().front().Position().X();
                 _true_nu_y            = mcnu.Nu().Trajectory().front().Position().Y();
                 _true_nu_z            = mcnu.Nu().Trajectory().front().Position().Z();
-                TVector3 reco_vtx_tvec = TVector3(reco_neutrino.first.X(), reco_neutrino.first.Y(), reco_neutrino.first.Z());
+                TVector3 reco_vtx_tvec = TVector3(reco_neutrino.Vertex().X(), reco_neutrino.Vertex().Y(), reco_neutrino.Vertex().Z());
                 _dist_reco_true_vtx   = (mcnu.Nu().Trajectory().front().Position().Vect() - reco_vtx_tvec).Mag();
-                ::geoalgo::Sphere thevertexsphere(reco_neutrino.first.X(),
-                                                  reco_neutrino.first.Y(),
-                                                  reco_neutrino.first.Z(),
+                ::geoalgo::Sphere thevertexsphere(reco_neutrino.Vertex().X(),
+                                                  reco_neutrino.Vertex().Y(),
+                                                  reco_neutrino.Vertex().Z(),
                                                   5.0);
                 _correct_ID = thevertexsphere.Contain(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position());
                 _hcorrect_ID->Fill(_correct_ID);

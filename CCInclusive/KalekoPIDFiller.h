@@ -17,6 +17,7 @@
 
 #include "Analysis/ana_base.h"
 #include "CCInclusiveConstants.h"
+#include "KalekoNuItxn.h"
 
 namespace larlite {
 
@@ -32,7 +33,7 @@ namespace larlite {
 
     // Takes in reco neutrino interaction, loops through tracks
     // and sets a PID value for each one
-    bool fillKalekoPIDs(KalekoNuItxn_t &kaleko_itxn);
+    bool fillKalekoPIDs(KalekoNuItxn &kaleko_itxn);
 
   protected:
     

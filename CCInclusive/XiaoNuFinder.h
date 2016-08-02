@@ -19,6 +19,7 @@
 #include "DataFormat/track.h"
 #include "DataFormat/vertex.h"
 #include "DataFormat/calorimetry.h"
+#include "KalekoNuItxn.h"
 #include "GeoAlgo/GeoVector.h"
 #include "GeoAlgo/GeoSphere.h"
 #include "GeoAlgo/GeoAABox.h"
@@ -46,7 +47,7 @@ namespace larlite {
 		/// Default destructor
 		~XiaoNuFinder() {}
 
-		std::vector<larlite::KalekoNuItxn_t> findNeutrino(const event_track *ev_track,
+		std::vector<larlite::KalekoNuItxn> findNeutrino(const event_track *ev_track,
 		        const event_calorimetry *ev_calo,
 		        const larlite::AssSet_t & ass_calo_v,
 		        const event_vertex *ev_vtx,

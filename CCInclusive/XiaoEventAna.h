@@ -24,6 +24,7 @@
 #include "DataFormat/track.h"
 #include "DataFormat/vertex.h"
 #include "DataFormat/calorimetry.h"
+#include "KalekoNuItxn.h"
 #include "GeoAlgo/GeoVector.h"
 #include "GeoAlgo/GeoSphere.h"
 #include "GeoAlgo/GeoAABox.h"
@@ -152,6 +153,7 @@ namespace larlite {
     double _longest_trk_spline_mom;
     double _nu_E_estimate;
     double _longest_trk_avg_calo;
+    double _second_longest_trk_avg_calo;
 
     double _true_nu_x;
     double _true_nu_y;
@@ -172,6 +174,8 @@ namespace larlite {
     double _dist_vtx_to_TPC;
 
     double _longest_trk_dot_truemuondir;
+
+    int _n_reco_nu_in_evt;
   };
 }
 #endif
