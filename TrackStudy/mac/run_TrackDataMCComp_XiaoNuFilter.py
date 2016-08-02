@@ -26,11 +26,9 @@ mc_1_data_0 = int(sys.argv[1])
 # Specify output root file name
 my_proc.set_ana_output_file("TrackDataMCComp_XiaoEvts_MC=%d_ana_out.root"%mc_1_data_0)
 
-my_running_on_data = False
-
 # Use XiaoEventAna as an event filter (returns false if no neutrino found in event)
 myxiao = fmwk.XiaoEventAna()
-myxiao.setRunningOnData(my_running_on_data)
+myxiao.setRunningOnData(False)
 myxiao.setVtxSphereRadius(4.0)
 myxiao.setInputType(fmwk.kBNBCosmic)#fmwk.kBNBCosmic fmwk.kCorsikaInTime
 my_proc.add_process(myxiao)
@@ -38,7 +36,7 @@ my_proc.add_process(myxiao)
 # Attach Track Data MC Comp Module
 mymod = fmwk.TrackDataMCComp()
 mymod.setTrackProducer("pandoraNuPMA")
-mymod.setRunningOnData(my_running_on_data)
+mymod.setRunningOnData(False)
 my_proc.add_process(mymod)
 
 print

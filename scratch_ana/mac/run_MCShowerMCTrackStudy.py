@@ -1,8 +1,9 @@
-import sys, os
+import sys
+import os
 
 if len(sys.argv) < 2:
     msg  = '\n'
-    msg += "Usage 1: %s $INPUT_ROOT_FILE $OUTPUT_ROOT_FILE\n" % sys.argv[0]
+    msg += "Usage 1: %s $INPUT_ROOT_FILE\n" % sys.argv[0]
     msg += '\n'
     sys.stderr.write(msg)
     sys.exit(1)
@@ -10,7 +11,6 @@ if len(sys.argv) < 2:
 from ROOT import gSystem
 from ROOT import larlite as fmwk
 from ROOT import ertool
-from singleE_config import GetERSelectionInstance
 
 from seltool.primarycosmicDef import GetPrimaryCosmicFinderInstance
 
@@ -20,7 +20,7 @@ gSystem.Load('libKalekoAna_scratch_ana.so')
 my_proc = fmwk.ana_processor()
 
 # Set input root file
-for x in xrange(len(sys.argv)-1):
+for x in xrange(len(sys.argv)):
     if x == 0: continue
     my_proc.add_input_file(sys.argv[x])
 
@@ -28,7 +28,7 @@ for x in xrange(len(sys.argv)-1):
 my_proc.set_io_mode(fmwk.storage_manager.kREAD)
 
 # Specify output root file name
-my_proc.set_ana_output_file(sys.argv[-1])
+my_proc.set_ana_output_file("ana_out_MCShowerStudy_MCTrackStudy_CosmicValidation.root");
 
 # Attach a template process
 mcsstudy = fmwk.MCShowerStudy()
@@ -73,7 +73,7 @@ my_proc.add_process(main_anaunit)
 
 
 # Let's run it.
-my_proc.run()
+my_proc.run();
 
 # done!
 print

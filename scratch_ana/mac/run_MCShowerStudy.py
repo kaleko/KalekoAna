@@ -10,6 +10,8 @@ if len(sys.argv) < 2:
 from ROOT import gSystem
 from ROOT import larlite as fmwk
 
+gSystem.Load('libKalekoAna_scratch_ana.so')
+
 # Create ana_processor instance
 my_proc = fmwk.ana_processor()
 
@@ -26,7 +28,8 @@ my_proc.set_ana_output_file("ana_out_MCShowerStudy.root");
 
 # Attach a template process
 mod = fmwk.MCShowerStudy()
-my_proc.add_process(mod);
+mod.setMCShowerProducer('mcreco')
+my_proc.add_process(mod)
 
 print
 print  "Finished configuring ana_processor. Start event loop!"

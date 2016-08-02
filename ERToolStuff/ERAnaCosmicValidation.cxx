@@ -319,8 +319,7 @@ namespace ertool {
       }
     }
     else if (parent.RecoType() == RecoType_t::kInvisible) {
-      // std::cout << "but its parent is invisible, so it IS primary" << std::endl;
-      return true;
+      return false;
     }
     else std::cout << " ---- wtf parent isn't track, shower, or invisible... ---- " << std::endl;
 
@@ -449,35 +448,41 @@ namespace ertool {
 
       candidate_mcparticle = mc_graph.GetParticle(mcp);
 
-      //If we're looking for a track
-      if ( p.RecoType() == RecoType_t::kTrack ) {
-        //Check that the track we're looking for matches exactly the mcparticlegraph's track:
-        //Check the start x, y, z coordinates all agree
-
-        if (mc_data.Track(candidate_mcparticle).at(0).at(0) != data.Track(p).at(0).at(0) ||
-            mc_data.Track(candidate_mcparticle).at(0).at(1) != data.Track(p).at(0).at(1) ||
-            mc_data.Track(candidate_mcparticle).at(0).at(2) != data.Track(p).at(0).at(2)) continue;
-        //Check energy agrees (note, mc_data.Track(candidate_mcparticle)._time is unfilled (1e308), but data.Track(p)._time IS filled)
-        if (mc_data.Track(candidate_mcparticle)._energy != data.Track(p)._energy) continue;
-        found_match = true;
-      }
-      else if ( p.RecoType() == RecoType_t::kShower ) { //If we're looking for a shower
-        //Check that the shower we're looking for matches exactly the mcparticlegraph's shower:
-        //Check the start point coordinates all agree
-        if (mc_data.Shower(candidate_mcparticle).Start() != data.Shower(p).Start()) continue;
-        //Check energy, dedx agree
-        //(note, mc_data.Shower(candidate_mcparticle)._time is unfilled (1e308), but data.Shower(p)._time IS filled)
-        if (mc_data.Shower(candidate_mcparticle)._energy != data.Shower(p)._energy ||
-            mc_data.Shower(candidate_mcparticle)._dedx != data.Shower(p)._dedx ) continue;
-        found_match = true;
-      }
-      else std::cout << " wtf you want to look for an mc particle matching a reco particle that is neither track nor shower?" << std::endl;
-
-      /// Note I have verified that only one match is ever found, so breaking here is fine to save computing time
-      if (found_match) {
+      if ( candidate_mcparticle.RecoID() == p.RecoID() ){
         found_mcparticle = candidate_mcparticle;
+        found_match = true;
         break;
       }
+
+      // //If we're looking for a track
+      // if ( p.RecoType() == RecoType_t::kTrack ) {
+      //   //Check that the track we're looking for matches exactly the mcparticlegraph's track:
+      //   //Check the start x, y, z coordinates all agree
+
+      //   if (mc_data.Track(candidate_mcparticle).at(0).at(0) != data.Track(p).at(0).at(0) ||
+      //       mc_data.Track(candidate_mcparticle).at(0).at(1) != data.Track(p).at(0).at(1) ||
+      //       mc_data.Track(candidate_mcparticle).at(0).at(2) != data.Track(p).at(0).at(2)) continue;
+      //   //Check energy agrees (note, mc_data.Track(candidate_mcparticle)._time is unfilled (1e308), but data.Track(p)._time IS filled)
+      //   if (mc_data.Track(candidate_mcparticle)._energy != data.Track(p)._energy) continue;
+      //   found_match = true;
+      // }
+      // else if ( p.RecoType() == RecoType_t::kShower ) { //If we're looking for a shower
+      //   //Check that the shower we're looking for matches exactly the mcparticlegraph's shower:
+      //   //Check the start point coordinates all agree
+      //   if (mc_data.Shower(candidate_mcparticle).Start() != data.Shower(p).Start()) continue;
+      //   //Check energy, dedx agree
+      //   //(note, mc_data.Shower(candidate_mcparticle)._time is unfilled (1e308), but data.Shower(p)._time IS filled)
+      //   if (mc_data.Shower(candidate_mcparticle)._energy != data.Shower(p)._energy ||
+      //       mc_data.Shower(candidate_mcparticle)._dedx != data.Shower(p)._dedx ) continue;
+      //   found_match = true;
+      // }
+      // else std::cout << " wtf you want to look for an mc particle matching a reco particle that is neither track nor shower?" << std::endl;
+
+      // /// Note I have verified that only one match is ever found, so breaking here is fine to save computing time
+      // if (found_match) {
+      //   found_mcparticle = candidate_mcparticle;
+      //   break;
+      // }
     } // End loop over mcparticlegraph to find the mcparticlegraph node corresponding to this particle
 
     if (found_match) return found_mcparticle;
