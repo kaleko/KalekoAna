@@ -33,6 +33,10 @@ namespace larlite {
 
     // Takes in reco neutrino interaction, loops through tracks
     // and sets a PID value for each one
+    // simple version just says: longest track is muon, <20cm is proton, >20cm is pion
+    bool fillKalekoPIDs_simple(KalekoNuItxn &kaleko_itxn);
+
+    // This version uses: longest track muon, then calorimetry associations
     bool fillKalekoPIDs(KalekoNuItxn &kaleko_itxn);
 
   protected:

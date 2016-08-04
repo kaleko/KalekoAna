@@ -143,6 +143,7 @@ namespace larlite {
         _n_associated_tracks = 0;
         _longest_trk_len = -999.;
         _second_longest_trk_len = -999.;
+        _longest_trk_cosy = -999;
         _longest_trk_theta = -999.;
         _longest_trk_MCS_mom = -999.;
         _longest_trk_spline_mom = -999.;
@@ -266,14 +267,14 @@ namespace larlite {
             auto longest_trackdir_endpoints = ::geoalgo::Vector(0., 0., 0.);
             _all_trks_contained = true;
             // Quick loop over associated track lengths to find the longest one:
-
+            _longest_trk_len = -999.;
             for (size_t david = 0; david < reco_neutrino.Tracks().size(); david++) {
                 auto const asstd_trk = reco_neutrino.Tracks().at(david);
                 bool contained = _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.Vertex())) &&
                                  _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.End()));
                 if (!contained) _all_trks_contained = false;
-
                 if ( asstd_trk.Length() > _longest_trk_len ) {
+
                     _longest_trk_len = asstd_trk.Length();
 
                     _longest_trk_theta = asstd_trk.Theta();
@@ -335,6 +336,11 @@ namespace larlite {
                     //     }
                 }
             }
+
+            if (longest_trackdir_endpoints.Length() < 0.00001){
+                std::cout<<"length problem. "<<longest_trackdir_endpoints.Length()<<std::endl;
+            }
+
             auto second_longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
             auto second_longest_trackdir_endpoints = ::geoalgo::Vector(0., 0., 0.);
             // Another quick loop to find the second longest one
@@ -365,12 +371,10 @@ namespace larlite {
             }
 
             // Find the dot product of directions between the longest two tracks
-            longest_trackdir.Normalize();
-            _longest_trk_cosy = longest_trackdir.at(1);
-            second_longest_trackdir.Normalize();
-            _longest_tracks_dotprod = longest_trackdir.Dot(second_longest_trackdir);
             longest_trackdir_endpoints.Normalize();
+            _longest_trk_cosy = fabs(longest_trackdir_endpoints.at(1));
             second_longest_trackdir_endpoints.Normalize();
+            _longest_tracks_dotprod = longest_trackdir.Dot(second_longest_trackdir);
             _longest_tracks_dotprod_trkendpoints = longest_trackdir_endpoints.Dot(second_longest_trackdir_endpoints);
 
             // Loop over all track combinations  and compute the highest absolute value of dot product
