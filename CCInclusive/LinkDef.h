@@ -34,8 +34,10 @@
 #pragma link C++ class larlite::KalekoTrackStitcher+;
 
 #pragma link C++ class larlite::KalekoNuItxn+;
+#pragma link C++ class larlite::FluxAna+;
 //ADD_NEW_CLASS ... do not change this line
 #endif
+
 
 
 
