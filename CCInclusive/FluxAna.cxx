@@ -82,7 +82,7 @@ namespace larlite {
         _fpppz = ev_mcflux->at(0).fpppz;
         _fppenergy = ev_mcflux->at(0).fppenergy;
 
-        if (_fndecay == 5) {
+        if ( _fndecay == 5 || _fndecay == 6 || _fndecay == 6 ) {
             _kaon_prod_px = _fpppz * _fppdxdz;
             _kaon_prod_py = _fpppz * _fppdydz;
             _kaon_prod_pz = _fpppz;
@@ -92,7 +92,7 @@ namespace larlite {
                                       k_plus_mass * k_plus_mass);
             _kaon_prod_theta = ::geoalgo::Vector(
                                    _kaon_prod_px, _kaon_prod_py, _kaon_prod_pz
-                               ).Theta() * (180./3.14159);
+                               ).Theta() * (180. / 3.14159);
 
         }
 
