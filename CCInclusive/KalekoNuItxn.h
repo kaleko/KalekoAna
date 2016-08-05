@@ -41,6 +41,7 @@ namespace larlite {
     std::vector<larlite::track>       Tracks() const;
     std::vector<larlite::KalekoPID_t> PIDs() const;
     std::vector<larlite::calorimetry> Calos() const;
+    std::vector<larlite::track>       ExtraTracks() const;
 
     //--- Setters ---//
     void Vertex   ( larlite::vertex v )       { fVertex = v; }
@@ -48,6 +49,7 @@ namespace larlite {
     void AddPID   ( larlite::KalekoPID_t p  ) { fPIDs.push_back(p); }
     void AddCalo  ( larlite::calorimetry c  ) { fCalos.push_back(c); }
     void ChangePID( size_t PID_idx, larlite::KalekoPID_t p ) { fPIDs.at(PID_idx) = p; }
+    void AddExtraTrack( larlite::track t )    { fExtraTracks.push_back(t); }
 
 
   protected:
@@ -56,8 +58,11 @@ namespace larlite {
     larlite::vertex fVertex;  /// The reconstructed vertex
 
     std::vector<larlite::track>       fTracks; /// A vector (length n) of n tracks associated with vertex
-    std::vector<larlite::KalekoPID_t> fPIDs;   /// A vector (length n) of PID decisions associated per track
-    std::vector<larlite::calorimetry> fCalos;  /// A vector (length n) of calo objects associated per track
+    std::vector<larlite::KalekoPID_t> fPIDs;   /// A vector (length n) of PID decisions associated per vertex track
+    std::vector<larlite::calorimetry> fCalos;  /// A vector (length n) of calo objects associated per vertex track
+
+    std::vector<larlite::track>       fExtraTracks; /// Possible additional tracks NOT associated with vertex
+                                                    /// E.G. a pion from vtx stops, decays into a muon, which is a separate track
 
   };
 

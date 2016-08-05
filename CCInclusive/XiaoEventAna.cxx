@@ -15,6 +15,7 @@ namespace larlite {
         _myspline = TrackMomentumSplines();
         _MCScalc = TrackMomentumCalculator();
         _nu_E_calc = NuEnergyCalc();
+        _intxn_booster = IntxnBooster();
 
         if (_filetype == kINPUT_FILE_TYPE_MAX) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("DID NOT SET INPUT FILE TYPE!"));
@@ -256,7 +257,10 @@ namespace larlite {
         _n_reco_nu_in_evt = reco_neutrinos.size();
 
         // Loop over the reconstructed neutrinos and fill TTree one per neutrino
-        for (auto const& reco_neutrino : reco_neutrinos) {
+        for (auto & reco_neutrino : reco_neutrinos) {
+
+            // Let's "boost" the interaction by potentially adding more tracks:
+            _intxn_booster.BoostIntxn(reco_neutrino,ev_track);
 
             // Store TTree variables that have to do with the flashes in the BSW
             _brightest_BSW_flash_PE = -999.;

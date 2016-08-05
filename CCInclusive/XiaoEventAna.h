@@ -37,6 +37,7 @@
 #include "NuEnergyCalc.h"
 #include "FidVolBox.h"
 #include "TrackMomentumCalculator.h"
+#include "IntxnBooster.h"
 
 
 namespace larlite {
@@ -105,6 +106,7 @@ namespace larlite {
     TrackMomentumSplines _myspline;
     TrackMomentumCalculator _MCScalc;
     NuEnergyCalc _nu_E_calc;
+    IntxnBooster _intxn_booster;
 
     double _vtx_sphere_radius;
 

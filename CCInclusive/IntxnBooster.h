@@ -43,6 +43,8 @@ namespace larlite {
 		/// Default destructor
 		~IntxnBooster() {}
 
+		void BoostIntxn( larlite::KalekoNuItxn & itxn, const larlite::event_track * ev_track );
+
 	};
 
 }// end namespace larlite

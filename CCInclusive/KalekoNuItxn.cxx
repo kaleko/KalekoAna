@@ -10,6 +10,7 @@ namespace larlite {
   std::vector<larlite::track>       KalekoNuItxn::Tracks() const { return fTracks;}
   std::vector<larlite::KalekoPID_t> KalekoNuItxn::PIDs()   const { return fPIDs;}
   std::vector<larlite::calorimetry> KalekoNuItxn::Calos()  const { return fCalos;}
+  std::vector<larlite::track>       KalekoNuItxn::ExtraTracks() const { return fExtraTracks;}
 
 }
 
