@@ -38,6 +38,7 @@
 #include "FidVolBox.h"
 #include "TrackMomentumCalculator.h"
 #include "IntxnBooster.h"
+ #include "KalekoPIDFiller.h"
 
 
 namespace larlite {
@@ -107,6 +108,7 @@ namespace larlite {
     TrackMomentumCalculator _MCScalc;
     NuEnergyCalc _nu_E_calc;
     IntxnBooster _intxn_booster;
+    KalekoPIDFiller _PID_filler;
 
     double _vtx_sphere_radius;
 
