@@ -82,7 +82,7 @@ namespace larlite {
         _fpppz = ev_mcflux->at(0).fpppz;
         _fppenergy = ev_mcflux->at(0).fppenergy;
 
-        if ( _fndecay == 5 || _fndecay == 6 || _fndecay == 6 ) {
+        if ( _fndecay <= 10 ) {
             _kaon_prod_px = _fpppz * _fppdxdz;
             _kaon_prod_py = _fpppz * _fppdydz;
             _kaon_prod_pz = _fpppz;
