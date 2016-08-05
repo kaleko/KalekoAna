@@ -296,12 +296,12 @@ namespace larlite {
     return muEguess;
   }
 
-  double NuEnergyCalc::ComputeEnuNTracksFromPID(const KalekoNuItxn itxn){
+  double NuEnergyCalc::ComputeEnuNTracksFromPID(const KalekoNuItxn itxn) {
     double dummy1 = 0.;
     double dummy2 = 0.;
-    return ComputeEnuNTracksFromPID(itxn,dummy1,dummy2);
+    return ComputeEnuNTracksFromPID(itxn, dummy1, dummy2);
   }
-  
+
   double NuEnergyCalc::ComputeEnuNTracksFromPID(const KalekoNuItxn itxn, double &E_lepton, double &E_hadrons) {
 
     bool debug = false;
@@ -337,7 +337,7 @@ namespace larlite {
         }
         else {
           if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
-          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track,flip_trk) + 0.106;
+          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track, flip_trk) + 0.106;
 
           //New addition: if range energy is more than MCS energy, then always use range energy!
           // there's no way range energy is going to overestimate.
@@ -369,7 +369,7 @@ namespace larlite {
         }
         else {
           if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
-          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track,flip_trk) + 0.140;
+          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track, flip_trk) + 0.140;
 
           //New addition: if range energy is more than MCS energy, then always use range energy!
           // there's no way range energy is going to overestimate.
@@ -402,6 +402,46 @@ namespace larlite {
         return -1.;
       } // end if no PID
     } // end loop over tracks
+
+
+    // Loop over tracks that have been added to the interaction but are not associated with the vertex
+    // as of right now they have no PID associated with them, so let's assume they're muons
+    for (size_t itrk = 0; itrk < itxn.ExtraTracks().size(); ++itrk) {
+      auto const track = itxn.ExtraTracks().at(itrk);
+      bool trkcontained = _fidvolBox.Contain(track.Vertex()) && _fidvolBox.Contain(track.End());
+      double itrklen = (track.End() - track.Vertex()).Mag();
+      // This is stupid but for now decide direction of track based on its start/end distance to the
+      // INTERACTION VERTEX (but it really should be the distance to the track it was matched to, EG
+      // the end of the pion track if this was pi->mu decay)
+      auto const &geovtx = ::geoalgo::Vector(itxn.Vertex().X(), itxn.Vertex().Y(), itxn.Vertex().Z());
+      bool flip_trk = ::geoalgo::Vector(track.Vertex()).SqDist(geovtx) <
+                      ::geoalgo::Vector(track.End()).SqDist(geovtx) ?
+                      false : true;
+
+      if (trkcontained) {
+        // DON'T add in the muon mass... mass was already added from the tracks associated with vertex
+        tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000.;
+        E_lepton += _myspline.GetMuMomentum(itrklen) / 1000.;
+      }
+      else {
+        double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track, flip_trk);
+
+        //New addition: if range energy is more than MCS energy, then always use range energy!
+        // there's no way range energy is going to overestimate.
+        double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000.;
+        if (spline_energy > mcs_energy) {
+          tot_nu_energy += spline_energy;
+          E_lepton += spline_energy;
+        }
+        else if (mcs_energy > 0) {
+          tot_nu_energy += mcs_energy;
+          E_lepton += mcs_energy;
+        }
+        else {
+          std::cout << "SHOULD NEVER GET HERE" << std::endl;
+        }
+      }
+    }// end loop over extra tracks
 
     return tot_nu_energy;
   } // end computeenuNtracksfromPID
