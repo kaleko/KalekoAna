@@ -57,6 +57,8 @@ namespace larlite {
 
 		void setVtxSphereRadius(double myradius) { _vtx_sphere_radius = myradius; }
 
+    void setMinTrkLen(double len) { _min_trk_len = len; }
+
 	protected:
 
 		double flashDistZ(const track &longest_track, const double flash_z);
@@ -93,6 +95,10 @@ namespace larlite {
 		bool _viable_vtx_has_matched_flash;
 
 		double _vtx_sphere_radius;
+
+    // Minimum track length to consider a track anywhere in analysis. Default 0.
+    double _min_trk_len;
+    
 	};
 
 }

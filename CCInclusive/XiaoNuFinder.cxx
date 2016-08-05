@@ -25,6 +25,7 @@ namespace larlite {
 		_n_total_neutrinos = 0;
 		_vtx_sphere_radius = 3.;
 
+		_min_trk_len = 0.;
 	}
 
 	void XiaoNuFinder::printNumbers() {
@@ -65,6 +66,9 @@ namespace larlite {
 
 		::geoalgo::Vector trkstart = ::geoalgo::Vector( trk.Vertex() );
 		::geoalgo::Vector trkend   = ::geoalgo::Vector( trk.End()    );
+
+		if( (trkend - trkstart).Length() < _min_trk_len ) return false;
+		
 		//std::cout<<vtx_sphere.Center()<<std::endl;
 		// if ( (vtx_sphere.Center() - ::geoalgo::Vector(20.72, 53.45, 513.21)).Length() < 1.) {
 		// 	std::cout << "This track starts here: " << trkstart << std::endl;
