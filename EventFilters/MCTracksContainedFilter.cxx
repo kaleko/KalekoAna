@@ -2,19 +2,22 @@
 #define MCTRACKSCONTAINEDFILTER_CXX
 
 #include "MCTracksContainedFilter.h"
+#include "FidVolBox.h"
 
 namespace larlite {
 
   bool MCTracksContainedFilter::initialize() {
 
-    //Set DistToBoxWall's "box" to be TPC 
-    _myGeoAABox.Min( 0,
-		     -(::larutil::Geometry::GetME()->DetHalfHeight()),
-		     0);
+    _myGeoAABox = FidVolBox();
+
+    // //Set DistToBoxWall's "box" to be TPC 
+    // _myGeoAABox.Min( 0,
+		  //    -(::larutil::Geometry::GetME()->DetHalfHeight()),
+		  //    0);
     
-    _myGeoAABox.Max( 2*(::larutil::Geometry::GetME()->DetHalfWidth()),
-		     ::larutil::Geometry::GetME()->DetHalfHeight(),
-		     ::larutil::Geometry::GetME()->DetLength());
+    // _myGeoAABox.Max( 2*(::larutil::Geometry::GetME()->DetHalfWidth()),
+		  //    ::larutil::Geometry::GetME()->DetHalfHeight(),
+		  //    ::larutil::Geometry::GetME()->DetLength());
     
     kept_events = 0;
     total_events = 0;
@@ -34,8 +37,10 @@ namespace larlite {
     total_events++;
 
     //Make sure all MC tracks are fully contained
-    for (auto &track : *ev_mctrack)
+    for (auto &track : *ev_mctrack){
+      if(track.Origin() != 1) continue;
       if ( !isFullyContained(track) ) return false;
+    }
     
     //Looks like you want to keep this event.
     kept_events++;
