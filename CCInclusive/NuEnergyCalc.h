@@ -87,6 +87,8 @@ namespace larlite {
         /// Loop over associated tracks in interaction and their (already determined) PID info.
         /// For contained tracks use track range splines (charged pions use muon spline, protons use proton spline)
         /// If mu track exits, use multiple coloumb scattering
+        double ComputeEnuNTracksFromPID(const KalekoNuItxn itxn, double &E_lepton, double &E_hadrons);
+        // Wrapper
         double ComputeEnuNTracksFromPID(const KalekoNuItxn itxn);
 
     private:

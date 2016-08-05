@@ -296,17 +296,28 @@ namespace larlite {
     return muEguess;
   }
 
-  double NuEnergyCalc::ComputeEnuNTracksFromPID(const KalekoNuItxn itxn) {
+  double NuEnergyCalc::ComputeEnuNTracksFromPID(const KalekoNuItxn itxn){
+    double dummy1 = 0.;
+    double dummy2 = 0.;
+    return ComputeEnuNTracksFromPID(itxn,dummy1,dummy2);
+  }
+  
+  double NuEnergyCalc::ComputeEnuNTracksFromPID(const KalekoNuItxn itxn, double &E_lepton, double &E_hadrons) {
 
     bool debug = false;
     double tot_nu_energy = 0.;
+    E_lepton = 0.;
+    E_hadrons = 0.;
     // Loop over associated tracks.
     // They are not necessarily pointing in the correct direction ...
     // Assume the start/end point closest to the interaction vertex is the start of the track
     if (debug) std::cout << ":::NuEnergyCalc::: looping over " << itxn.Tracks().size() << " tracks ... " << std::endl;
     for (size_t itrk = 0; itrk < itxn.Tracks().size(); ++itrk) {
       auto const track = itxn.Tracks().at(itrk);
-      double itrklen = track.Length();
+
+      //let's try using start-to-end distance instead
+      // double itrklen = track.Length();
+      double itrklen = (track.End() - track.Vertex()).Mag();
       bool trkcontained = _fidvolBox.Contain(track.Vertex()) && _fidvolBox.Contain(track.End());
 
 
@@ -320,6 +331,7 @@ namespace larlite {
         if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a muon " << std::endl;
         if (trkcontained) {
           tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
+          E_lepton = _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
           if (debug) std::cout << " :::NuEnergyCalc::: this track contained. added spline energy of "
                                  << _myspline.GetMuMomentum(itrklen) / 1000. + 0.106 << std::endl;
         }
@@ -330,9 +342,13 @@ namespace larlite {
           //New addition: if range energy is more than MCS energy, then always use range energy!
           // there's no way range energy is going to overestimate.
           double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
-          if (spline_energy > mcs_energy) tot_nu_energy += spline_energy;
+          if (spline_energy > mcs_energy) {
+            tot_nu_energy += spline_energy;
+            E_lepton = spline_energy;
+          }
           else if (mcs_energy > 0) {
             tot_nu_energy += mcs_energy;
+            E_lepton = mcs_energy;
             if (debug) std::cout << " :::NuEnergyCalc::: MCS worked fine (length = " << itrklen
                                    << ". adding in energy of " << mcs_energy + 0.106 << std::endl;
           }
@@ -347,6 +363,7 @@ namespace larlite {
         if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a pion " << std::endl;
         if (trkcontained) {
           tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
+          E_hadrons += _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
           if (debug) std::cout << " :::NuEnergyCalc::: this track contained. added spline energy of "
                                  << _myspline.GetMuMomentum(itrklen) / 1000. + 0.140 << std::endl;
         }
@@ -357,9 +374,13 @@ namespace larlite {
           //New addition: if range energy is more than MCS energy, then always use range energy!
           // there's no way range energy is going to overestimate.
           double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
-          if (spline_energy > mcs_energy) tot_nu_energy += spline_energy;
+          if (spline_energy > mcs_energy) {
+            tot_nu_energy += spline_energy;
+            E_hadrons += spline_energy;
+          }
           else if (mcs_energy > 0) {
             tot_nu_energy += mcs_energy;
+            E_hadrons += mcs_energy;
             if (debug) std::cout << " :::NuEnergyCalc::: MCS worked fine. adding in energy of " << mcs_energy + 0.140 << std::endl;
           }
           else {
@@ -372,6 +393,7 @@ namespace larlite {
       else if (itxn.PIDs().at(itrk) == kKalekoProton) {
         if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a proton " << std::endl;
         tot_nu_energy += _myspline.GetPMomentum(itrklen) / 1000.;
+        E_hadrons += _myspline.GetPMomentum(itrklen) / 1000.;
         if (debug) std::cout << " :::NuEnergyCalc::: adding in energy from spline: "
                                << _myspline.GetPMomentum(itrklen) / 1000. << std::endl;
       }
