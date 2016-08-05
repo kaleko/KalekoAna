@@ -488,7 +488,7 @@ namespace larlite {
 
                 double k_plus_mass = 0.493667; // GEV
 
-                if ( _fndecay == 5 || _fndecay == 6 || _fndecay == 6 ) {
+                if ( _fndecay <= 10 ) {
                     double _kaon_prod_px = _fpppz * _fppdxdz;
                     double _kaon_prod_py = _fpppz * _fppdydz;
                     double _kaon_prod_pz = _fpppz;
