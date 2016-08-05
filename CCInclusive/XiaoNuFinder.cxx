@@ -16,8 +16,6 @@ namespace larlite {
 
 		_fidvolBox = FidVolBox();
 
-		_PID_filler = KalekoPIDFiller();
-
 		_tot_requests = 0;
 		_n_evts_with_flash_in_bgw = 0;
 		_n_evts_viable_vertex = 0;
@@ -67,8 +65,8 @@ namespace larlite {
 		::geoalgo::Vector trkstart = ::geoalgo::Vector( trk.Vertex() );
 		::geoalgo::Vector trkend   = ::geoalgo::Vector( trk.End()    );
 
-		if( (trkend - trkstart).Length() < _min_trk_len ) return false;
-		
+		if ( (trkend - trkstart).Length() < _min_trk_len ) return false;
+
 		//std::cout<<vtx_sphere.Center()<<std::endl;
 		// if ( (vtx_sphere.Center() - ::geoalgo::Vector(20.72, 53.45, 513.21)).Length() < 1.) {
 		// 	std::cout << "This track starts here: " << trkstart << std::endl;
@@ -279,6 +277,21 @@ namespace larlite {
 			// Make sure vertex is in fiducial volume
 			// std::cout << "this vertex is at " << vtx_sphere.Center() << std::endl;
 			if (!_fidvolBox.Contain(vtx_sphere.Center())) continue;
+
+			// First check if any already-reconstructed neutrinos in this event
+			// have a vertex very close to this one
+			// if so, skip this one!
+			// (though, better would be to pick the one with the fewer # of tracks)
+			bool skip_this_vtx = false;
+			for (auto const& other_itxn : results) {
+				double dist = vtx_sphere.Center().Dist(
+				                  ::geoalgo::Vector(other_itxn.Vertex().X(), other_itxn.Vertex().Y(), other_itxn.Vertex().Z()));
+				if (dist < 10.) {
+					skip_this_vtx = true;
+				}
+			}
+			if (skip_this_vtx) continue;
+
 			// std::cout << "this vertex is at " << vtx_sphere.Center() << std::endl;
 			// Loop over tracks, store index of the ones associated with this vertex
 			std::vector<size_t> associated_track_idx_vec;
@@ -372,6 +385,8 @@ namespace larlite {
 				n_viable_vertices++;
 
 				// "result" is this reconstructed neutrino
+
+
 				KalekoNuItxn result;
 				result.Vertex(vtx);
 				result.AddTrack(track1);
@@ -392,15 +407,15 @@ namespace larlite {
 				n_viable_vertices++;
 				KalekoNuItxn result;
 				result.Vertex(vtx);
-				for (size_t j = 0; j < associated_track_idx_vec.size(); ++j){
+				for (size_t j = 0; j < associated_track_idx_vec.size(); ++j) {
 					// Find the calo for this track
 					size_t tmp_nhits = 0;
 					calorimetry trkcalo;
 					for (size_t i = 0; i < 3; ++i)
-					if (ev_calo->at(ass_calo_v[associated_track_idx_vec[j]][i]).dEdx().size() > tmp_nhits) {
-						trkcalo = ev_calo->at(ass_calo_v[associated_track_idx_vec[j]][i]);
-						tmp_nhits = trkcalo.dEdx().size();
-					}
+						if (ev_calo->at(ass_calo_v[associated_track_idx_vec[j]][i]).dEdx().size() > tmp_nhits) {
+							trkcalo = ev_calo->at(ass_calo_v[associated_track_idx_vec[j]][i]);
+							tmp_nhits = trkcalo.dEdx().size();
+						}
 
 					result.AddTrack(ev_track->at(associated_track_idx_vec[j]));
 					result.AddCalo(trkcalo);
@@ -431,13 +446,6 @@ namespace larlite {
 		// if (_viable_vtx_has_matched_flash)
 		// 	_n_successful_flashmatch++;
 		// std::cout<<"This event found "<<results.size()<<" neutrinos."<<std::endl;
-		/// Fill a PID value for each of the tracks in the interaction
-		for (size_t i = 0; i < results.size(); ++i) {
-			if ( !_PID_filler.fillKalekoPIDs(results.at(i)) ) {
-				print(larlite::msg::kERROR, __FUNCTION__, Form("Failed filling PIDs for some reason!"));
-				throw std::exception();
-			}
-		}
 
 
 		return results;

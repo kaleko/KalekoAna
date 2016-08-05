@@ -24,7 +24,6 @@
 #include "GeoAlgo/GeoSphere.h"
 #include "GeoAlgo/GeoAABox.h"
 #include "CCInclusiveConstants.h"
-#include "KalekoPIDFiller.h"
 #include "FidVolBox.h"
 
 /**
@@ -57,7 +56,7 @@ namespace larlite {
 
 		void setVtxSphereRadius(double myradius) { _vtx_sphere_radius = myradius; }
 
-    void setMinTrkLen(double len) { _min_trk_len = len; }
+		void setMinTrkLen(double len) { _min_trk_len = len; }
 
 	protected:
 
@@ -84,9 +83,6 @@ namespace larlite {
 		// Fiducial volume box
 		geoalgo::AABox _fidvolBox;
 
-		// PID filler
-		KalekoPIDFiller _PID_filler;
-
 		size_t _tot_requests;
 		size_t _n_evts_with_flash_in_bgw;
 		size_t _n_evts_viable_vertex;
@@ -96,9 +92,9 @@ namespace larlite {
 
 		double _vtx_sphere_radius;
 
-    // Minimum track length to consider a track anywhere in analysis. Default 0.
-    double _min_trk_len;
-    
+		// Minimum track length to consider a track anywhere in analysis. Default 0.
+		double _min_trk_len;
+
 	};
 
 }
