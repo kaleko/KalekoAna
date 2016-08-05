@@ -52,6 +52,8 @@ namespace larlite {
     void AddExtraTrack( larlite::track t )    { fExtraTracks.push_back(t); }
 
 
+    void printInfo();
+    
   protected:
 //      typedef std::pair<larlite::vertex, std::vector< std::pair<larlite::KalekoPID_t, larlite::track> > > CCNuItxn_t;
 
