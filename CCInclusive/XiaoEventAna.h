@@ -63,6 +63,7 @@ namespace larlite {
       _track_producer = "pandoraNuPMA";
       _vtx_producer = "pmtrack";
       _calo_producer = _track_producer + "calo";
+      _min_trk_len = 0.;
 
     }
 
@@ -89,12 +90,17 @@ namespace larlite {
 
     void setCaloProducer(std::string prod) { _calo_producer = prod; }
 
+    void setMinTrkLen(double len) { _min_trk_len = len; }
+
   protected:
 
     std::string _track_producer;
     std::string _vtx_producer;
     std::string _calo_producer;
     
+    // Minimum track length to consider a track anywhere in analysis. Default 0.
+    double _min_trk_len;
+
     XiaoNuFinder _nu_finder;
     TrackMomentumSplines _myspline;
     TrackMomentumCalculator _MCScalc;
@@ -142,6 +148,8 @@ namespace larlite {
     double _fppdydz;
     double _fpppz;
     double _fppenergy;
+        double _kaon_prod_E;
+    double _kaon_prod_theta;
     double _mu_p_dirdot;
     int _n_associated_tracks;
 
@@ -176,6 +184,8 @@ namespace larlite {
     double _longest_trk_dot_truemuondir;
 
     int _n_reco_nu_in_evt;
+    double _E_lepton;
+    double _E_hadrons;
   };
 }
 #endif

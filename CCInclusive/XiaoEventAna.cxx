@@ -11,6 +11,7 @@ namespace larlite {
     bool XiaoEventAna::initialize() {
 
         _nu_finder = XiaoNuFinder();
+        _nu_finder.setMinTrkLen(_min_trk_len);
         _myspline = TrackMomentumSplines();
         _MCScalc = TrackMomentumCalculator();
         _nu_E_calc = NuEnergyCalc();
@@ -61,6 +62,8 @@ namespace larlite {
             _tree->Branch("fppdydz", &_fppdydz, "fppdydz/D");
             _tree->Branch("fpppz", &_fpppz, "fpppz/D");
             _tree->Branch("fppenergy", &_fppenergy, "fppenergy/D");
+            _tree->Branch("kaon_prod_E", &_kaon_prod_E, "kaon_prod_E/D");
+            _tree->Branch("kaon_prod_theta", &_kaon_prod_theta, "kaon_prod_theta/D");
             _tree->Branch("mu_p_dirdot", &_mu_p_dirdot, "mu_p_dirdot/D");
             _tree->Branch("true_lepton_pdg", &_true_lepton_pdg, "true_lepton_pdg/I");
             _tree->Branch("true_lepton_momentum", &_true_lepton_momentum, "true_lepton_momentum/D");
@@ -88,6 +91,8 @@ namespace larlite {
             _tree->Branch("BSW_flash_z_range", &_BSW_flash_z_range, "BSW_flash_z_range/D");
             _tree->Branch("longest_trk_dot_truemuondir", &_longest_trk_dot_truemuondir, "longest_trk_dot_truemuondir/D");
             _tree->Branch("n_reco_nu_in_evt", &_n_reco_nu_in_evt, "n_reco_nu_in_evt/I");
+            _tree->Branch("E_lepton", &_E_lepton, "E_lepton/D");
+            _tree->Branch("E_hadrons", &_E_hadrons, "E_hadrons/D");
         }
 
 
@@ -137,6 +142,8 @@ namespace larlite {
         _true_nu_CCNC = false;
         _true_nu_mode = -999;
         _fndecay = 0;
+        _kaon_prod_E = -999.;
+        _kaon_prod_theta = -999.;
         _mu_p_dirdot = 999.;
         _true_lepton_pdg = -999;
         _true_lepton_momentum = -999.;
@@ -168,6 +175,8 @@ namespace larlite {
         _fppenergy = -999.;
         _longest_trk_dot_truemuondir = -999.;
         _n_reco_nu_in_evt = 0;
+        _E_lepton = -999.;
+        _E_hadrons = -999.;
     }
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
@@ -337,8 +346,8 @@ namespace larlite {
                 }
             }
 
-            if (longest_trackdir_endpoints.Length() < 0.00001){
-                std::cout<<"length problem. "<<longest_trackdir_endpoints.Length()<<std::endl;
+            if (longest_trackdir_endpoints.Length() < 0.00001) {
+                std::cout << "length problem. " << longest_trackdir_endpoints.Length() << std::endl;
             }
 
             auto second_longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
@@ -444,7 +453,8 @@ namespace larlite {
 
             }
 
-            _nu_E_estimate = _nu_E_calc.ComputeEnuNTracksFromPID(reco_neutrino);
+            // This now fills E lepton and E hadrons
+            _nu_E_estimate = _nu_E_calc.ComputeEnuNTracksFromPID(reco_neutrino, _E_lepton, _E_hadrons);
 
 
             larlite::mcnu mcnu;
@@ -475,6 +485,24 @@ namespace larlite {
                 _fppdydz = ev_mcflux->at(0).fppdydz;
                 _fpppz = ev_mcflux->at(0).fpppz;
                 _fppenergy = ev_mcflux->at(0).fppenergy;
+
+                double k_plus_mass = 0.493667; // GEV
+
+                if ( _fndecay == 5 || _fndecay == 6 || _fndecay == 6 ) {
+                    double _kaon_prod_px = _fpppz * _fppdxdz;
+                    double _kaon_prod_py = _fpppz * _fppdydz;
+                    double _kaon_prod_pz = _fpppz;
+                    _kaon_prod_E = std::sqrt( _kaon_prod_px * _kaon_prod_px +
+                                              _kaon_prod_py * _kaon_prod_py +
+                                              _kaon_prod_pz * _kaon_prod_pz +
+                                              k_plus_mass * k_plus_mass);
+                    _kaon_prod_theta = ::geoalgo::Vector(
+                                           _kaon_prod_px, _kaon_prod_py, _kaon_prod_pz
+                                       ).Theta() * (180. / 3.14159);
+
+                }
+
+
                 // std::cout << "The reconstructed vertex is at : " << thevertexsphere.Center() << std::endl;
                 // std::cout << "The true vertex is at : "
                 //           <<::geoalgo::Vector(ev_mctruth->at(0).GetNeutrino().Nu().Trajectory().front().Position()) << std::endl;
@@ -517,38 +545,19 @@ namespace larlite {
             passed_events++;
         } // Done loop over all neutrinos in this event
 
-        // if (_nu_E_estimate > 3 && !_correct_ID && _second_longest_trk_len > 16.) {
-        //     std::cout << "--- FOUND EVENT WITH _nu_E_estimate > 3 and !_correctID and scnd_long_trklen > 16 --- " << std::endl;
-        //     std::cout << "  - the true vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", mcnu.Nu().Trajectory().front().Position().X()
-        //               , mcnu.Nu().Trajectory().front().Position().Y()
-        //               , mcnu.Nu().Trajectory().front().Position().Z()) << std::endl;
-        //     std::cout << "  - the reco vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", reco_neutrino.first.X()
-        //               , reco_neutrino.first.Y()
-        //               , reco_neutrino.first.Z()) << std::endl;
-        //     std::cout << "  - and the ttree index is " << storage->get_index() << std::endl;
-        //     std::cout << "  - _max_tracks_dotprod is " << _max_tracks_dotprod << std::endl;
-        //     std::cout << "  - _longest_tracks_dotprod is " << _longest_tracks_dotprod << std::endl;
-        //     std::cout << "  - _longest_tracks_dotprod_trkendpoints is " << _longest_tracks_dotprod_trkendpoints << std::endl;
-        //     // std::cout << "  - longest track info: " << std::endl;
-        //     // std::cout << "    -"
+        // if (_n_reco_nu_in_evt == 1 && _all_trks_contained &&  !_true_nu_CCNC && _correct_ID && _longest_trk_len > 100.) {
+        //     if (_true_nu_E / _nu_E_estimate > 2) {
+        //         std::cout << "Found weird fully contained event." << std::endl;
+        //         std::cout << "  - run " << storage->run_id() << ", subrun " << storage->subrun_id() << ", event " << storage->event_id() << std::endl;
+        //         std::cout << "  - the (correctly ID'd) reco vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", reco_neutrinos.front().Vertex().X()
+        //                   , reco_neutrinos.front().Vertex().Y()
+        //                   , reco_neutrinos.front().Vertex().Z()) << std::endl;
+        //         std::cout << "  - true neutrino energy is " << _true_nu_E << std::endl;
+        //         std::cout << "  - reco neutrino energy is " << _nu_E_estimate << std::endl;
+        //         std::cout << "  - and the ttree index is " << storage->get_index() << std::endl;
+        //         std::cout << "  - and n associated tracks is " << _n_associated_tracks << std::endl;
+        //     }
         // }
-
-
-        /// TEMP
-        // if (_nu_E_estimate < 2.5 && _true_nu_E > 2.5 && _correct_ID) {
-
-        //     std::cout << "Index is " << storage->get_index() << ", correct ID is: " << _correct_ID
-        //               << ", estimate E: " << _nu_E_estimate
-        //               << ", true E: " << _true_nu_E << std::endl;
-        //     std::cout << " >> reco vtx is (" << reco_neutrino.first.X() << ","
-        //               << reco_neutrino.first.Y() << "," << reco_neutrino.first.Z() << ")" << std::endl;
-        //     std::cout << " >> _longest_tracks_dotprod_trkendpoints is " << _longest_tracks_dotprod_trkendpoints << std::endl;
-        //     std::cout << std::endl;
-        //     return true;
-        // }
-        // else return false;
-
-
 
         return true;
     }
