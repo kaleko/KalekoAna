@@ -320,6 +320,13 @@ namespace larlite {
       double itrklen = (track.End() - track.Vertex()).Mag();
       bool trkcontained = _fidvolBox.Contain(track.Vertex()) && _fidvolBox.Contain(track.End());
 
+      // If neither the vertex OR the end of the neutrino-vertex-associated track are contained, something has gone wrong.
+      if (!_fidvolBox.Contain(track.Vertex()) && !_fidvolBox.Contain(track.End())) {
+        // This happens sometimes when the reconstructed neutrino vertex is contained near the edge of 
+        // the fiducial volume box and one of the associated tracks is not contained at all.
+        // If so, skip this track
+        continue;
+      }
 
       auto const &geovtx = ::geoalgo::Vector(itxn.Vertex().X(), itxn.Vertex().Y(), itxn.Vertex().Z());
       bool flip_trk = ::geoalgo::Vector(track.Vertex()).SqDist(geovtx) <
@@ -336,8 +343,15 @@ namespace larlite {
                                  << _myspline.GetMuMomentum(itrklen) / 1000. + 0.106 << std::endl;
         }
         else {
+          // if track isn't contained, "chop" it so only the portion inside of the fid vol box is used
+          auto chopped_trk = _chopper.chopTrack(track);
+          // std::cout << "before chopping track has length " << itrklen << std::endl;
+          // std::cout << "   after chopping, track has length " << (chopped_trk.End() - chopped_trk.Vertex()).Mag() << std::endl;
           if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
-          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track, flip_trk) + 0.106;
+          // NOTE that trackchopper also flips the track if the "end" is contained but the "vertex" isn't,
+          // so no additional track flipping is needed
+          flip_trk = false;
+          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(chopped_trk, flip_trk) + 0.106;
 
           //New addition: if range energy is more than MCS energy, then always use range energy!
           // there's no way range energy is going to overestimate.
@@ -368,8 +382,13 @@ namespace larlite {
                                  << _myspline.GetMuMomentum(itrklen) / 1000. + 0.140 << std::endl;
         }
         else {
+          // if track isn't contained, "chop" it so only the portion inside of the fid vol box is used
+          auto chopped_trk = _chopper.chopTrack(track);
           if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
-          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track, flip_trk) + 0.140;
+          // NOTE that trackchopper also flips the track if the "end" is contained but the "vertex" isn't,
+          // so no additional track flipping is needed
+          flip_trk = false;
+          double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(chopped_trk, flip_trk) + 0.140;
 
           //New addition: if range energy is more than MCS energy, then always use range energy!
           // there's no way range energy is going to overestimate.
@@ -410,6 +429,11 @@ namespace larlite {
       auto const track = itxn.ExtraTracks().at(itrk);
       bool trkcontained = _fidvolBox.Contain(track.Vertex()) && _fidvolBox.Contain(track.End());
       double itrklen = (track.End() - track.Vertex()).Mag();
+
+      // If neither the vertex OR the end of the extra-track are contained, ignore this track.
+      if (!_fidvolBox.Contain(track.Vertex()) && !_fidvolBox.Contain(track.End()))
+        continue;
+
       // This is stupid but for now decide direction of track based on its start/end distance to the
       // INTERACTION VERTEX (but it really should be the distance to the track it was matched to, EG
       // the end of the pion track if this was pi->mu decay)
@@ -424,7 +448,13 @@ namespace larlite {
         E_lepton += _myspline.GetMuMomentum(itrklen) / 1000.;
       }
       else {
-        double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(track, flip_trk);
+        // if track isn't contained, "chop" it so only the portion inside of the fid vol box is used
+        auto chopped_trk = _chopper.chopTrack(track);
+        // NOTE that trackchopper also flips the track if the "end" is contained but the "vertex" isn't,
+        // so no additional track flipping is needed
+        flip_trk = false;
+        double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
+
 
         //New addition: if range energy is more than MCS energy, then always use range energy!
         // there's no way range energy is going to overestimate.

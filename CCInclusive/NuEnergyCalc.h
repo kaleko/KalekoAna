@@ -26,6 +26,7 @@
 #include "KalekoNuItxn.h"
 #include "TrackMomentumSplines.h"
 #include "TrackMomentumCalculator.h"
+#include "TrackChopper.h"
 
 /**
    \class NuEnergyCalc
@@ -42,6 +43,7 @@ namespace larlite {
             _fidvolBox = FidVolBox();
             _myspline = TrackMomentumSplines();
             _tmc = TrackMomentumCalculator();
+            _chopper = TrackChopper();
         };
 
         /// Default destructor
@@ -97,6 +99,7 @@ namespace larlite {
 
         TrackMomentumSplines _myspline;
         TrackMomentumCalculator _tmc;
+        TrackChopper _chopper;
     };
 
 }// end namespace larlite

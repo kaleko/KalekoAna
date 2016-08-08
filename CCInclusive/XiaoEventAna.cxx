@@ -17,6 +17,7 @@ namespace larlite {
         _nu_E_calc = NuEnergyCalc();
         _intxn_booster = IntxnBooster();
         _PID_filler = KalekoPIDFiller();
+        _chopper = TrackChopper();
 
 
         if (_filetype == kINPUT_FILE_TYPE_MAX) {
@@ -72,6 +73,7 @@ namespace larlite {
             _tree->Branch("true_lepton_momentum", &_true_lepton_momentum, "true_lepton_momentum/D");
             _tree->Branch("n_associated_tracks", &_n_associated_tracks, "n_associated_tracks/I");
             _tree->Branch("longest_trk_len", &_longest_trk_len, "longest_trk_len/D");
+            _tree->Branch("longest_trk_len_infidvol", &_longest_trk_len_infidvol, "longest_trk_len_infidvol/D");
             _tree->Branch("longest_trk_cosy", &_longest_trk_cosy, "longest_trk_cosy/D");
             _tree->Branch("second_longest_trk_len", &_second_longest_trk_len, "second_longest_trk_len/D");
             _tree->Branch("longest_trk_theta", &_longest_trk_theta, "longest_trk_theta/D");
@@ -152,6 +154,7 @@ namespace larlite {
         _true_lepton_momentum = -999.;
         _n_associated_tracks = 0;
         _longest_trk_len = -999.;
+        _longest_trk_len_infidvol = -999.;
         _second_longest_trk_len = -999.;
         _longest_trk_cosy = -999;
         _longest_trk_theta = -999.;
@@ -290,6 +293,7 @@ namespace larlite {
             _all_trks_contained = true;
             // Quick loop over associated track lengths to find the longest one:
             _longest_trk_len = -999.;
+            _longest_trk_len_infidvol = -999.;
             for (size_t david = 0; david < reco_neutrino.Tracks().size(); david++) {
                 auto const asstd_trk = reco_neutrino.Tracks().at(david);
                 bool contained = _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.Vertex())) &&
@@ -297,7 +301,13 @@ namespace larlite {
                 if (!contained) _all_trks_contained = false;
                 if ( asstd_trk.Length() > _longest_trk_len ) {
 
-                    _longest_trk_len = asstd_trk.Length();
+                    _longest_trk_len = (asstd_trk.End() - asstd_trk.Vertex()).Mag();
+                    if (!contained) {
+                        auto const chopped_trk = _chopper.chopTrack(asstd_trk);
+                        _longest_trk_len_infidvol = (chopped_trk.End() - chopped_trk.Vertex()).Mag();
+                    }
+                    else
+                        _longest_trk_len_infidvol = _longest_trk_len;
 
                     _longest_trk_theta = asstd_trk.Theta();
                     _longest_trk_spline_mom = _myspline.GetMuMomentum(asstd_trk.Length());
