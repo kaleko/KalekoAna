@@ -12,7 +12,7 @@ namespace larlite {
         // If the track is fully contained (which should never happen)
         // Just return the original track
         if (_box.Contain(trk.Vertex()) && _box.Contain(trk.End())) {
-            std::cout << " Hrmmm... why did TrackChopper get handed a fully-contained track? Returning original ... " << std::endl;
+            // std::cout << " Hrmmm... why did TrackChopper get handed a fully-contained track? Returning original ... " << std::endl;
             return larlite::track(trk);
         }
 
@@ -27,8 +27,13 @@ namespace larlite {
         // the portion of the track inside of the fiducial volume.
         if (_box.Contain(trk.Vertex()) && !_box.Contain(trk.End())) {
             for (int i = 0; i < n_points; ++i) {
-                if (_box.Contain(trk.LocationAtPoint(i)))
+                if (_box.Contain(trk.LocationAtPoint(i))) {
                     result.add_vertex(trk.LocationAtPoint(i));
+                    // You also need to add directions just to get the NumberTrajectoryPoints to work
+                    // because the reco track data product is ass-backwards
+                    // so I'm filling it with a dummy now
+                    result.add_direction(trk.LocationAtPoint(i));
+                }
                 else
                     return result;
             }
@@ -39,8 +44,13 @@ namespace larlite {
         // to worry about flipping it later on down the line.
         else if (_box.Contain(trk.End()) && !_box.Contain(trk.Vertex())) {
             for (int i = n_points - 1; i >= 0; i--) {
-                if (_box.Contain(trk.LocationAtPoint(i)))
+                if (_box.Contain(trk.LocationAtPoint(i))) {
                     result.add_vertex(trk.LocationAtPoint(i));
+                    // You also need to add directions just to get the NumberTrajectoryPoints to work
+                    // because the reco track data product is ass-backwards
+                    // so I'm filling it with a dummy now
+                    result.add_direction(trk.LocationAtPoint(i));
+                }
                 else
                     return result;
             }
