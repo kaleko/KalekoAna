@@ -36,17 +36,20 @@ namespace larlite {
 
     bool KalekoPIDFiller::fillKalekoPIDs(KalekoNuItxn &kaleko_itxn) {
 
+        bool debug = false;
+
         // Loop over associated track lengths to find the longest one.
         // Set the longest one's PID value to muon.
         double longest_trklen = -999.;
         size_t longest_itrk   = 0;
         for (size_t itrk = 0; itrk < kaleko_itxn.Tracks().size(); ++itrk) {
-            double itrklen = kaleko_itxn.Tracks().at(itrk).Length();
+            double itrklen = (kaleko_itxn.Tracks().at(itrk).End() - kaleko_itxn.Tracks().at(itrk).Vertex()).Mag();
             if (itrklen > longest_trklen) {
                 longest_itrk = itrk;
                 longest_trklen = itrklen;
             }
         }
+        if (debug) std::cout << " __KalekoPIDFiller__ Longest track (muon) has length " << longest_trklen << "." << std::endl;
         kaleko_itxn.ChangePID(longest_itrk, kKalekoMuon);
 
         // Loop over the other associated tracks use calorimetry cut on 4
@@ -60,6 +63,9 @@ namespace larlite {
             for (size_t j = 0; j < thecalo.dEdx().size(); ++j)
                 avg_dedx += thecalo.dEdx().at(j);
             avg_dedx /= thecalo.dEdx().size();
+
+            if (debug)
+                std::cout << " __KalekoPIDFiller__ This track (not longest) has avg dEdx of " << avg_dedx << std::endl;
 
             // if avg dedx is > 4, it's proton
             if (avg_dedx >= 4.) kaleko_itxn.ChangePID(itrk, kKalekoProton);
