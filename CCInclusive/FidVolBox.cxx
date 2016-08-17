@@ -9,7 +9,7 @@ namespace larlite{
 		double fidvol_dist_x = 20.;
 		double fidvol_dist_y = 26.5;
 		double fidvol_dist_zmin = 20.;
-		double fidvol_dist_z = 36.8;
+		double fidvol_dist_z = 36.8;//361.8;
 
 		// DetHalfHeight is 116.5
 		// DetHalfWidth  is 128.175
