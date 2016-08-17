@@ -344,15 +344,16 @@ namespace larlite {
 
       if (itxn.PIDs().at(itrk) == kKalekoMuon) {
         if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a muon " << std::endl;
-        if (trkcontained) {
-          tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
-          E_lepton = _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
-          if (debug) std::cout << " :::NuEnergyCalc::: this track contained. added spline energy of "
-                                 << _myspline.GetMuMomentum(itrklen) / 1000. + 0.106 << std::endl;
-        }
-        else {
+        // if (trkcontained) {
+        //   tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
+        //   E_lepton = _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
+        //   if (debug) std::cout << " :::NuEnergyCalc::: this track contained. added spline energy of "
+        //                          << _myspline.GetMuMomentum(itrklen) / 1000. + 0.106 << std::endl;
+        // }
+        // else {
           // if track isn't contained, "chop" it so only the portion inside of the fid vol box is used
           auto chopped_trk = _chopper.chopTrack(track);
+          double choppedtrklen = (chopped_trk.End() - chopped_trk.Vertex()).Mag();
           // std::cout << "before chopping track has length " << itrklen << std::endl;
           // std::cout << "   after chopping, track has length " << (chopped_trk.End() - chopped_trk.Vertex()).Mag() << std::endl;
           if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
@@ -372,7 +373,7 @@ namespace larlite {
 
           //New addition: if range energy is more than MCS energy, then always use range energy!
           // there's no way range energy is going to overestimate.
-          double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
+          double spline_energy = _myspline.GetMuMomentum(choppedtrklen) / 1000. + 0.106;
           // sometimes MCS returns exactly 7.501 GeV (some "failure" mode I don't understand)
           // so if MCS is way overestimating, use range.
           // Jose: "the loglikelihood is minimized doing a raster scan up to 7.5 GeV"
@@ -391,19 +392,20 @@ namespace larlite {
             // if (debug) std::cout << " :::NuEnergyCalc::: MCS failed. using tracklength contained. adding "
             //                        << _myspline.GetMuMomentum(itrklen) / 1000. + 0.106 << std::endl;
           }
-        }
+        // }
       }
       else if (itxn.PIDs().at(itrk) == kKalekoChargedPion) {
         if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a pion " << std::endl;
-        if (trkcontained) {
-          tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
-          E_hadrons += _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
-          if (debug) std::cout << " :::NuEnergyCalc::: this track contained. added spline energy of "
-                                 << _myspline.GetMuMomentum(itrklen) / 1000. + 0.140 << std::endl;
-        }
-        else {
+        // if (trkcontained) {
+        //   tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
+        //   E_hadrons += _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
+        //   if (debug) std::cout << " :::NuEnergyCalc::: this track contained. added spline energy of "
+        //                          << _myspline.GetMuMomentum(itrklen) / 1000. + 0.140 << std::endl;
+        // }
+        // else {
           // if track isn't contained, "chop" it so only the portion inside of the fid vol box is used
           auto chopped_trk = _chopper.chopTrack(track);
+          double choppedtrklen = (chopped_trk.End() - chopped_trk.Vertex()).Mag();
           if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
           // NOTE that trackchopper also flips the track if the "end" is contained but the "vertex" isn't,
           // so no additional track flipping is needed
@@ -412,7 +414,7 @@ namespace larlite {
 
           //New addition: if range energy is more than MCS energy, then always use range energy!
           // there's no way range energy is going to overestimate.
-          double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
+          double spline_energy = _myspline.GetMuMomentum(choppedtrklen) / 1000. + 0.140;
           if (spline_energy > mcs_energy || mcs_energy > 7.0) {
             tot_nu_energy += spline_energy;
             E_hadrons += spline_energy;
@@ -428,7 +430,7 @@ namespace larlite {
             // if (debug) std::cout << " :::NuEnergyCalc::: MCS failed. using tracklength contained. adding "
             //                        << _myspline.GetMuMomentum(itrklen) / 1000. + 0.146 << std::endl;
           }
-        }
+        // }
       }
       else if (itxn.PIDs().at(itrk) == kKalekoProton) {
         if (debug) std::cout << " :::NuEnergyCalc::: this track is thought to be a proton " << std::endl;
@@ -444,55 +446,55 @@ namespace larlite {
     } // end loop over tracks
 
 
-    // Loop over tracks that have been added to the interaction but are not associated with the vertex
-    // as of right now they have no PID associated with them, so let's assume they're muons
-    for (size_t itrk = 0; itrk < itxn.ExtraTracks().size(); ++itrk) {
-      auto const track = itxn.ExtraTracks().at(itrk);
-      bool trkcontained = _fidvolBox.Contain(track.Vertex()) && _fidvolBox.Contain(track.End());
-      double itrklen = (track.End() - track.Vertex()).Mag();
+    // // Loop over tracks that have been added to the interaction but are not associated with the vertex
+    // // as of right now they have no PID associated with them, so let's assume they're muons
+    // for (size_t itrk = 0; itrk < itxn.ExtraTracks().size(); ++itrk) {
+    //   auto const track = itxn.ExtraTracks().at(itrk);
+    //   bool trkcontained = _fidvolBox.Contain(track.Vertex()) && _fidvolBox.Contain(track.End());
+    //   double itrklen = (track.End() - track.Vertex()).Mag();
 
-      // If neither the vertex OR the end of the extra-track are contained, ignore this track.
-      if (!_fidvolBox.Contain(track.Vertex()) && !_fidvolBox.Contain(track.End()))
-        continue;
+    //   // If neither the vertex OR the end of the extra-track are contained, ignore this track.
+    //   if (!_fidvolBox.Contain(track.Vertex()) && !_fidvolBox.Contain(track.End()))
+    //     continue;
 
-      // This is stupid but for now decide direction of track based on its start/end distance to the
-      // INTERACTION VERTEX (but it really should be the distance to the track it was matched to, EG
-      // the end of the pion track if this was pi->mu decay)
-      auto const &geovtx = ::geoalgo::Vector(itxn.Vertex().X(), itxn.Vertex().Y(), itxn.Vertex().Z());
-      bool flip_trk = ::geoalgo::Vector(track.Vertex()).SqDist(geovtx) <
-                      ::geoalgo::Vector(track.End()).SqDist(geovtx) ?
-                      false : true;
+    //   // This is stupid but for now decide direction of track based on its start/end distance to the
+    //   // INTERACTION VERTEX (but it really should be the distance to the track it was matched to, EG
+    //   // the end of the pion track if this was pi->mu decay)
+    //   auto const &geovtx = ::geoalgo::Vector(itxn.Vertex().X(), itxn.Vertex().Y(), itxn.Vertex().Z());
+    //   bool flip_trk = ::geoalgo::Vector(track.Vertex()).SqDist(geovtx) <
+    //                   ::geoalgo::Vector(track.End()).SqDist(geovtx) ?
+    //                   false : true;
 
-      if (trkcontained) {
-        // DON'T add in the muon mass... mass was already added from the tracks associated with vertex
-        tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000.;
-        E_lepton += _myspline.GetMuMomentum(itrklen) / 1000.;
-      }
-      else {
-        // if track isn't contained, "chop" it so only the portion inside of the fid vol box is used
-        auto chopped_trk = _chopper.chopTrack(track);
-        // NOTE that trackchopper also flips the track if the "end" is contained but the "vertex" isn't,
-        // so no additional track flipping is needed
-        flip_trk = false;
-        double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
+    //   if (trkcontained) {
+    //     // DON'T add in the muon mass... mass was already added from the tracks associated with vertex
+    //     tot_nu_energy += _myspline.GetMuMomentum(itrklen) / 1000.;
+    //     E_lepton += _myspline.GetMuMomentum(itrklen) / 1000.;
+    //   }
+    //   else {
+    //     // if track isn't contained, "chop" it so only the portion inside of the fid vol box is used
+    //     auto chopped_trk = _chopper.chopTrack(track);
+    //     // NOTE that trackchopper also flips the track if the "end" is contained but the "vertex" isn't,
+    //     // so no additional track flipping is needed
+    //     flip_trk = false;
+    //     double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
 
 
-        //New addition: if range energy is more than MCS energy, then always use range energy!
-        // there's no way range energy is going to overestimate.
-        double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000.;
-        if (spline_energy > mcs_energy || mcs_energy > 7.0) {
-          tot_nu_energy += spline_energy;
-          E_lepton += spline_energy;
-        }
-        else if (mcs_energy > 0 && mcs_energy < 7.0) {
-          tot_nu_energy += mcs_energy;
-          E_lepton += mcs_energy;
-        }
-        else {
-          std::cout << "SHOULD NEVER GET HERE" << std::endl;
-        }
-      }
-    }// end loop over extra tracks
+    //     //New addition: if range energy is more than MCS energy, then always use range energy!
+    //     // there's no way range energy is going to overestimate.
+    //     double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000.;
+    //     if (spline_energy > mcs_energy || mcs_energy > 7.0) {
+    //       tot_nu_energy += spline_energy;
+    //       E_lepton += spline_energy;
+    //     }
+    //     else if (mcs_energy > 0 && mcs_energy < 7.0) {
+    //       tot_nu_energy += mcs_energy;
+    //       E_lepton += mcs_energy;
+    //     }
+    //     else {
+    //       std::cout << "SHOULD NEVER GET HERE" << std::endl;
+    //     }
+    //   }
+    // }// end loop over extra tracks
 
     return tot_nu_energy;
   } // end computeenuNtracksfromPID
