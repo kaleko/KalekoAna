@@ -33,6 +33,9 @@ namespace larlite {
 
 		kcal = 0.0022;
 
+		// This pretty much has to be 100. If you use 20, you will find many events with low neutrino energy
+		// that get reconstructed as having high neutrino energy becuase the muon only has 30cm in the
+		// fiducial volume, and MCS way overestimates the energy. (you get high pion contamination above energy cut)
 		minLength = 100.;
 		maxLength = 1350.0;
 
@@ -841,7 +844,7 @@ namespace larlite {
 		recoX.clear(); recoY.clear(); recoZ.clear();
 
 		Int_t n_points = trk.NumberTrajectoryPoints();
-
+		// std::cout<<"n_points is "<<n_points<<std::endl;
 		if (!flip) {
 			for ( Int_t i = 0; i < n_points; i++ )
 			{
@@ -862,21 +865,21 @@ namespace larlite {
 
 		}
 		Int_t my_steps = recoX.size();
-
+		// std::cout<<" my_Steps = "<<my_steps<<std::endl;
 		if ( my_steps < 2 ) return -1.0;
 
 		Int_t check0 = GetRecoTracks( recoX, recoY, recoZ );
-
+		// std::cout<<" check0 = "<<check0<<std::endl;
 		if ( check0 != 0 ) return -1.0;
 
 		seg_size = steps_size2;
 
 		Int_t check1 = GetSegTracks2( recoX, recoY, recoZ );
-
+		// std::cout<<"check1 = "<<check1<<std::endl;
 		if ( check1 != 0 ) return -1.0;
 
 		Int_t seg_steps = segx.size();
-
+		// std::cout<<"seg_steps = "<<seg_steps<<std::endl;
 		if ( seg_steps < 2 ) return -1;
 
 		Int_t seg_steps0 = seg_steps - 1;
@@ -886,7 +889,7 @@ namespace larlite {
 		if ( recoL < minLength || recoL > maxLength ) return -1;
 
 		Int_t check2 = GetDeltaThetaij( dEi, dEj, dthij, seg_size, ind );
-
+		// std::cout<<"check2 = "<<check2<<std::endl;
 		if ( check2 != 0 ) return -1.0;
 
 		Double_t logL = 1e+16;

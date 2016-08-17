@@ -67,6 +67,8 @@ namespace larlite {
 
         virtual ~TrackMomentumCalculator() {};
 
+        void SetMinLength(double minlen) { minLength = minlen; }
+
         //    double GetTrackMomentum(double trkrange, int pdg);
 
         TPolyLine3D *gr_xyz; TGraph *gr_xy; TGraph *gr_yz; TGraph *gr_xz;
@@ -108,6 +110,7 @@ namespace larlite {
         Double_t minLength;
 
         Double_t maxLength;
+
     };
 } // end namespace larlite
 
