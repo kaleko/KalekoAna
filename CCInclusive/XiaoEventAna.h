@@ -67,6 +67,7 @@ namespace larlite {
       _vtx_producer = "pmtrack";
       _calo_producer = _track_producer + "calo";
       _min_trk_len = 0.;
+      _mcs_min_trk_len = 100.;
 
     }
 
@@ -93,7 +94,13 @@ namespace larlite {
 
     void setCaloProducer(std::string prod) { _calo_producer = prod; }
 
+    // This is minimum length to SELECT THE EVENTS
     void setMinTrkLen(double len) { _min_trk_len = len; }
+
+    // This is minimum length the MCS scattering code uses
+    void setMCSMinLen(double len) { _mcs_min_trk_len = len; }
+
+
 
   protected:
 
@@ -103,6 +110,9 @@ namespace larlite {
     
     // Minimum track length to consider a track anywhere in analysis. Default 0.
     double _min_trk_len;
+
+    // Minimum track length for the MCS code to use
+    double _mcs_min_trk_len;
 
     XiaoNuFinder _nu_finder;
     TrackMomentumSplines _myspline;
@@ -161,18 +171,29 @@ namespace larlite {
 
     double _longest_trk_len;
     double _longest_trk_len_infidvol;
+    double _longest_trk_Length;
+    double _longest_trk_Length_infidvol;
+    double _longest_track_end_x_infidvol;
+    double _longest_track_end_y_infidvol;
+    double _longest_track_end_z_infidvol;
+
     double _longest_trk_cosy;
     double _second_longest_trk_len;
     double _longest_trk_theta;
+    double _longest_trk_phi;
     double _longest_trk_MCS_mom;
     double _longest_trk_spline_mom;
     double _nu_E_estimate;
+    double _CCQE_E;
     double _longest_trk_avg_calo;
     double _second_longest_trk_avg_calo;
 
     double _true_nu_x;
     double _true_nu_y;
     double _true_nu_z;
+        double _reco_nu_x;
+    double _reco_nu_y;
+    double _reco_nu_z;
 
     double _dist_reco_true_vtx;
     double _max_tracks_dotprod;
@@ -193,6 +214,14 @@ namespace larlite {
     int _n_reco_nu_in_evt;
     double _E_lepton;
     double _E_hadrons;
+
+    double _smallest_avg_calo;
+
+    bool _longest_track_well_recod;
+    bool _found_mu_mctrack;
+    int _true_multiplicity;
+    double _tot_E_mcshowers;
+    double _tot_E_mctracks;
   };
 }
 #endif

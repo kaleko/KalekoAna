@@ -5,6 +5,8 @@
 #include "DataFormat/opflash.h"
 #include "DataFormat/mctruth.h"
 #include "DataFormat/mcflux.h"
+#include "DataFormat/mctrack.h"
+#include "DataFormat/mcshower.h"
 
 namespace larlite {
 
@@ -14,6 +16,7 @@ namespace larlite {
         _nu_finder.setMinTrkLen(_min_trk_len);
         _myspline = TrackMomentumSplines();
         _MCScalc = TrackMomentumCalculator();
+        _MCScalc.SetMinLength(_mcs_min_trk_len);
         _nu_E_calc = NuEnergyCalc();
         _intxn_booster = IntxnBooster();
         _PID_filler = KalekoPIDFiller();
@@ -54,6 +57,7 @@ namespace larlite {
             _tree->Branch("true_nu_E", &_true_nu_E, "true_nu_E/D");
             _tree->Branch("true_nu_CCNC", &_true_nu_CCNC, "true_nu_CCNC/O");
             _tree->Branch("true_nu_mode", &_true_nu_mode, "true_nu_mode/I");
+            _tree->Branch("true_multiplicity", &_true_multiplicity, "true_multiplicity/I");
             _tree->Branch("longest_trk_contained", &_longest_trk_contained, "longest_trk_contained/O");
             _tree->Branch("all_trks_contained", &_all_trks_contained, "all_trks_contained/O");
             _tree->Branch("p_phi", &_p_phi, "p_phi/D");
@@ -74,17 +78,27 @@ namespace larlite {
             _tree->Branch("n_associated_tracks", &_n_associated_tracks, "n_associated_tracks/I");
             _tree->Branch("longest_trk_len", &_longest_trk_len, "longest_trk_len/D");
             _tree->Branch("longest_trk_len_infidvol", &_longest_trk_len_infidvol, "longest_trk_len_infidvol/D");
+            _tree->Branch("longest_trk_Length", &_longest_trk_Length, "longest_trk_Length/D");
+            _tree->Branch("longest_trk_Length_infidvol", &_longest_trk_Length_infidvol, "longest_trk_Length_infidvol/D");
+            _tree->Branch("longest_track_end_x_infidvol", &_longest_track_end_x_infidvol, "longest_track_end_x_infidvol/D");
+            _tree->Branch("longest_track_end_y_infidvol", &_longest_track_end_y_infidvol, "longest_track_end_y_infidvol/D");
+            _tree->Branch("longest_track_end_z_infidvol", &_longest_track_end_z_infidvol, "longest_track_end_z_infidvol/D");
             _tree->Branch("longest_trk_cosy", &_longest_trk_cosy, "longest_trk_cosy/D");
             _tree->Branch("second_longest_trk_len", &_second_longest_trk_len, "second_longest_trk_len/D");
             _tree->Branch("longest_trk_theta", &_longest_trk_theta, "longest_trk_theta/D");
+            _tree->Branch("longest_trk_phi", &_longest_trk_phi, "longest_trk_phi/D");
             _tree->Branch("longest_trk_MCS_mom", &_longest_trk_MCS_mom, "longest_trk_MCS_mom/D");
             _tree->Branch("longest_trk_spline_mom", &_longest_trk_spline_mom, "longest_trk_spline_mom/D");
             _tree->Branch("nu_E_estimate", &_nu_E_estimate, "nu_E_estimate/D");
+            _tree->Branch("CCQE_E", &_CCQE_E, "CCQE_E/D");
             _tree->Branch("longest_trk_avg_calo", &_longest_trk_avg_calo, "longest_trk_avg_calo/D");
             _tree->Branch("second_longest_trk_avg_calo", &_second_longest_trk_avg_calo, "second_longest_trk_avg_calo/D");
             _tree->Branch("true_nu_x", &_true_nu_x, "true_nu_x/D");
             _tree->Branch("true_nu_y", &_true_nu_y, "true_nu_y/D");
             _tree->Branch("true_nu_z", &_true_nu_z, "true_nu_z/D");
+            _tree->Branch("reco_nu_x", &_reco_nu_x, "reco_nu_x/D");
+            _tree->Branch("reco_nu_y", &_reco_nu_y, "reco_nu_y/D");
+            _tree->Branch("reco_nu_z", &_reco_nu_z, "reco_nu_z/D");
             _tree->Branch("dist_reco_true_vtx", &_dist_reco_true_vtx, "dist_reco_true_vtx/D");
             _tree->Branch("max_tracks_dotprod", &_max_tracks_dotprod, "max_tracks_dotprod/D");
             _tree->Branch("longest_tracks_dotprod", &_longest_tracks_dotprod, "longest_tracks_dotprod/D");
@@ -98,6 +112,11 @@ namespace larlite {
             _tree->Branch("n_reco_nu_in_evt", &_n_reco_nu_in_evt, "n_reco_nu_in_evt/I");
             _tree->Branch("E_lepton", &_E_lepton, "E_lepton/D");
             _tree->Branch("E_hadrons", &_E_hadrons, "E_hadrons/D");
+            _tree->Branch("smallest_avg_calo", &_smallest_avg_calo, "smallest_avg_calo/D");
+            _tree->Branch("longest_track_well_recod", &_longest_track_well_recod, "longest_track_well_recod/O");
+            _tree->Branch("found_mu_mctrack", &_found_mu_mctrack, "found_mu_mctrack/O");
+            _tree->Branch("tot_E_mcshowers", &_tot_E_mcshowers, "tot_E_mcshowers/D");
+            _tree->Branch("tot_E_mctracks", &_tot_E_mctracks, "tot_E_mctracks/D");
         }
 
 
@@ -155,17 +174,24 @@ namespace larlite {
         _n_associated_tracks = 0;
         _longest_trk_len = -999.;
         _longest_trk_len_infidvol = -999.;
+        _longest_trk_Length = -999.;
+        _longest_trk_Length_infidvol = -999.;
         _second_longest_trk_len = -999.;
         _longest_trk_cosy = -999;
         _longest_trk_theta = -999.;
+        _longest_trk_phi = -999.;
         _longest_trk_MCS_mom = -999.;
         _longest_trk_spline_mom = -999.;
         _longest_trk_avg_calo = -999.;
         _second_longest_trk_avg_calo = -999.;
         _nu_E_estimate = -999.;
+        _CCQE_E = -999.;
         _true_nu_x = -999.;
         _true_nu_y = -999.;
         _true_nu_z = -999.;
+        _reco_nu_x = -999.;
+        _reco_nu_y = -999.;
+        _reco_nu_z = -999.;
         _dist_reco_true_vtx = -999.;
         _max_tracks_dotprod = -999.;
         _longest_tracks_dotprod = -999.;
@@ -173,6 +199,9 @@ namespace larlite {
         _longest_track_end_x = -999.;
         _longest_track_end_y = -999.;
         _longest_track_end_z = -999.;
+        _longest_track_end_x_infidvol = -999.;
+        _longest_track_end_y_infidvol = -999.;
+        _longest_track_end_z_infidvol = -999.;
         _brightest_BSW_flash_PE = -999.;
         _BSW_flash_z_range = -999.;
         _fppdxdz = -999.;
@@ -183,10 +212,15 @@ namespace larlite {
         _n_reco_nu_in_evt = 0;
         _E_lepton = -999.;
         _E_hadrons = -999.;
+        _longest_track_well_recod = false;
+        _found_mu_mctrack = false;
+        _true_multiplicity = 0;
     }
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
 
+
+        // if (!(storage->run_id() == 5411 && storage->subrun_id() == 114 && storage->event_id() == 5718)) return false;
         total_events++;
         _n_reco_nu_in_evt = 0;
         resetTTreeVars();
@@ -286,31 +320,66 @@ namespace larlite {
 
             _n_associated_tracks = (int)reco_neutrino.Tracks().size();
 
-
-            auto const &geovtx = ::geoalgo::Vector(reco_neutrino.Vertex().X(), reco_neutrino.Vertex().Y(), reco_neutrino.Vertex().Z());
+            _reco_nu_x = reco_neutrino.Vertex().X();
+            _reco_nu_y = reco_neutrino.Vertex().Y();
+            _reco_nu_z = reco_neutrino.Vertex().Z();
+            auto const &geovtx = ::geoalgo::Vector(_reco_nu_x, _reco_nu_y, _reco_nu_z);
             auto longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
             auto longest_trackdir_endpoints = ::geoalgo::Vector(0., 0., 0.);
             _all_trks_contained = true;
             // Quick loop over associated track lengths to find the longest one:
+            larlite::track longest_track;
             _longest_trk_len = -999.;
             _longest_trk_len_infidvol = -999.;
+            _longest_trk_Length = -999.;
+            _longest_trk_Length_infidvol = -999.;
+            _smallest_avg_calo = 999.;
+            size_t longest_trk_id = 0;
             for (size_t david = 0; david < reco_neutrino.Tracks().size(); david++) {
                 auto const asstd_trk = reco_neutrino.Tracks().at(david);
                 bool contained = _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.Vertex())) &&
                                  _fidvolBox.Contain(::geoalgo::Vector(asstd_trk.End()));
                 if (!contained) _all_trks_contained = false;
-                if ( asstd_trk.Length() > _longest_trk_len ) {
+
+                // Compute smallest calo of all vertex-associated tracks
+                // to maybe help cut out poorly reconstructed events.
+                // Seems some noise sources in data (tracks going thru cathode)
+                // might make tracks with poorly reconstructed calos.
+                auto const asstd_calo = reco_neutrino.Calos().at(david);
+                double dummy_calo = 0;
+                for (size_t j = 0; j < asstd_calo.dEdx().size(); ++j)
+                    dummy_calo += asstd_calo.dEdx().at(j);
+                dummy_calo /= asstd_calo.dEdx().size();
+                if (dummy_calo < _smallest_avg_calo) _smallest_avg_calo = dummy_calo;
+
+
+                double asstd_trk_len = (asstd_trk.End() - asstd_trk.Vertex()).Mag();
+                if ( asstd_trk_len > _longest_trk_len ) {
+                    longest_track = asstd_trk;
+                    auto const chopped_trk = _chopper.chopTrack(asstd_trk);
+
+                    bool flip_longest_trk = ::geoalgo::Vector(asstd_trk.Vertex()).SqDist(geovtx) <
+                                            ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
+                                            false : true;
+
+                    _longest_track_end_x_infidvol = flip_longest_trk ? chopped_trk.Vertex().X() : chopped_trk.End().X();
+                    _longest_track_end_y_infidvol = flip_longest_trk ? chopped_trk.Vertex().Y() : chopped_trk.End().Y();
+                    _longest_track_end_z_infidvol = flip_longest_trk ? chopped_trk.Vertex().Z() : chopped_trk.End().Z();
 
                     _longest_trk_len = (asstd_trk.End() - asstd_trk.Vertex()).Mag();
+                    _longest_trk_Length = asstd_trk.Length();
                     if (!contained) {
-                        auto const chopped_trk = _chopper.chopTrack(asstd_trk);
                         _longest_trk_len_infidvol = (chopped_trk.End() - chopped_trk.Vertex()).Mag();
+                        _longest_trk_Length_infidvol = chopped_trk.Length();
                     }
-                    else
+                    else {
                         _longest_trk_len_infidvol = _longest_trk_len;
-
-                    _longest_trk_theta = asstd_trk.Theta();
-                    _longest_trk_spline_mom = _myspline.GetMuMomentum(asstd_trk.Length());
+                        _longest_trk_Length_infidvol = _longest_trk_Length;
+                    }
+                    longest_trk_id = asstd_trk.ID();
+                    _longest_trk_theta = (asstd_trk.End() - asstd_trk.Vertex()).Theta();
+                    _longest_trk_phi = (asstd_trk.End() - asstd_trk.Vertex()).Phi();
+                    _longest_trk_spline_mom = _myspline.GetMuMomentum(asstd_trk_len);
 
                     longest_trackdir = ::geoalgo::Vector(asstd_trk.Vertex()).SqDist(geovtx) <
                                        ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
@@ -322,15 +391,12 @@ namespace larlite {
                                                  ::geoalgo::Vector(asstd_trk.Vertex() - asstd_trk.End());
                     _longest_trk_contained = contained;
 
-                    bool flip_longest_trk = ::geoalgo::Vector(asstd_trk.Vertex()).SqDist(geovtx) <
-                                            ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
-                                            false : true;
 
                     _longest_trk_MCS_mom = _MCScalc.GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk);
 
-                    _longest_track_end_x = asstd_trk.End().X();
-                    _longest_track_end_y = asstd_trk.End().Y();
-                    _longest_track_end_z = asstd_trk.End().Z();
+                    _longest_track_end_x = flip_longest_trk ? asstd_trk.Vertex().X() : asstd_trk.End().X();
+                    _longest_track_end_y = flip_longest_trk ? asstd_trk.Vertex().Y() : asstd_trk.End().Y();
+                    _longest_track_end_z = flip_longest_trk ? asstd_trk.Vertex().Z() : asstd_trk.End().Z();
 
 
                     // // Choose the calo object for this track by the one
@@ -382,9 +448,10 @@ namespace larlite {
                 // for (auto const& asstd_trk_pair : reco_neutrino.second) {
                 // auto const &asstd_trk = asstd_trk_pair.second;
                 // Skip the already-found longest track
-                if (asstd_trk.Length() == _longest_trk_len) continue;
-                if ( asstd_trk.Length() > _second_longest_trk_len ) {
-                    _second_longest_trk_len = asstd_trk.Length();
+                if (asstd_trk.ID() == longest_trk_id) continue;
+                double asstd_trk_len = (asstd_trk.End() - asstd_trk.Vertex()).Mag();
+                if ( asstd_trk_len > _second_longest_trk_len ) {
+                    _second_longest_trk_len = asstd_trk_len;
                     second_longest_trackdir = ::geoalgo::Vector(asstd_trk.Vertex()).SqDist(geovtx) <
                                               ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
                                               ::geoalgo::Vector(asstd_trk.VertexDirection()) :
@@ -422,8 +489,8 @@ namespace larlite {
 
                 for (auto const& asstd_trk2 : reco_neutrino.Tracks()) {
                     // auto const &asstd_trk2 = asstd_trk_pair2.second;
-                    // Don't compare a track to itself.. doing this by Length because I'm stupid
-                    if (asstd_trk1.Length() == asstd_trk2.Length()) continue;
+                    // Don't compare a track to itself.. doing this by track ID
+                    if (asstd_trk1.ID() == asstd_trk2.ID()) continue;
 
                     auto track2dir = ::geoalgo::Vector(asstd_trk2.Vertex()).SqDist(geovtx) <
                                      ::geoalgo::Vector(asstd_trk2.End()).SqDist(geovtx) ?
@@ -478,9 +545,10 @@ namespace larlite {
 
             // This now fills E lepton and E hadrons
             _nu_E_estimate = _nu_E_calc.ComputeEnuNTracksFromPID(reco_neutrino, _E_lepton, _E_hadrons);
-
+            _CCQE_E = _nu_E_calc.ComputeECCQE(_E_lepton * 1000., longest_trackdir_endpoints, false);
 
             larlite::mcnu mcnu;
+            larlite::mctrack mu_mctrack;
             // If we found a vertex and we are running over MC, let's check if it is accurate
             if (!_running_on_data) {
 
@@ -503,6 +571,18 @@ namespace larlite {
                     print(larlite::msg::kINFO, __FUNCTION__, Form("ev_mcflux size is not 1!"));
                     return false;
                 }
+
+                auto ev_mctrack = storage->get_data<event_mctrack>("mcreco");
+                if (!ev_mctrack || !ev_mctrack->size()) {
+                    print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mctrack (or size == 0)!"));
+                    return false;
+                }
+                auto ev_mcshower = storage->get_data<event_mcshower>("mcreco");
+                if (!ev_mcshower || !ev_mcshower->size()) {
+                    print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mcshower (or size == 0)!"));
+                    return false;
+                }
+
                 _fndecay = ev_mcflux->at(0).fndecay;
                 _fppdxdz = ev_mcflux->at(0).fppdxdz;
                 _fppdydz = ev_mcflux->at(0).fppdydz;
@@ -552,22 +632,79 @@ namespace larlite {
                 ::geoalgo::Vector true_mu_dir = ::geoalgo::Vector(mcnu.Lepton().Trajectory().front().Momentum().Vect());
                 true_mu_dir.Normalize();
                 _longest_trk_dot_truemuondir = longest_trackdir.Dot(true_mu_dir);
+
+                // Find the muon mctrack if there is one
+                _found_mu_mctrack = false;
+                _true_multiplicity = 0;
+                _tot_E_mctracks = 0.;
+                for (auto const& mct : *ev_mctrack) {
+                    if (mct.Origin() != 1 || !mct.size()) continue; //throw out cosmic mctracks
+
+                    double dist_to_true_vtx = (mct.front().Position().Vect() - mcnu.Nu().Trajectory().front().Position().Vect()).Mag();
+                    double mct_len = (mct.back().Position().Vect() - mct.front().Position().Vect()).Mag();
+                    //true multiplicity is # of mctracks coming from vertex that are longer than 1cm
+                    if ( mct_len > 1. and dist_to_true_vtx < 0.01 ) {
+                        if (abs(mct.PdgCode()) == 13)
+                            _tot_E_mctracks += (mct.front().E());
+                        if (abs(mct.PdgCode()) == 211)
+                            _tot_E_mctracks += (mct.front().E());
+                        if (abs(mct.PdgCode()) == 2212)
+                            _tot_E_mctracks += (mct.front().E() - 938.);
+
+                        _true_multiplicity++;
+                    }
+
+                    if (abs(mct.PdgCode()) == 13 && dist_to_true_vtx < 0.01 ) {
+                        mu_mctrack = mct;
+                        _found_mu_mctrack = true;
+                    }
+
+                }
+                _tot_E_mctracks /= 1000.;
+
+                // count up energy lost to showers
+                _tot_E_mcshowers = 0;
+                for (auto const& mcs : *ev_mcshower) {
+                    if (mcs.Origin() != 1) continue;
+                    _tot_E_mcshowers += mcs.DetProfile().E();
+                }
+                _tot_E_mcshowers /= 1000.;
+                // std::cout << "# reco neutrinos in event is " << reco_neutrinos.size() << std::endl;
+                // std::cout << "found mu mctrack is " << _found_mu_mctrack << std::endl;
+                // std::cout << "size of it is " << mu_mctrack.size() << std::endl;
+
+
+                // longest track is well recod if the front of reco track matches front of mctrack AND
+                // back of reco track matches back of mctrack OR
+                // the same but if hte reco track is flipped direction
+                if (_found_mu_mctrack)
+                    _longest_track_well_recod =
+                        ( (mu_mctrack.front().Position().Vect() - longest_track.Vertex()).Mag() < 3. &&
+                          (mu_mctrack.back().Position().Vect() -     longest_track.End()).Mag() < 3. ) ||
+                        ( (mu_mctrack.front().Position().Vect() -    longest_track.End()).Mag() < 3. &&
+                          (mu_mctrack.back().Position().Vect() -  longest_track.Vertex()).Mag() < 3. ) ?
+                        true : false;
             }
 
 
 
             // Only apply second longest trk len cut and collinearity cut for ==2 associated tracks
-            if (_n_associated_tracks != 2) {
-                _second_longest_trk_len = 999.;
-                _max_tracks_dotprod = 999.;
-                _longest_tracks_dotprod = 999.;
-                _longest_tracks_dotprod_trkendpoints = 999.;
-            }
+            // if (_n_associated_tracks != 2) {
+            //     _second_longest_trk_len = 999.;
+            //     _max_tracks_dotprod = 999.;
+            //     _longest_tracks_dotprod = 999.;
+            //     _longest_tracks_dotprod_trkendpoints = 999.;
+            // }
 
             _tree->Fill();
             passed_events++;
         } // Done loop over all neutrinos in this event
 
+        // if(_longest_trk_contained && _longest_trk_len_infidvol > 100. && _longest_trk_spline_mom < 500 && _longest_trk_MCS_mom > 0.75){//
+        //     std::cout << storage->run_id() << " " << storage->subrun_id() << " " << storage->event_id() << std::endl;
+        // }
+
+        // std::cout << storage->run_id() << " " << storage->subrun_id() << " " << storage->event_id() << std::endl;
         // if (_n_reco_nu_in_evt == 1 && _all_trks_contained &&  !_true_nu_CCNC && _correct_ID && _longest_trk_len > 100.) {
         //     if (_true_nu_E / _nu_E_estimate > 2) {
         //         std::cout << "Found weird fully contained event." << std::endl;
@@ -579,6 +716,30 @@ namespace larlite {
         //         std::cout << "  - reco neutrino energy is " << _nu_E_estimate << std::endl;
         //         std::cout << "  - and the ttree index is " << storage->get_index() << std::endl;
         //         std::cout << "  - and n associated tracks is " << _n_associated_tracks << std::endl;
+        //     }
+        // }
+
+        // // if ( _second_longest_trk_len > 16. && fabs(_longest_tracks_dotprod_trkendpoints) > 0.5) {
+        // // // if (storage->run_id() == 5411 && storage->subrun_id() == 114 && storage->event_id() == 5718) {
+        // if (_correct_ID) {
+        //     if (_true_nu_E / _nu_E_estimate > 2 || _true_nu_E / _nu_E_estimate < 0.5 ) {
+        //         if (_true_nu_E / _nu_E_estimate > 2 ) std::cout << "TRUE ENERGY MORE THAN TWICE RECO NU ENERGY" << std::endl;
+        //         if (_true_nu_E / _nu_E_estimate < 0.5 ) std::cout << "TRUE ENERGY LESS THAN HALF RECO NU ENERGY" << std::endl;
+        //         std::cout << storage->run_id() << " " << storage->subrun_id() << " " << storage->event_id() << " (index " << storage->get_index() << ")" << std::endl;
+        //         std::cout << "  INFO:" << std::endl;
+        //         std::cout << "  - the reco vertex is at " << Form("(%0.2f,%0.2f,%0.2f)", reco_neutrinos.front().Vertex().X()
+        //                   , reco_neutrinos.front().Vertex().Y()
+        //                   , reco_neutrinos.front().Vertex().Z()) << std::endl;
+        //         std::cout << "  - # neutrinos in this event is " << reco_neutrinos.size() << std::endl;
+        //         std::cout << "  - (only showing info for the first one)" << std::endl;
+        //         std::cout << "  - true neutrino energy is " << _true_nu_E << std::endl;
+        //         std::cout << "  - reco neutrino energy is " << _nu_E_estimate << std::endl;
+        //         std::cout << "  - and n associated tracks is " << _n_associated_tracks << std::endl;
+        //         std::cout << " longest trk len is " << _longest_trk_len << std::endl;
+        //         std::cout << " longest trk len contained in fidvol is " << _longest_trk_len_infidvol << std::endl;
+        //         std::cout << " longest trk mcs energy is " << _longest_trk_MCS_mom << std::endl;
+        //         std::cout << " longest trk dotprod endpoints is " << _longest_tracks_dotprod_trkendpoints << std::endl;
+        //         std::cout << " second longest trk len is " << _second_longest_trk_len << std::endl;
         //     }
         // }
 
