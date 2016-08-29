@@ -40,6 +40,7 @@
 #include "IntxnBooster.h"
 #include "KalekoPIDFiller.h"
 #include "TrackChopper.h"
+#include "IntxnTrackExtender.h"
 
 
 namespace larlite {
@@ -66,6 +67,7 @@ namespace larlite {
       _track_producer = "pandoraNuPMA";
       _vtx_producer = "pmtrack";
       _calo_producer = _track_producer + "calo";
+      _extend_track_producer = "";
       _min_trk_len = 0.;
       _mcs_min_trk_len = 100.;
 
@@ -89,6 +91,8 @@ namespace larlite {
     bool setBGWTimes();
 
     void setTrackProducer(std::string prod) { _track_producer = prod; }
+    
+    void setExtendTrackProducer(std::string prod) { _extend_track_producer = prod; }
 
     void setVtxProducer(std::string prod) { _vtx_producer = prod; }
 
@@ -105,6 +109,7 @@ namespace larlite {
   protected:
 
     std::string _track_producer;
+    std::string _extend_track_producer;
     std::string _vtx_producer;
     std::string _calo_producer;
     
@@ -121,6 +126,7 @@ namespace larlite {
     IntxnBooster _intxn_booster;
     KalekoPIDFiller _PID_filler;
     TrackChopper _chopper;
+    IntxnTrackExtender _trkextender;
 
     double _vtx_sphere_radius;
 
@@ -214,6 +220,8 @@ namespace larlite {
     int _n_reco_nu_in_evt;
     double _E_lepton;
     double _E_hadrons;
+    double _E_MCS;
+    double _E_range;
 
     double _smallest_avg_calo;
 

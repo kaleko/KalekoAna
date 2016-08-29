@@ -18,9 +18,11 @@ namespace larlite {
         _MCScalc = TrackMomentumCalculator();
         _MCScalc.SetMinLength(_mcs_min_trk_len);
         _nu_E_calc = NuEnergyCalc();
+        _nu_E_calc.setMCSMinLen(_mcs_min_trk_len);
         _intxn_booster = IntxnBooster();
         _PID_filler = KalekoPIDFiller();
         _chopper = TrackChopper();
+        _trkextender = IntxnTrackExtender();
 
 
         if (_filetype == kINPUT_FILE_TYPE_MAX) {
@@ -112,6 +114,8 @@ namespace larlite {
             _tree->Branch("n_reco_nu_in_evt", &_n_reco_nu_in_evt, "n_reco_nu_in_evt/I");
             _tree->Branch("E_lepton", &_E_lepton, "E_lepton/D");
             _tree->Branch("E_hadrons", &_E_hadrons, "E_hadrons/D");
+            _tree->Branch("E_MCS", &_E_MCS, "E_MCS/D");
+            _tree->Branch("E_range", &_E_range, "E_range/D");
             _tree->Branch("smallest_avg_calo", &_smallest_avg_calo, "smallest_avg_calo/D");
             _tree->Branch("longest_track_well_recod", &_longest_track_well_recod, "longest_track_well_recod/O");
             _tree->Branch("found_mu_mctrack", &_found_mu_mctrack, "found_mu_mctrack/O");
@@ -212,6 +216,8 @@ namespace larlite {
         _n_reco_nu_in_evt = 0;
         _E_lepton = -999.;
         _E_hadrons = -999.;
+        _E_MCS = -999.;
+        _E_range = -999.;
         _longest_track_well_recod = false;
         _found_mu_mctrack = false;
         _true_multiplicity = 0;
@@ -245,6 +251,7 @@ namespace larlite {
             //print(larlite::msg::kERROR, __FUNCTION__, Form("Zero reconstructed tracks in this event!"));
             return false;
         }
+
         auto ev_opflash = storage->get_data<event_opflash>("opflashSat");
         if (!ev_opflash) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, opflash!"));
@@ -300,8 +307,21 @@ namespace larlite {
 
 
             // Let's "boost" the interaction by potentially adding more tracks:
-            _intxn_booster.BoostIntxn(reco_neutrino, ev_track);
+            // _intxn_booster.BoostIntxn(reco_neutrino, ev_track);
 
+            // Let's "extend" the tracks from the vertex by stitching them to new producers
+            if (!_extend_track_producer.empty()) {
+                auto ev_extend_track = storage->get_data<event_track>(_extend_track_producer);
+                if (!ev_extend_track) {
+                    print(larlite::msg::kERROR, __FUNCTION__,
+                          Form("Did not find specified data product, track for extended track!"));
+                    return false;
+                }
+                if (!ev_extend_track->size())
+                    return false;
+                _trkextender.ExtendVertexTracks( reco_neutrino, ev_extend_track);
+
+            }
             // Fill the PIDs for the tracks in this interaction
             if ( !_PID_filler.fillKalekoPIDs(reco_neutrino) ) {
                 print(larlite::msg::kERROR, __FUNCTION__, Form("Failed filling PIDs for some reason!"));
@@ -471,7 +491,7 @@ namespace larlite {
 
             // Find the dot product of directions between the longest two tracks
             longest_trackdir_endpoints.Normalize();
-            _longest_trk_cosy = fabs(longest_trackdir_endpoints.at(1));
+            _longest_trk_cosy = longest_trackdir_endpoints.at(1);
             second_longest_trackdir_endpoints.Normalize();
             _longest_tracks_dotprod = longest_trackdir.Dot(second_longest_trackdir);
             _longest_tracks_dotprod_trkendpoints = longest_trackdir_endpoints.Dot(second_longest_trackdir_endpoints);
@@ -544,7 +564,7 @@ namespace larlite {
             }
 
             // This now fills E lepton and E hadrons
-            _nu_E_estimate = _nu_E_calc.ComputeEnuNTracksFromPID(reco_neutrino, _E_lepton, _E_hadrons);
+            _nu_E_estimate = _nu_E_calc.ComputeEnuNTracksFromPID(reco_neutrino, _E_lepton, _E_hadrons, _E_MCS, _E_range);
             _CCQE_E = _nu_E_calc.ComputeECCQE(_E_lepton * 1000., longest_trackdir_endpoints, false);
 
             larlite::mcnu mcnu;
@@ -699,7 +719,7 @@ namespace larlite {
             _tree->Fill();
             passed_events++;
         } // Done loop over all neutrinos in this event
-
+        // std::cout << storage->run_id() << " " << storage->subrun_id() << " " << storage->event_id() << std::endl;
         // if(_longest_trk_contained && _longest_trk_len_infidvol > 100. && _longest_trk_spline_mom < 500 && _longest_trk_MCS_mom > 0.75){//
         //     std::cout << storage->run_id() << " " << storage->subrun_id() << " " << storage->event_id() << std::endl;
         // }
