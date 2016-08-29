@@ -50,10 +50,11 @@ namespace larlite {
     void AddCalo  ( larlite::calorimetry c  ) { fCalos.push_back(c); }
     void ChangePID( size_t PID_idx, larlite::KalekoPID_t p ) { fPIDs.at(PID_idx) = p; }
     void AddExtraTrack( larlite::track t )    { fExtraTracks.push_back(t); }
+    void ReplaceTrack(size_t trk_idx, larlite::track newtrack) { fTracks.at(trk_idx) = newtrack; }
 
 
     void printInfo();
-    
+
   protected:
 //      typedef std::pair<larlite::vertex, std::vector< std::pair<larlite::KalekoPID_t, larlite::track> > > CCNuItxn_t;
 
@@ -64,7 +65,7 @@ namespace larlite {
     std::vector<larlite::calorimetry> fCalos;  /// A vector (length n) of calo objects associated per vertex track
 
     std::vector<larlite::track>       fExtraTracks; /// Possible additional tracks NOT associated with vertex
-                                                    /// E.G. a pion from vtx stops, decays into a muon, which is a separate track
+    /// E.G. a pion from vtx stops, decays into a muon, which is a separate track
 
   };
 
