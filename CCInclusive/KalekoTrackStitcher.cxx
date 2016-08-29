@@ -115,11 +115,12 @@ namespace larlite {
             it = idx_map.find(base_idx);
             // If so:
             if (it != idx_map.end()) {
-                ev_stitched_track->push_back(
-                    stitchTracks(ev_base_track->at(base_idx),
-                                 ev_match_track->at(it->second.first),
-                                 it->second.second)
-                );
+                // ev_stitched_track->push_back(
+                //     stitchTracks(ev_base_track->at(base_idx),
+                //                  ev_match_track->at(it->second.first),
+                //                  it->second.second)
+                // );
+                ev_stitched_track->push_back(ev_base_track->at(base_idx));
                 double before_len = (ev_base_track->at(base_idx).End() - ev_base_track->at(base_idx).Vertex()).Mag();
                 double after_len = (ev_stitched_track->back().End() - ev_stitched_track->back().Vertex()).Mag();
                 _h_lendiff->Fill(after_len - before_len);
@@ -186,11 +187,11 @@ namespace larlite {
         bool flip_match = _dotprod > 0 ? false : true;
 
         /// Ask how far the matched start point is from the line
-        ::geoalgo::Point_t match_vtx = flip_match ?
-                                       ::geoalgo::Point_t(match_candidate.End()) :
-                                       ::geoalgo::Point_t(match_candidate.Vertex());
+        ::geoalgo::Point_t match_vtx          = ::geoalgo::Point_t(match_candidate.Vertex());
+        ::geoalgo::Point_t match_vtx_inverted = ::geoalgo::Point_t(match_candidate.End());
+                
 
-        _infdist = _geoalg.SqDist(base_line, match_vtx);
+        _infdist = std::min(_geoalg.SqDist(base_line, match_vtx),_geoalg.SqDist(base_line, match_vtx_inverted));
         _infdist = std::sqrt(_infdist);
 
         ::geoalgo::Point_t projpoint = _geoalg.ClosestPt(base_line, match_vtx);
@@ -199,7 +200,7 @@ namespace larlite {
 
         _debug_tree->Fill();
 
-        if (_infdist < 10. && fabs(_dotprod) > 0.999)
+        if (_infdist < 50. && fabs(_dotprod) > 0.99)
             return std::make_pair(true, flip_match);
 
         return std::make_pair(false, flip_match);
