@@ -37,8 +37,10 @@
 #pragma link C++ class larlite::FluxAna+;
 #pragma link C++ class larlite::IntxnBooster+;
 #pragma link C++ class larlite::TrackChopper+;
+#pragma link C++ class larlite::IntxnTrackExtender+;
 //ADD_NEW_CLASS ... do not change this line
 #endif
+
 
 
 
