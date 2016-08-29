@@ -45,6 +45,7 @@ namespace larlite {
 
 		void BoostIntxn( larlite::KalekoNuItxn & itxn, const larlite::event_track * ev_track );
 
+		void AddKalmanTracks( larlite::KalekoNuItxn & itxn, const larlite::event_track * ev_track );
 	};
 
 }// end namespace larlite
