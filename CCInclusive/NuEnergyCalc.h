@@ -46,6 +46,8 @@ namespace larlite {
             _chopper = TrackChopper();
         };
 
+        void setMCSMinLen(double len) { _tmc.SetMinLength(len); }
+
         /// Default destructor
         virtual ~NuEnergyCalc() {};
 
@@ -89,7 +91,11 @@ namespace larlite {
         /// Loop over associated tracks in interaction and their (already determined) PID info.
         /// For contained tracks use track range splines (charged pions use muon spline, protons use proton spline)
         /// If mu track exits, use multiple coloumb scattering
-        double ComputeEnuNTracksFromPID(const KalekoNuItxn itxn, double &E_lepton, double &E_hadrons);
+        double ComputeEnuNTracksFromPID(const KalekoNuItxn itxn,
+                                        double &E_lepton,
+                                        double &E_hadrons,
+                                        double &E_MCS,
+                                        double &E_range);
         // Wrapper
         double ComputeEnuNTracksFromPID(const KalekoNuItxn itxn);
 
@@ -100,6 +106,7 @@ namespace larlite {
         TrackMomentumSplines _myspline;
         TrackMomentumCalculator _tmc;
         TrackChopper _chopper;
+
     };
 
 }// end namespace larlite
