@@ -69,6 +69,7 @@ namespace larlite {
     float recostart_x;
     float recostart_y;
     float recostart_z;
+    float reco_zcomponent;
   };
 }
 #endif

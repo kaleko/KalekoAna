@@ -29,6 +29,7 @@ namespace larlite {
         _tree->Branch("recostart_x", &recostart_x, "recostart_x/F");
         _tree->Branch("recostart_y", &recostart_y, "recostart_y/F");
         _tree->Branch("recostart_z", &recostart_z, "recostart_z/F");
+        _tree->Branch("reco_zcomponent", &reco_zcomponent, "reco_zcomponent/F");
 
         return true;
     }
@@ -53,6 +54,7 @@ namespace larlite {
         recostart_x = -1.;
         recostart_y = -1.;
         recostart_z = -1.;
+        reco_zcomponent = -999999.;
 
         ///Read in mctracks
         auto ev_mct = storage->get_data<event_mctrack>("mcreco");
@@ -106,6 +108,8 @@ namespace larlite {
 
         startptdiff = (mct.Start().Position().Vect() - track.LocationAtPoint(0)).Mag();
         startanglediff = acos((mct.Start().Momentum().Vect().Unit().Dot(track.DirectionAtPoint(0).Unit())));
+
+        reco_zcomponent = (track.End() - track.Vertex()).Z();
 
         _tree->Fill();
 
