@@ -8,7 +8,7 @@ namespace larlite {
 
   bool TestMultiScatterPID::initialize() {
 
-    _tmc = TrackMomentumCalculator();
+    _tmc = kaleko::TrackMomentumCalculator();
 
     if(!_ana_tree){
       _ana_tree = new TTree("ana_tree","ana_tree");

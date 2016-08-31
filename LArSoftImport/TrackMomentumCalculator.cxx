@@ -1,5 +1,5 @@
-#ifndef TRACKMOMENTUMCALCULATOR_CXX
-#define TRACKMOMENTUMCALCULATOR_CXX
+#ifndef KALEKO_TRACKMOMENTUMCALCULATOR_CXX
+#define KALEKO_TRACKMOMENTUMCALCULATOR_CXX
 
 #include "TrackMomentumCalculator.h"
 // \file  TrackMomentumCalculator.cxx
@@ -8,6 +8,7 @@
 
 namespace larlite {
 
+namespace kaleko {
 
 	TrackMomentumCalculator::TrackMomentumCalculator()
 	{
@@ -1068,5 +1069,6 @@ namespace larlite {
 
 	// }
 
+}
 }
 #endif

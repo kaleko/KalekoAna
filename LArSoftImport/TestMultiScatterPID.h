@@ -41,7 +41,7 @@ namespace larlite {
 
     protected:
 
-    TrackMomentumCalculator _tmc;
+    kaleko::TrackMomentumCalculator _tmc;
 
     TTree* _ana_tree;
     double _llhd;

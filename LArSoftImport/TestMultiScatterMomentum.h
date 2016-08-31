@@ -47,7 +47,7 @@ namespace larlite {
 
     bool _using_mctracks;
 
-    TrackMomentumCalculator _tmc;
+    kaleko::TrackMomentumCalculator _tmc;
 
     TTree* _ana_tree;
     double _true_mom;

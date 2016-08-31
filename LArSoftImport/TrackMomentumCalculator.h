@@ -12,8 +12,8 @@
 /** \addtogroup LArSoftImport
 
     @{*/
-#ifndef TRACKMOMENTUMCALCULATOR_H
-#define TRACKMOMENTUMCALCULATOR_H
+#ifndef KALEKO_TRACKMOMENTUMCALCULATOR_H
+#define KALEKO_TRACKMOMENTUMCALCULATOR_H
 
 #include <iostream>
 #include "TVector3.h"
@@ -36,6 +36,7 @@
 
 namespace larlite {
 
+    namespace kaleko {
     class TrackMomentumCalculator {
 
         // Global variables/input
@@ -112,6 +113,7 @@ namespace larlite {
         Double_t maxLength;
 
     };
+} // end namespace kaleko
 } // end namespace larlite
 
 
