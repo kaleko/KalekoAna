@@ -42,11 +42,13 @@ namespace larlite {
         NuEnergyCalc() {
             _fidvolBox = FidVolBox();
             _myspline = TrackMomentumSplines();
-            _tmc = TrackMomentumCalculator();
+            _tmc = new kaleko::TrackMomentumCalculator();
             _chopper = TrackChopper();
+
+            _mcs_bias_factor = 1.;
         };
 
-        void setMCSMinLen(double len) { _tmc.SetMinLength(len); }
+        void setMCSMinLen(double len) { _tmc->SetMinLength(len); }
 
         /// Default destructor
         virtual ~NuEnergyCalc() {};
@@ -99,13 +101,21 @@ namespace larlite {
         // Wrapper
         double ComputeEnuNTracksFromPID(const KalekoNuItxn itxn);
 
+
+        void SetMCSBiasFactor(double factor) { _mcs_bias_factor = factor; }
+        
     private:
         // Fiducial volume box
         geoalgo::AABox _fidvolBox;
 
         TrackMomentumSplines _myspline;
-        TrackMomentumCalculator _tmc;
+        kaleko::TrackMomentumCalculator *_tmc;
         TrackChopper _chopper;
+
+        // Every time MCS is run, the final momentum (energy) is multiplied by this factor
+        // this can be measured in data and MC, and set differently for each
+        // Default value is 1.
+        double _mcs_bias_factor;
 
     };
 

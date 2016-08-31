@@ -386,14 +386,16 @@ namespace larlite {
         //           << itrklen << ", while length of chopped track is "
         //           << (chopped_trk.End() - chopped_trk.Vertex()).Mag()
         //           << ". Without chopping MCS energy is "
-        //           << _tmc.GetMomentumMultiScatterLLHD(track, flip_trk) + 0.106
+        //           << _tmc->GetMomentumMultiScatterLLHD(track, flip_trk) + 0.106
         //           << ", while with chopped MCS energy is "
-        //           << _tmc.GetMomentumMultiScatterLLHD(chopped_trk, false) + 0.106
+        //           << _tmc->GetMomentumMultiScatterLLHD(chopped_trk, false) + 0.106
         //           << std::endl;
 
         // flip_trk = false;
-        double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(chopped_trk, flip_trk) + 0.106;
-
+        // MCS code uses ultrarelativistic so p = E, so it returns total E.
+        // No need to add mass!
+        double mcs_energy = _tmc->GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
+        mcs_energy *= _mcs_bias_factor;
         //New addition: if range energy is more than MCS energy, then always use range energy!
         // there's no way range energy is going to overestimate.
         double spline_energy = _myspline.GetMuMomentum(choppedtrklen) / 1000. + 0.106;
@@ -439,8 +441,9 @@ namespace larlite {
                    ::geoalgo::Vector(chopped_trk.End()).SqDist(geovtx) ?
                    false : true;
         // flip_trk = false;
-        double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(chopped_trk, flip_trk) + 0.140;
-
+        // don't need to add mass, MCS code uses p == E so it returns total E
+        double mcs_energy = _tmc->GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
+        mcs_energy *= _mcs_bias_factor;
         //New addition: if range energy is more than MCS energy, then always use range energy!
         // there's no way range energy is going to overestimate.
         double spline_energy = _myspline.GetMuMomentum(choppedtrklen) / 1000. + 0.140;
@@ -508,7 +511,7 @@ namespace larlite {
     //     // NOTE that trackchopper also flips the track if the "end" is contained but the "vertex" isn't,
     //     // so no additional track flipping is needed
     //     flip_trk = false;
-    //     double mcs_energy = _tmc.GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
+    //     double mcs_energy = _tmc->GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
 
 
     //     //New addition: if range energy is more than MCS energy, then always use range energy!
