@@ -62,7 +62,7 @@ namespace larlite {
 
     NuEnergyCalc *mycalc;
     TrackMomentumSplines *myspline;
-    TrackMomentumCalculator *myMCScalc;
+    kaleko::TrackMomentumCalculator *myMCScalc;
 
     geoalgo::AABox _fidvolBox;
 

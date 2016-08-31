@@ -29,7 +29,7 @@ namespace larlite {
 
         mycalc = new NuEnergyCalc();
         myspline = new TrackMomentumSplines();
-        myMCScalc = new TrackMomentumCalculator();
+        myMCScalc = new kaleko::TrackMomentumCalculator();
 
         return true;
     }
