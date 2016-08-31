@@ -15,14 +15,15 @@ namespace larlite {
         _nu_finder = XiaoNuFinder();
         _nu_finder.setMinTrkLen(_min_trk_len);
         _myspline = TrackMomentumSplines();
-        _MCScalc = TrackMomentumCalculator();
-        _MCScalc.SetMinLength(_mcs_min_trk_len);
         _nu_E_calc = NuEnergyCalc();
+        _MCScalc = kaleko::TrackMomentumCalculator();
+        _MCScalc.SetMinLength(_mcs_min_trk_len);
         _nu_E_calc.setMCSMinLen(_mcs_min_trk_len);
         _intxn_booster = IntxnBooster();
         _PID_filler = KalekoPIDFiller();
         _chopper = TrackChopper();
         _trkextender = IntxnTrackExtender();
+        _mcsbiasstudy = new MCSBiasStudy();
 
 
         if (_filetype == kINPUT_FILE_TYPE_MAX) {
@@ -231,6 +232,14 @@ namespace larlite {
         _n_reco_nu_in_evt = 0;
         resetTTreeVars();
 
+
+        // Current calculation is MCS overestimate in MC by 1.01% and underestimates in data by 1.86%
+        // which leads to scale factors of 1/1.0101 = 0.9900 for MC, and 1.0186 for data
+        // if(_running_on_data)
+        //     _nu_E_calc.SetMCSBiasFactor(1.0186);
+        // else
+        //     _nu_E_calc.SetMCSBiasFactor(0.9900);
+
         auto ev_vtx = storage->get_data<event_vertex>(_vtx_producer);
         if (!ev_vtx) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, vertex!"));
@@ -382,9 +391,13 @@ namespace larlite {
                                             ::geoalgo::Vector(asstd_trk.End()).SqDist(geovtx) ?
                                             false : true;
 
-                    _longest_track_end_x_infidvol = flip_longest_trk ? chopped_trk.Vertex().X() : chopped_trk.End().X();
-                    _longest_track_end_y_infidvol = flip_longest_trk ? chopped_trk.Vertex().Y() : chopped_trk.End().Y();
-                    _longest_track_end_z_infidvol = flip_longest_trk ? chopped_trk.Vertex().Z() : chopped_trk.End().Z();
+                    bool flip_chopped_trk = ::geoalgo::Vector(chopped_trk.Vertex()).SqDist(geovtx) <
+                                            ::geoalgo::Vector(chopped_trk.End()).SqDist(geovtx) ?
+                                            false : true;
+
+                    _longest_track_end_x_infidvol = flip_chopped_trk ? chopped_trk.Vertex().X() : chopped_trk.End().X();
+                    _longest_track_end_y_infidvol = flip_chopped_trk ? chopped_trk.Vertex().Y() : chopped_trk.End().Y();
+                    _longest_track_end_z_infidvol = flip_chopped_trk ? chopped_trk.Vertex().Z() : chopped_trk.End().Z();
 
                     _longest_trk_len = (asstd_trk.End() - asstd_trk.Vertex()).Mag();
                     _longest_trk_Length = asstd_trk.Length();
@@ -397,8 +410,10 @@ namespace larlite {
                         _longest_trk_Length_infidvol = _longest_trk_Length;
                     }
                     longest_trk_id = asstd_trk.ID();
-                    _longest_trk_theta = (asstd_trk.End() - asstd_trk.Vertex()).Theta();
-                    _longest_trk_phi = (asstd_trk.End() - asstd_trk.Vertex()).Phi();
+                    _longest_trk_theta = flip_longest_trk ?  (asstd_trk.Vertex() - asstd_trk.End()).Theta() :
+                                         (asstd_trk.End() - asstd_trk.Vertex()).Theta();
+                    _longest_trk_phi = flip_longest_trk ? (asstd_trk.Vertex() - asstd_trk.End()).Phi() :
+                                       (asstd_trk.End() - asstd_trk.Vertex()).Phi();
                     _longest_trk_spline_mom = _myspline.GetMuMomentum(asstd_trk_len);
 
                     longest_trackdir = ::geoalgo::Vector(asstd_trk.Vertex()).SqDist(geovtx) <
@@ -458,6 +473,9 @@ namespace larlite {
             if (longest_trackdir_endpoints.Length() < 0.00001) {
                 std::cout << "length problem. " << longest_trackdir_endpoints.Length() << std::endl;
             }
+
+            if (_longest_trk_contained)
+                _mcsbiasstudy->AnalyzeTrack(longest_track);
 
             auto second_longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
             auto second_longest_trackdir_endpoints = ::geoalgo::Vector(0., 0., 0.);
@@ -780,6 +798,7 @@ namespace larlite {
             // _hdedx->Write();
             _hcorrect_ID->Write();
             _tree->Write();
+            _mcsbiasstudy->GetTree()->Write();
         }
 
         _nu_finder.printNumbers();

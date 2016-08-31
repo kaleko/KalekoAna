@@ -41,6 +41,7 @@
 #include "KalekoPIDFiller.h"
 #include "TrackChopper.h"
 #include "IntxnTrackExtender.h"
+#include "MCSBiasStudy.h"
 
 
 namespace larlite {
@@ -70,6 +71,8 @@ namespace larlite {
       _extend_track_producer = "";
       _min_trk_len = 0.;
       _mcs_min_trk_len = 100.;
+
+      _mcsbiasstudy=0;
 
     }
 
@@ -121,12 +124,13 @@ namespace larlite {
 
     XiaoNuFinder _nu_finder;
     TrackMomentumSplines _myspline;
-    TrackMomentumCalculator _MCScalc;
+    kaleko::TrackMomentumCalculator _MCScalc;
     NuEnergyCalc _nu_E_calc;
     IntxnBooster _intxn_booster;
     KalekoPIDFiller _PID_filler;
     TrackChopper _chopper;
     IntxnTrackExtender _trkextender;
+    MCSBiasStudy *_mcsbiasstudy;
 
     double _vtx_sphere_radius;
 
