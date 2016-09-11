@@ -27,6 +27,7 @@
 #include "TrackMomentumSplines.h"
 #include "TrackMomentumCalculator.h"
 #include "TrackChopper.h"
+#include "MCSBiasCorrector.h"
 
 /**
    \class NuEnergyCalc
@@ -44,7 +45,7 @@ namespace larlite {
             _myspline = TrackMomentumSplines();
             _tmc = new kaleko::TrackMomentumCalculator();
             _chopper = TrackChopper();
-
+            _corrector = new MCSBiasCorrector();
             _mcs_bias_factor = 1.;
         };
 
@@ -97,13 +98,17 @@ namespace larlite {
                                         double &E_lepton,
                                         double &E_hadrons,
                                         double &E_MCS,
-                                        double &E_range);
+                                        double &E_range,
+                                        bool apply_correction,
+                                        bool data_true_MC_false);
         // Wrapper
         double ComputeEnuNTracksFromPID(const KalekoNuItxn itxn);
 
+        bool ViableForCorrection(const double range_energy, const double MCS_energy);
 
+        //depricated
         void SetMCSBiasFactor(double factor) { _mcs_bias_factor = factor; }
-        
+
     private:
         // Fiducial volume box
         geoalgo::AABox _fidvolBox;
@@ -111,6 +116,7 @@ namespace larlite {
         TrackMomentumSplines _myspline;
         kaleko::TrackMomentumCalculator *_tmc;
         TrackChopper _chopper;
+        MCSBiasCorrector *_corrector;
 
         // Every time MCS is run, the final momentum (energy) is multiplied by this factor
         // this can be measured in data and MC, and set differently for each

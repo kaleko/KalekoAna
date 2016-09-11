@@ -301,7 +301,9 @@ namespace larlite {
     double dummy2 = 0.;
     double dummy3 = 0.;
     double dummy4 = 0.;
-    return ComputeEnuNTracksFromPID(itxn, dummy1, dummy2, dummy3, dummy4);
+    bool dummy5 = false; // do NOT apply any correction factors by default
+    bool dummy6 = false; // doesn't matter since dummy5 is false
+    return ComputeEnuNTracksFromPID(itxn, dummy1, dummy2, dummy3, dummy4, dummy5, dummy6);
   }
 
 
@@ -318,7 +320,9 @@ namespace larlite {
       double &E_lepton,
       double &E_hadrons,
       double &E_MCS,
-      double &E_range) {
+      double &E_range,
+      bool apply_correction,
+      bool data_true_MC_false) {
 
     bool debug = false;
     double tot_nu_energy = 0.;
@@ -391,23 +395,30 @@ namespace larlite {
         //           << _tmc->GetMomentumMultiScatterLLHD(chopped_trk, false) + 0.106
         //           << std::endl;
 
+
+
+        //New addition: if range energy is more than MCS energy, then always use range energy!
+        // there's no way range energy is going to overestimate.
+        double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000. + 0.106;
+
         // flip_trk = false;
         // MCS code uses ultrarelativistic so p = E, so it returns total E.
         // No need to add mass!
         double mcs_energy = _tmc->GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
-        mcs_energy *= _mcs_bias_factor;
-        //New addition: if range energy is more than MCS energy, then always use range energy!
-        // there's no way range energy is going to overestimate.
-        double spline_energy = _myspline.GetMuMomentum(choppedtrklen) / 1000. + 0.106;
+        if (apply_correction && ViableForCorrection(spline_energy, mcs_energy))
+          mcs_energy /= 1 + _corrector->GetBiasFactor(choppedtrklen, data_true_MC_false);
+
+
+
         // sometimes MCS returns exactly 7.501 GeV (some "failure" mode I don't understand)
         // so if MCS is way overestimating, use range.
         // Jose: "the loglikelihood is minimized doing a raster scan up to 7.5 GeV"
-        if (spline_energy > mcs_energy || mcs_energy > 7.0) {
+        if (spline_energy > mcs_energy) {//|| mcs_energy > 7.0) {
           tot_nu_energy += spline_energy;
           E_lepton = spline_energy;
           E_range += spline_energy;
         }
-        else if (mcs_energy > 0 && mcs_energy < 7.0) {
+        else if (spline_energy < mcs_energy && mcs_energy > 0) { //} && mcs_energy < 7.0) {
           tot_nu_energy += mcs_energy;
           E_lepton = mcs_energy;
           E_MCS += mcs_energy;
@@ -440,19 +451,23 @@ namespace larlite {
         flip_trk = ::geoalgo::Vector(chopped_trk.Vertex()).SqDist(geovtx) <
                    ::geoalgo::Vector(chopped_trk.End()).SqDist(geovtx) ?
                    false : true;
+
+        //New addition: if range energy is more than MCS energy, then always use range energy!
+        // there's no way range energy is going to overestimate.
+        double spline_energy = _myspline.GetMuMomentum(itrklen) / 1000. + 0.140;
+
         // flip_trk = false;
         // don't need to add mass, MCS code uses p == E so it returns total E
         double mcs_energy = _tmc->GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
-        mcs_energy *= _mcs_bias_factor;
-        //New addition: if range energy is more than MCS energy, then always use range energy!
-        // there's no way range energy is going to overestimate.
-        double spline_energy = _myspline.GetMuMomentum(choppedtrklen) / 1000. + 0.140;
-        if (spline_energy > mcs_energy || mcs_energy > 7.0) {
+        if (apply_correction && ViableForCorrection(spline_energy, mcs_energy))
+          mcs_energy /= 1 + _corrector->GetBiasFactor(choppedtrklen, data_true_MC_false);
+
+        if (spline_energy > mcs_energy) { //} || mcs_energy > 7.0) {
           tot_nu_energy += spline_energy;
           E_hadrons += spline_energy;
           E_range += spline_energy;
         }
-        else if (mcs_energy > 0 && mcs_energy < 7.0) {
+        else if (spline_energy < mcs_energy && mcs_energy > 0) { //} && mcs_energy < 7.0) {
           tot_nu_energy += mcs_energy;
           E_hadrons += mcs_energy;
           E_MCS += mcs_energy;
@@ -533,6 +548,14 @@ namespace larlite {
 
     return tot_nu_energy;
   } // end computeenuNtracksfromPID
+
+  bool NuEnergyCalc::ViableForCorrection(const double range_energy, const double MCS_energy) {
+
+    if ( MCS_energy > 7.0 ) return false;
+
+    return MCS_energy > (0.15 + 1.25 * range_energy);
+
+  }
 }
 
 #endif
