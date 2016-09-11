@@ -192,8 +192,10 @@ namespace larlite {
     double _longest_trk_theta;
     double _longest_trk_phi;
     double _longest_trk_MCS_mom;
+    double _longest_trk_MCS_mom_chopped;
     double _longest_trk_spline_mom;
     double _nu_E_estimate;
+    double _corrected_nu_E_estimate;
     double _CCQE_E;
     double _longest_trk_avg_calo;
     double _second_longest_trk_avg_calo;

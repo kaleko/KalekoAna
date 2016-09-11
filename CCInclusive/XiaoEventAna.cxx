@@ -91,8 +91,10 @@ namespace larlite {
             _tree->Branch("longest_trk_theta", &_longest_trk_theta, "longest_trk_theta/D");
             _tree->Branch("longest_trk_phi", &_longest_trk_phi, "longest_trk_phi/D");
             _tree->Branch("longest_trk_MCS_mom", &_longest_trk_MCS_mom, "longest_trk_MCS_mom/D");
+            _tree->Branch("longest_trk_MCS_mom_chopped", &_longest_trk_MCS_mom_chopped, "longest_trk_MCS_mom_chopped/D");
             _tree->Branch("longest_trk_spline_mom", &_longest_trk_spline_mom, "longest_trk_spline_mom/D");
             _tree->Branch("nu_E_estimate", &_nu_E_estimate, "nu_E_estimate/D");
+            _tree->Branch("corrected_nu_E_estimate", &_corrected_nu_E_estimate, "corrected_nu_E_estimate/D");
             _tree->Branch("CCQE_E", &_CCQE_E, "CCQE_E/D");
             _tree->Branch("longest_trk_avg_calo", &_longest_trk_avg_calo, "longest_trk_avg_calo/D");
             _tree->Branch("second_longest_trk_avg_calo", &_second_longest_trk_avg_calo, "second_longest_trk_avg_calo/D");
@@ -186,10 +188,12 @@ namespace larlite {
         _longest_trk_theta = -999.;
         _longest_trk_phi = -999.;
         _longest_trk_MCS_mom = -999.;
+        _longest_trk_MCS_mom_chopped = -999.;
         _longest_trk_spline_mom = -999.;
         _longest_trk_avg_calo = -999.;
         _second_longest_trk_avg_calo = -999.;
         _nu_E_estimate = -999.;
+        _corrected_nu_E_estimate = -999.;
         _CCQE_E = -999.;
         _true_nu_x = -999.;
         _true_nu_y = -999.;
@@ -428,6 +432,7 @@ namespace larlite {
 
 
                     _longest_trk_MCS_mom = _MCScalc.GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk);
+_longest_trk_MCS_mom_chopped = _MCScalc.GetMomentumMultiScatterLLHD(chopped_trk, flip_longest_trk);   
 
                     _longest_track_end_x = flip_longest_trk ? asstd_trk.Vertex().X() : asstd_trk.End().X();
                     _longest_track_end_y = flip_longest_trk ? asstd_trk.Vertex().Y() : asstd_trk.End().Y();
@@ -582,7 +587,12 @@ namespace larlite {
             }
 
             // This now fills E lepton and E hadrons
-            _nu_E_estimate = _nu_E_calc.ComputeEnuNTracksFromPID(reco_neutrino, _E_lepton, _E_hadrons, _E_MCS, _E_range);
+
+            _nu_E_estimate = _nu_E_calc.ComputeEnuNTracksFromPID(reco_neutrino, _E_lepton, _E_hadrons, _E_MCS, _E_range, false, false);
+            double dummy1; double dummy2; double dummy3; double dummy4;
+            _corrected_nu_E_estimate = _nu_E_calc.ComputeEnuNTracksFromPID(reco_neutrino, dummy1, dummy2, dummy3, dummy4, true, _running_on_data);
+
+
             _CCQE_E = _nu_E_calc.ComputeECCQE(_E_lepton * 1000., longest_trackdir_endpoints, false);
 
             larlite::mcnu mcnu;
