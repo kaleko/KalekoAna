@@ -39,6 +39,7 @@
 #pragma link C++ class larlite::TrackChopper+;
 #pragma link C++ class larlite::IntxnTrackExtender+;
 #pragma link C++ class larlite::MCSBiasStudy+;
+#pragma link C++ class larlite::MCSBiasCorrector+;
 
 //ADD_NEW_CLASS ... do not change this line
 #endif
