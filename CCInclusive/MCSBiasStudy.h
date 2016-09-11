@@ -59,6 +59,13 @@ namespace larlite {
         double _MCS_energy;
         double _full_MCS_energy;
         double _full_range_energy;
+        double _track_start_x;
+        double _track_start_y;
+        double _track_start_z;
+        double _track_end_x;
+        double _track_end_y;
+        double _track_end_z;
+        bool _full_track_tree_entry;
 
     };
 

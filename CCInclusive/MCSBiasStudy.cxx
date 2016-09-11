@@ -17,6 +17,13 @@ namespace larlite {
     _tree->Branch("full_range_energy", &_full_range_energy, "full_range_energy/D");
     _tree->Branch("MCS_energy", &_MCS_energy, "MCS_energy/D");
     _tree->Branch("full_MCS_energy", &_full_MCS_energy, "full_MCS_energy/D");
+    _tree->Branch("track_start_x", &_track_start_x, "track_start_x/D");
+    _tree->Branch("track_start_y", &_track_start_y, "track_start_y/D");
+    _tree->Branch("track_start_z", &_track_start_z, "track_start_z/D");
+    _tree->Branch("track_end_x", &_track_end_x, "track_end_x/D");
+    _tree->Branch("track_end_y", &_track_end_y, "track_end_y/D");
+    _tree->Branch("track_end_z", &_track_end_z, "track_end_z/D");
+    _tree->Branch("full_track_tree_entry", &_full_track_tree_entry, "full_track_tree_entry/O");
 
   }
 
@@ -29,6 +36,18 @@ namespace larlite {
     _full_length = (track.End() - track.Vertex()).Mag();
     _full_range_energy = _myspline.GetMuMomentum(_full_length) / 1000. + 0.106;
     _full_MCS_energy = _MCS_energy = _tmc.GetMomentumMultiScatterLLHD(track);
+    _track_start_x = track.Vertex().X();
+    _track_start_y = track.Vertex().Y();
+    _track_start_z = track.Vertex().Z();
+    _track_end_x = track.End().X();
+    _track_end_y = track.End().Y();
+    _track_end_z = track.End().Z();
+    _full_track_tree_entry = true;
+    _tree->Fill();
+
+    
+    _full_track_tree_entry = false;
+
 
     // slowly build up a copy of the initial track with increasing length
     // and compute MCS energy as length increases
@@ -46,7 +65,7 @@ namespace larlite {
 
       _length_analyzed = (track.LocationAtPoint(i) - track.LocationAtPoint(0)).Mag();
       if ( _length_analyzed < current_min_len ) continue;
-    
+
       _MCS_energy = _tmc.GetMomentumMultiScatterLLHD(dummy_trk);
 
       current_min_len += length_increment;
