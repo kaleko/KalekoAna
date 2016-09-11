@@ -17,6 +17,7 @@
 
 #include "Analysis/ana_base.h"
 #include "TH1I.h"
+#include "TTree.h"
 
 namespace larlite {
   /**
@@ -32,6 +33,7 @@ namespace larlite {
       _name="NeutrinoParentInvestigation"; 
       _fout=0;
       _nu_decay_code_hist=NULL;
+      _tree = 0;
     }
 
     /// Default destructor
@@ -55,6 +57,11 @@ namespace larlite {
   protected:
 
     TH1I *_nu_decay_code_hist;
+    TTree *_tree;
+
+    int _pdg;
+    int _fndecay;
+    double _E;
 
   };
 }
