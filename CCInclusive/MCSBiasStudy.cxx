@@ -49,30 +49,30 @@ namespace larlite {
     _full_track_tree_entry = false;
 
 
-    // slowly build up a copy of the initial track with increasing length
-    // and compute MCS energy as length increases
-    larlite::track dummy_trk;
+    // // slowly build up a copy of the initial track with increasing length
+    // // and compute MCS energy as length increases
+    // larlite::track dummy_trk;
 
-    double length_increment = 10.; //cm
+    // double length_increment = 10.; //cm
 
-    double current_min_len = 100.;
-    size_t n_points = track.NumberTrajectoryPoints();
+    // double current_min_len = 100.;
+    // size_t n_points = track.NumberTrajectoryPoints();
 
-    for (int i = 1; i < n_points; ++i) {
+    // for (int i = 1; i < n_points; ++i) {
 
-      dummy_trk.add_vertex(track.LocationAtPoint(i - 1));
-      dummy_trk.add_direction(track.LocationAtPoint(i - 1));
+    //   dummy_trk.add_vertex(track.LocationAtPoint(i - 1));
+    //   dummy_trk.add_direction(track.LocationAtPoint(i - 1));
 
-      _length_analyzed = (track.LocationAtPoint(i) - track.LocationAtPoint(0)).Mag();
-      if ( _length_analyzed < current_min_len ) continue;
+    //   _length_analyzed = (track.LocationAtPoint(i) - track.LocationAtPoint(0)).Mag();
+    //   if ( _length_analyzed < current_min_len ) continue;
 
-      _MCS_energy = _tmc.GetMomentumMultiScatterLLHD(dummy_trk);
+    //   _MCS_energy = _tmc.GetMomentumMultiScatterLLHD(dummy_trk);
 
-      current_min_len += length_increment;
+    //   current_min_len += length_increment;
 
-      _tree->Fill();
+    //   _tree->Fill();
 
-    }
+    // }
 
   }
 
