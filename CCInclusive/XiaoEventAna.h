@@ -199,6 +199,7 @@ namespace larlite {
     double _CCQE_E;
     double _longest_trk_avg_calo;
     double _second_longest_trk_avg_calo;
+    double _longest_trk_wiggle;
 
     double _true_nu_x;
     double _true_nu_y;
