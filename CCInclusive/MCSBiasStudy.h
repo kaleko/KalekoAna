@@ -49,6 +49,9 @@ namespace larlite {
         /// Getter for the ttree so the user can write it to a file, for example
         TTree* GetTree() { return _tree; }
 
+        /// Function to compute the average angle deviation for custom-segmented tracks
+        std::pair<double,double> ComputeWiggle(const larlite::track &track);
+
     private:
 
         TrackMomentumSplines _myspline;
@@ -72,6 +75,8 @@ namespace larlite {
         double _track_end_z;
         double _track_dot_z;
         int _n_traj_points;
+        double _chopped_wiggle;
+        double _chopped_rms;
         bool _full_track_tree_entry;
 
     };
