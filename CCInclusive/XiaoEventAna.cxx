@@ -86,6 +86,7 @@ namespace larlite {
             _tree->Branch("longest_track_end_x_infidvol", &_longest_track_end_x_infidvol, "longest_track_end_x_infidvol/D");
             _tree->Branch("longest_track_end_y_infidvol", &_longest_track_end_y_infidvol, "longest_track_end_y_infidvol/D");
             _tree->Branch("longest_track_end_z_infidvol", &_longest_track_end_z_infidvol, "longest_track_end_z_infidvol/D");
+            _tree->Branch("longest_trk_wiggle", &_longest_trk_wiggle, "longest_trk_wiggle/D");
             _tree->Branch("longest_trk_cosy", &_longest_trk_cosy, "longest_trk_cosy/D");
             _tree->Branch("second_longest_trk_len", &_second_longest_trk_len, "second_longest_trk_len/D");
             _tree->Branch("longest_trk_theta", &_longest_trk_theta, "longest_trk_theta/D");
@@ -183,6 +184,7 @@ namespace larlite {
         _longest_trk_len_infidvol = -999.;
         _longest_trk_Length = -999.;
         _longest_trk_Length_infidvol = -999.;
+        _longest_trk_wiggle = -999.;
         _second_longest_trk_len = -999.;
         _longest_trk_cosy = -999;
         _longest_trk_theta = -999.;
@@ -432,7 +434,9 @@ namespace larlite {
 
 
                     _longest_trk_MCS_mom = _MCScalc.GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk);
-_longest_trk_MCS_mom_chopped = _MCScalc.GetMomentumMultiScatterLLHD(chopped_trk, flip_longest_trk);   
+                    _longest_trk_MCS_mom_chopped = _MCScalc.GetMomentumMultiScatterLLHD(chopped_trk, flip_longest_trk);
+                    auto wiggle_info = _mcsbiasstudy->ComputeWiggle(chopped_trk);
+                    _longest_trk_wiggle = wiggle_info.first;
 
                     _longest_track_end_x = flip_longest_trk ? asstd_trk.Vertex().X() : asstd_trk.End().X();
                     _longest_track_end_y = flip_longest_trk ? asstd_trk.Vertex().Y() : asstd_trk.End().Y();
