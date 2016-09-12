@@ -28,6 +28,7 @@ namespace larlite {
     _tree->Branch("track_end_y", &_track_end_y, "track_end_y/D");
     _tree->Branch("track_end_z", &_track_end_z, "track_end_z/D");
     _tree->Branch("track_dot_z", &_track_dot_z, "track_dot_z/D");
+    _tree->Branch("n_traj_points", &_n_traj_points, "n_traj_points/I");
     _tree->Branch("full_track_tree_entry", &_full_track_tree_entry, "full_track_tree_entry/O");
 
   }
@@ -48,7 +49,8 @@ namespace larlite {
     _track_end_y = track.End().Y();
     _track_end_z = track.End().Z();
     _full_track_tree_entry = true;
-
+    _n_traj_points = track.NumberTrajectoryPoints();
+    
     bool flip_trk = _track_start_y < _track_end_y;
     _full_MCS_energy_someflipped = _tmc.GetMomentumMultiScatterLLHD(track, flip_trk);
 

@@ -71,6 +71,7 @@ namespace larlite {
         double _track_end_y;
         double _track_end_z;
         double _track_dot_z;
+        int _n_traj_points;
         bool _full_track_tree_entry;
 
     };
