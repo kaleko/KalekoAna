@@ -24,6 +24,7 @@
 #include "TrackMomentumSplines.h"
 #include "TrackMomentumCalculator.h"
 #include "TTree.h"
+#include "TrackChopper.h"
 
 /**
    \class MCSBiasStudy
@@ -52,12 +53,16 @@ namespace larlite {
 
         TrackMomentumSplines _myspline;
         kaleko::TrackMomentumCalculator _tmc;
+        TrackChopper _chopper;
 
         TTree *_tree;
         double _length_analyzed;
         double _full_length;
+        double _chopped_full_length;
         double _MCS_energy;
         double _full_MCS_energy;
+        double _full_MCS_energy_someflipped;
+        double _full_MCS_energy_chopped;
         double _full_range_energy;
         double _track_start_x;
         double _track_start_y;
@@ -65,6 +70,7 @@ namespace larlite {
         double _track_end_x;
         double _track_end_y;
         double _track_end_z;
+        double _track_dot_z;
         bool _full_track_tree_entry;
 
     };

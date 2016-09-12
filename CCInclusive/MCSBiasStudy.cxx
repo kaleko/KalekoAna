@@ -10,19 +10,24 @@ namespace larlite {
 
     _myspline = TrackMomentumSplines();
     _tmc = kaleko::TrackMomentumCalculator();
+    _chopper = TrackChopper();
 
     _tree = new TTree("MCS_bias_tree", "MCS_bias_tree");
     _tree->Branch("length_analyzed", &_length_analyzed, "length_analyzed/D");
     _tree->Branch("full_length", &_full_length, "full_length/D");
+    _tree->Branch("chopped_full_length", &_chopped_full_length, "chopped_full_length/D");
     _tree->Branch("full_range_energy", &_full_range_energy, "full_range_energy/D");
     _tree->Branch("MCS_energy", &_MCS_energy, "MCS_energy/D");
     _tree->Branch("full_MCS_energy", &_full_MCS_energy, "full_MCS_energy/D");
+    _tree->Branch("full_MCS_energy_someflipped", &_full_MCS_energy_someflipped, "full_MCS_energy_someflipped/D");
+    _tree->Branch("full_MCS_energy_chopped", &_full_MCS_energy_chopped, "full_MCS_energy_chopped/D");
     _tree->Branch("track_start_x", &_track_start_x, "track_start_x/D");
     _tree->Branch("track_start_y", &_track_start_y, "track_start_y/D");
     _tree->Branch("track_start_z", &_track_start_z, "track_start_z/D");
     _tree->Branch("track_end_x", &_track_end_x, "track_end_x/D");
     _tree->Branch("track_end_y", &_track_end_y, "track_end_y/D");
     _tree->Branch("track_end_z", &_track_end_z, "track_end_z/D");
+    _tree->Branch("track_dot_z", &_track_dot_z, "track_dot_z/D");
     _tree->Branch("full_track_tree_entry", &_full_track_tree_entry, "full_track_tree_entry/O");
 
   }
@@ -35,7 +40,7 @@ namespace larlite {
 
     _full_length = (track.End() - track.Vertex()).Mag();
     _full_range_energy = _myspline.GetMuMomentum(_full_length) / 1000. + 0.106;
-    _full_MCS_energy = _MCS_energy = _tmc.GetMomentumMultiScatterLLHD(track);
+    _full_MCS_energy = _tmc.GetMomentumMultiScatterLLHD(track);
     _track_start_x = track.Vertex().X();
     _track_start_y = track.Vertex().Y();
     _track_start_z = track.Vertex().Z();
@@ -43,9 +48,22 @@ namespace larlite {
     _track_end_y = track.End().Y();
     _track_end_z = track.End().Z();
     _full_track_tree_entry = true;
+
+    bool flip_trk = _track_start_y < _track_end_y;
+    _full_MCS_energy_someflipped = _tmc.GetMomentumMultiScatterLLHD(track, flip_trk);
+
+    TVector3 zdir(0., 0., -1.);
+    _track_dot_z = !flip_trk ? (track.End() - track.Vertex()).Unit().Dot(zdir) :
+                   (track.Vertex() - track.End()).Unit().Dot(zdir);
+
+    auto const chopped_trk = _chopper.chopTrack(track);
+    _chopped_full_length = (chopped_trk.End() - chopped_trk.Vertex()).Mag();
+    _full_MCS_energy_chopped = _tmc.GetMomentumMultiScatterLLHD(chopped_trk);
+
+
     _tree->Fill();
 
-    
+
     _full_track_tree_entry = false;
 
 
