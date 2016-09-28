@@ -29,6 +29,7 @@
 #pragma link C++ class larlite::TestPPiCalo+;
 #pragma link C++ class larlite::QuickMikePlot+;
 #pragma link C++ class larlite::TestTrkHitAssn+;
+#pragma link C++ class larlite::TestTrkSPSAssn+;
 #pragma link C++ class larlite::KalekoPIDFiller+;
 #pragma link C++ class larlite::FidVolBox+;
 #pragma link C++ class larlite::KalekoTrackStitcher+;
@@ -37,6 +38,7 @@
 #pragma link C++ class larlite::FluxAna+;
 #pragma link C++ class larlite::IntxnBooster+;
 #pragma link C++ class larlite::TrackChopper+;
+#pragma link C++ class larlite::TrackSmearer+;
 #pragma link C++ class larlite::IntxnTrackExtender+;
 #pragma link C++ class larlite::MCSBiasStudy+;
 #pragma link C++ class larlite::MCSBiasCorrector+;
