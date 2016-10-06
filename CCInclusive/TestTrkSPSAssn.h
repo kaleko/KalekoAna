@@ -17,7 +17,7 @@
 
 #include "Analysis/ana_base.h"
 #include "TTree.h"
-#include "FidvolBox.h"
+#include "FidVolBox.h"
 #include "TrackMomentumCalculator.h"
 
 namespace larlite {
