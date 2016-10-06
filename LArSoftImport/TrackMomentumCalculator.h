@@ -24,15 +24,32 @@
 #include "DataFormat/track.h"
 #include "TMatrixDSym.h"
 #include "TMatrixDSymEigen.h"
+#include "TFile.h"
 #include "TAxis.h"
 // #include "Minuit2/Minuit2Minimizer.h"
 #include "TMath.h"
+#include "Minuit2/MnUserParameterState.h"
+#include "Minuit2/Minuit2Minimizer.h"
+#include "Minuit2/FunctionMinimum.h"
+#include "Minuit2/MnMigrad.h"
+#include "Minuit2/MnUserParameters.h"
+#include "Minuit2/MnPrint.h"
+#include "Minuit2/FCNBase.h"
+#include "Math/Minimizer.h"
+#include "Math/Factory.h"
+#include "Math/Functor.h"
+#include <math.h>
+#include <cmath>
+#include "TTree.h"
+
+ #include "TrackMomentumSplines.h"
 
 /**
    \class TrackMomentumCalculator
    User defined class TrackMomentumCalculator ... these comments are used to generate
    doxygen documentation!
 */
+
 
 namespace larlite {
 
@@ -41,7 +58,7 @@ namespace larlite {
 
         // Global variables/input
         // A. ---> for the TMinuit2 chi^2 minimization !
-        Double_t xmeas[30]; Double_t ymeas[30]; Double_t eymeas[30]; Int_t nmeas;
+        //Double_t xmeas[30]; Double_t ymeas[30]; Double_t eymeas[30]; Int_t nmeas;
         // B. ---> For the LLHD raster scan !
         // ..
 
@@ -57,11 +74,14 @@ namespace larlite {
         std::vector<Float_t> segL;
         Double_t find_angle( Double_t vz, Double_t vy );
         Float_t steps_size; Int_t n_steps; std::vector<Float_t> steps;
-        Float_t steps_size2;
+        Float_t steps_size2; // I think this is the actual step size that is used
         Float_t kcal;
         std::vector<Float_t> dthij; std::vector<Float_t> dEi; std::vector<Float_t> dEj; std::vector<Float_t> ind;
 
+        double max_len_to_analyze;
     public:
+
+        TrackMomentumSplines *_myspline;
 
         // Constructor and destructor  //
         TrackMomentumCalculator();
@@ -69,6 +89,10 @@ namespace larlite {
         virtual ~TrackMomentumCalculator() {};
 
         void SetMinLength(double minlen) { minLength = minlen; }
+
+        void SetStepSize(double stepsize) { steps_size2 = stepsize; }
+
+        void SetMaxLengthToAnalyze(double maxlen) { max_len_to_analyze = maxlen; }
 
         //    double GetTrackMomentum(double trkrange, int pdg);
 
@@ -84,7 +108,7 @@ namespace larlite {
 
         Int_t GetSegTracks2( const std::vector<Float_t> &xxx, const std::vector<Float_t> &yyy, const std::vector<Float_t> &zzz );
 
-        //    void GetDeltaThetaRMS( Double_t &mean, Double_t &rms, Double_t &rmse, Double_t thick );
+           void GetDeltaThetaRMS( Double_t &mean, Double_t &rms, Double_t &rmse, Double_t thick );
 
         TGraphErrors *gr_meas;
 
@@ -98,9 +122,11 @@ namespace larlite {
 
         Double_t my_mcs_llhd( Double_t x0, Double_t x1 );
 
+        // double my_mcs_chi2( const double *x );
+
         Double_t GetMomentumMultiScatterLLHD( const larlite::mctrack &trk );
-        Double_t GetMomentumMultiScatterLLHD( const larlite::track   &trk, bool flip = false );
-        // Double_t GetMomentumMultiScatterChi2( const larlite::mctrack &trk );
+        Double_t GetMomentumMultiScatterLLHD( const larlite::track   &trk, bool flip = false, bool debug = false );
+        Double_t GetMomentumMultiScatterChi2( const larlite::mctrack &trk );
 
         Double_t p_mcs_2; Double_t LLbf;
 
@@ -111,6 +137,31 @@ namespace larlite {
         Double_t minLength;
 
         Double_t maxLength;
+
+        TTree* GetTree() { return _debug_tree; }
+
+        std::vector<size_t> points_per_segment;
+
+    private:
+
+        // Filled once per segment of tracks
+        TTree *_debug_tree;
+        double _full_track_len; //This will be duplicated many times per track
+        double _full_MCS_E; // this also duplicated many times per track
+        double _full_range_E;
+        double _delta_theta_x;
+        double _delta_theta_y;
+        int    _n_traj_points;
+        double _seg_theta;
+        double _seg_phi;
+        double _seg_end_x;
+        double _seg_end_y;
+        double _seg_end_z;
+        int    _counter;
+        double _segment_E;
+        double _predicted_RMS;
+        double _true_segment_E;
+        double _true_predicted_RMS;
 
     };
 } // end namespace kaleko
