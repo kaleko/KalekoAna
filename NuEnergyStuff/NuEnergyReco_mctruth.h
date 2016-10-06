@@ -18,7 +18,7 @@
 #include "Analysis/ana_base.h"
 #include "DataFormat/mcpart.h"
 #include "TTree.h"
-#include "ECCQECalculator.h"
+//#include "/Users/davidkaleko/larlite/UserDev/LowEnergyExcess/Utilities/ECCQECalculator.h"
 
 namespace larlite {
   /**
@@ -90,7 +90,7 @@ namespace larlite {
     double second_prot_KE;
     double tot_pt;
 
-    larlite::util::ECCQECalculator _calc;
+    //    larlite::util::ECCQECalculator _calc;
 
 
   };

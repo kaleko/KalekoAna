@@ -76,7 +76,7 @@ namespace larlite {
 	if(abs(mcp.PdgCode()) == 13 || abs(mcp.PdgCode()) == 11){
 	  lep_E = part_E;
 	  n_lep++;
-	  E_ccqe = 1000.*_calc.ComputeECCQE(part_4mom);
+	  //	  E_ccqe = 1000.*_calc.ComputeECCQE(part_4mom);
 	  total_momentum += mcp.Trajectory().at(0).Momentum();
 	}
 	
