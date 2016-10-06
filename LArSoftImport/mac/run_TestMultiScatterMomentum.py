@@ -11,8 +11,10 @@ from ROOT import larlite as fmwk
 from ROOT import gSystem
 
 gSystem.Load('libKalekoAna_LArSoftImport')
+gSystem.Load('libKalekoAna_EventFilters')
 # Create ana_processor instance
 my_proc = fmwk.ana_processor()
+my_proc.enable_filter(True)
 
 # Set input root file
 for x in xrange(len(sys.argv)):
@@ -27,13 +29,16 @@ my_proc.set_io_mode(fmwk.storage_manager.kREAD)
 my_proc.set_ana_output_file("testmultiscattermomentum_output.root")
 
 # Attach a template process
+myfilter = fmwk.kaleko.MCTracksContainedFilter()
+
 mymod = fmwk.TestMultiScatterMomentum()
-usemctracks = False
+usemctracks = True
 mymod.SetUseMCTracks(usemctracks)
 if usemctracks:
 	print "\n\n\n TestMultiScatterMomentum is USING MCTRACKS.\n\n\n"
 else:
 	print "\n\n\n TestMultiScatterMomentum is USING RECONSTRUCTED TRACKS.\n\n\n"
+my_proc.add_process(myfilter)
 my_proc.add_process(mymod)
 
 print
