@@ -38,6 +38,7 @@
 #pragma link C++ class larlite::FluxAna+;
 #pragma link C++ class larlite::IntxnBooster+;
 #pragma link C++ class larlite::TrackChopper+;
+#pragma link C++ class larlite::FindSimilarTrack+;
 #pragma link C++ class larlite::TrackSmearer+;
 #pragma link C++ class larlite::IntxnTrackExtender+;
 #pragma link C++ class larlite::MCSBiasStudy+;
