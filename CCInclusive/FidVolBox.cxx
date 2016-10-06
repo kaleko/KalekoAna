@@ -13,8 +13,8 @@ namespace larlite{
 
 
 		// double fidvol_dist_x = 40.;//20.;
-		// double fidvol_dist_y = 26.5;
-		// double fidvol_dist_zmin = 20.;
+		// double fidvol_dist_y = 30.;
+		// double fidvol_dist_zmin = 50.;
 		// double fidvol_dist_z = 436.8;//36.8;//361.8;
 
 		
