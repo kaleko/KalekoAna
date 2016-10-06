@@ -50,6 +50,10 @@ myxiao.setInputType(mytype)
 myxiao.setTrackProducer(track_producer)
 myxiao.setVtxProducer(vtx_producer)
 myxiao.setCaloProducer(calo_producer)
+
+myxiao.setMCSSegSize(10.)
+myxiao.setMCSMinLen(100.)
+
 my_proc.add_process(myxiao)
 
 if not run_on_data:
@@ -59,9 +63,17 @@ if not run_on_data:
     my_proc.set_data_to_read(fmwk.data.kMCTrack,"mcreco")
 my_proc.set_data_to_read(fmwk.data.kOpFlash,"opflashSat")
 my_proc.set_data_to_read(fmwk.data.kTrack,track_producer)
+#my_proc.set_data_to_read(fmwk.data.kTrack,"pandoraNuKHit")
+#my_proc.set_data_to_read(fmwk.data.kTrack,"KalekopandoraNuPMAPlustrackkalmanhit")
+#my_proc.set_data_to_read(fmwk.data.kTrack,"KalekopandoraNuPlustrackkalmanhit")
+#my_proc.set_data_to_read(fmwk.data.kTrack,"pandoraNu")
+#my_proc.set_data_to_read(fmwk.data.kTrack,"trackkalmanhit")
 my_proc.set_data_to_read(fmwk.data.kVertex,vtx_producer)
-my_proc.set_data_to_read(fmwk.data.kCalorimetry,calo_producer)
-my_proc.set_data_to_read(fmwk.data.kAssociation,calo_producer)
+#my_proc.set_data_to_read(fmwk.data.kVertex,"pandoraNu")
+my_proc.set_data_to_read(fmwk.data.kCalorimetry,track_producer + "calo")
+#my_proc.set_data_to_read(fmwk.data.kCalorimetry,"pandoraNucalo")
+my_proc.set_data_to_read(fmwk.data.kAssociation,track_producer + "calo")
+#my_proc.set_data_to_read(fmwk.data.kAssociation,"pandoraNucalo")
 
 if not run_on_data:
     my_proc.set_data_to_write(fmwk.data.kMCFlux,"generator")
@@ -70,10 +82,17 @@ if not run_on_data:
     my_proc.set_data_to_write(fmwk.data.kMCTrack,"mcreco")
 my_proc.set_data_to_write(fmwk.data.kOpFlash,"opflashSat")
 my_proc.set_data_to_write(fmwk.data.kTrack,track_producer)
+#my_proc.set_data_to_write(fmwk.data.kTrack,"KalekopandoraNuPMAPlustrackkalmanhit")
+#my_proc.set_data_to_write(fmwk.data.kTrack,"KalekopandoraNuPlustrackkalmanhit")
+#my_proc.set_data_to_write(fmwk.data.kTrack,"pandoraNu")
+#my_proc.set_data_to_write(fmwk.data.kTrack,"trackkalmanhit")
 my_proc.set_data_to_write(fmwk.data.kVertex,vtx_producer)
-my_proc.set_data_to_write(fmwk.data.kCalorimetry,calo_producer)
-my_proc.set_data_to_write(fmwk.data.kAssociation,calo_producer)
-
+#my_proc.set_data_to_write(fmwk.data.kVertex,"pandoraNu")
+my_proc.set_data_to_write(fmwk.data.kCalorimetry,track_producer + "calo")
+my_proc.set_data_to_write(fmwk.data.kAssociation,track_producer + "calo")
+#my_proc.set_data_to_write(fmwk.data.kCalorimetry,"pandoraNucalo")
+#my_proc.set_data_to_write(fmwk.data.kAssociation,"pandoraNuKHitcalo")
+#my_proc.set_data_to_write(fmwk.data.kAssociation,"pandoraNucalo")
 
 print
 print "Finished configuring ana_processor. Start event loop!"
