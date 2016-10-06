@@ -5,6 +5,7 @@
 #include "FidVolBox.h"
 
 namespace larlite {
+  namespace kaleko{
 
   bool MCTracksContainedFilter::initialize() {
 
@@ -27,18 +28,21 @@ namespace larlite {
   
   bool MCTracksContainedFilter::analyze(storage_manager* storage) {
 
+    total_events++;
     //Grab the MCTracks
     auto ev_mctrack = storage->get_data<event_mctrack>("mcreco");    
     if(!ev_mctrack) {
       print(larlite::msg::kERROR,__FUNCTION__,Form("Did not find specified data product, mctrack!"));
       return false;
     }
+    if(ev_mctrack->size() != 1) return false;
 
-    total_events++;
+
 
     //Make sure all MC tracks are fully contained
     for (auto &track : *ev_mctrack){
-      if(track.Origin() != 1) continue;
+     // std::cout<<track.Origin()<<std::endl;
+     // if(track.Origin() != 1) continue;
       if ( !isFullyContained(track) ) return false;
     }
     
@@ -61,12 +65,12 @@ namespace larlite {
 
     //   Point_t mypoint(mytrack.Start().Position());
 
-    if(_myGeoAABox.Contain(mytrack.Start().Position()) > 0 &&
-       _myGeoAABox.Contain(mytrack.End().Position()) > 0)
-
+    if(_myGeoAABox.Contain(mytrack.front().Position())  &&
+       _myGeoAABox.Contain(mytrack.back().Position()) )
       return true;
 
     return false;
   }
+}//end namespace kaleko
 }
 #endif

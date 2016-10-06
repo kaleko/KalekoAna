@@ -20,7 +20,8 @@
 #include "DataFormat/mctrack.h"
 #include "LArUtil/Geometry.h"
 
-namespace larlite {
+namespace larlite { 
+  namespace kaleko {
   /**
      \class MCTracksContainedFilter
      User custom analysis class made by davidkaleko
@@ -33,6 +34,7 @@ namespace larlite {
     MCTracksContainedFilter(){ 
       _name="MCTracksContainedFilter"; 
       _fout=0;
+      std::cout<<"CONSTRUCTORRRRR"<<std::endl;
     };
     
     /// Default destructor
@@ -64,6 +66,7 @@ namespace larlite {
     size_t kept_events;
 
   };
+}
 }
 #endif
 
