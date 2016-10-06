@@ -376,6 +376,12 @@ namespace larlite {
         // else {
         // if track isn't contained, "chop" it so only the portion inside of the fid vol box is used
         auto chopped_trk = _chopper.chopTrack(track);
+
+        // smear track!
+        // if(!data_true_MC_false)
+        //   chopped_trk = _smearer.SmearTrack(chopped_trk);
+
+
         double choppedtrklen = (chopped_trk.End() - chopped_trk.Vertex()).Mag();
         // std::cout << "before chopping track has length " << itrklen << std::endl;
         // std::cout << "   after chopping, track has length " << (chopped_trk.End() - chopped_trk.Vertex()).Mag() << std::endl;
@@ -405,8 +411,8 @@ namespace larlite {
         // MCS code uses ultrarelativistic so p = E, so it returns total E.
         // No need to add mass!
         double mcs_energy = _tmc->GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
-        if (apply_correction && ViableForCorrection(spline_energy, mcs_energy))
-          mcs_energy /= 1 + _corrector->GetBiasFactor(choppedtrklen, data_true_MC_false);
+        // if (apply_correction && ViableForCorrection(spline_energy, mcs_energy))
+        //   mcs_energy /= 1 + _corrector->GetBiasFactor(choppedtrklen, data_true_MC_false);
 
 
 
@@ -443,6 +449,10 @@ namespace larlite {
         // else {
         // if track isn't contained, "chop" it so only the portion inside of the fid vol box is used
         auto chopped_trk = _chopper.chopTrack(track);
+
+        // if(!data_true_MC_false)
+        //   chopped_trk = _smearer.SmearTrack(chopped_trk);
+
         double choppedtrklen = (chopped_trk.End() - chopped_trk.Vertex()).Mag();
         if (debug) std::cout << " :::NuEnergyCalc::: this track NOT contained." << std::endl;
         // NOTE that trackchopper also flips the track if the "end" is contained but the "vertex" isn't,
@@ -459,8 +469,8 @@ namespace larlite {
         // flip_trk = false;
         // don't need to add mass, MCS code uses p == E so it returns total E
         double mcs_energy = _tmc->GetMomentumMultiScatterLLHD(chopped_trk, flip_trk);
-        if (apply_correction && ViableForCorrection(spline_energy, mcs_energy))
-          mcs_energy /= 1 + _corrector->GetBiasFactor(choppedtrklen, data_true_MC_false);
+        // if (apply_correction && ViableForCorrection(spline_energy, mcs_energy))
+        //   mcs_energy /= 1 + _corrector->GetBiasFactor(choppedtrklen, data_true_MC_false);
 
         if (spline_energy > mcs_energy) { //} || mcs_energy > 7.0) {
           tot_nu_energy += spline_energy;

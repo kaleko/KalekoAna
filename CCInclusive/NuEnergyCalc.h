@@ -28,6 +28,7 @@
 #include "TrackMomentumCalculator.h"
 #include "TrackChopper.h"
 #include "MCSBiasCorrector.h"
+#include "TrackSmearer.h"
 
 /**
    \class NuEnergyCalc
@@ -47,6 +48,8 @@ namespace larlite {
             _chopper = TrackChopper();
             _corrector = new MCSBiasCorrector();
             _mcs_bias_factor = 1.;
+            _smearer = TrackSmearer();
+            setMCSSegSize(10.);
         };
 
         void setMCSMinLen(double len) { _tmc->SetMinLength(len); }
@@ -109,6 +112,8 @@ namespace larlite {
         //depricated
         void SetMCSBiasFactor(double factor) { _mcs_bias_factor = factor; }
 
+        void setMCSSegSize(double len) { _tmc->SetStepSize(len); }
+
     private:
         // Fiducial volume box
         geoalgo::AABox _fidvolBox;
@@ -116,6 +121,7 @@ namespace larlite {
         TrackMomentumSplines _myspline;
         kaleko::TrackMomentumCalculator *_tmc;
         TrackChopper _chopper;
+        TrackSmearer _smearer;
         MCSBiasCorrector *_corrector;
 
         // Every time MCS is run, the final momentum (energy) is multiplied by this factor
