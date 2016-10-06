@@ -13,17 +13,19 @@ namespace larlite {
     bool XiaoEventAna::initialize() {
 
         _nu_finder = XiaoNuFinder();
-        _nu_finder.setMinTrkLen(_min_trk_len);
         _myspline = TrackMomentumSplines();
         _nu_E_calc = NuEnergyCalc();
-        _MCScalc = kaleko::TrackMomentumCalculator();
-        _MCScalc.SetMinLength(_mcs_min_trk_len);
-        _nu_E_calc.setMCSMinLen(_mcs_min_trk_len);
+        _MCScalc = new kaleko::TrackMomentumCalculator();
+        // _MCScalc->SetMaxLengthToAnalyze(125.);
+        _trackmatcher = FindSimilarTrack();
+
+
         _intxn_booster = IntxnBooster();
         _PID_filler = KalekoPIDFiller();
         _chopper = TrackChopper();
         _trkextender = IntxnTrackExtender();
         _mcsbiasstudy = new MCSBiasStudy();
+        _smearer = TrackSmearer();
 
 
         if (_filetype == kINPUT_FILE_TYPE_MAX) {
@@ -87,12 +89,21 @@ namespace larlite {
             _tree->Branch("longest_track_end_y_infidvol", &_longest_track_end_y_infidvol, "longest_track_end_y_infidvol/D");
             _tree->Branch("longest_track_end_z_infidvol", &_longest_track_end_z_infidvol, "longest_track_end_z_infidvol/D");
             _tree->Branch("longest_trk_wiggle", &_longest_trk_wiggle, "longest_trk_wiggle/D");
+            _tree->Branch("longest_trk_wiggle_5cm_seglen", &_longest_trk_wiggle_5cm_seglen, "longest_trk_wiggle_5cm_seglen/D");
+            _tree->Branch("longest_trk_wiggle_10cm_seglen", &_longest_trk_wiggle_10cm_seglen, "longest_trk_wiggle_10cm_seglen/D");
+            _tree->Branch("longest_trk_wiggle_15cm_seglen", &_longest_trk_wiggle_15cm_seglen, "longest_trk_wiggle_15cm_seglen/D");
+            _tree->Branch("longest_trk_wiggle_20cm_seglen", &_longest_trk_wiggle_20cm_seglen, "longest_trk_wiggle_20cm_seglen/D");
+            _tree->Branch("longest_trk_smeared_wiggle", &_longest_trk_smeared_wiggle, "longest_trk_smeared_wiggle/D");
             _tree->Branch("longest_trk_cosy", &_longest_trk_cosy, "longest_trk_cosy/D");
             _tree->Branch("second_longest_trk_len", &_second_longest_trk_len, "second_longest_trk_len/D");
             _tree->Branch("longest_trk_theta", &_longest_trk_theta, "longest_trk_theta/D");
             _tree->Branch("longest_trk_phi", &_longest_trk_phi, "longest_trk_phi/D");
             _tree->Branch("longest_trk_MCS_mom", &_longest_trk_MCS_mom, "longest_trk_MCS_mom/D");
             _tree->Branch("longest_trk_MCS_mom_chopped", &_longest_trk_MCS_mom_chopped, "longest_trk_MCS_mom_chopped/D");
+            _tree->Branch("matched_longest_trk_MCS_mom", &_matched_longest_trk_MCS_mom, "matched_longest_trk_MCS_mom/D");
+            _tree->Branch("matched_longest_trk_MCS_mom_chopped", &_matched_longest_trk_MCS_mom_chopped, "matched_longest_trk_MCS_mom_chopped/D");
+            _tree->Branch("longest_trk_MCS_mom_chopped_straightened", &_longest_trk_MCS_mom_chopped_straightened, "longest_trk_MCS_mom_chopped_straightened/D");
+            _tree->Branch("longest_trk_MCS_mom_smeared_MC", &_longest_trk_MCS_mom_smeared_MC, "longest_trk_MCS_mom_smeared_MC/D");
             _tree->Branch("longest_trk_spline_mom", &_longest_trk_spline_mom, "longest_trk_spline_mom/D");
             _tree->Branch("nu_E_estimate", &_nu_E_estimate, "nu_E_estimate/D");
             _tree->Branch("corrected_nu_E_estimate", &_corrected_nu_E_estimate, "corrected_nu_E_estimate/D");
@@ -125,6 +136,9 @@ namespace larlite {
             _tree->Branch("found_mu_mctrack", &_found_mu_mctrack, "found_mu_mctrack/O");
             _tree->Branch("tot_E_mcshowers", &_tot_E_mcshowers, "tot_E_mcshowers/D");
             _tree->Branch("tot_E_mctracks", &_tot_E_mctracks, "tot_E_mctracks/D");
+
+            _tree->Branch("longest_trk_len_infidvol_smeared", &_longest_trk_len_infidvol_smeared, "longest_trk_len_infidvol_smeared/D");
+            _tree->Branch("longest_trk_Length_infidvol_smeared", &_longest_trk_Length_infidvol_smeared, "longest_trk_Length_infidvol_smeared/D");
         }
 
 
@@ -185,12 +199,20 @@ namespace larlite {
         _longest_trk_Length = -999.;
         _longest_trk_Length_infidvol = -999.;
         _longest_trk_wiggle = -999.;
+        _longest_trk_wiggle_5cm_seglen = -999.;
+        _longest_trk_wiggle_10cm_seglen = -999.;
+        _longest_trk_wiggle_15cm_seglen = -999.;
+        _longest_trk_wiggle_20cm_seglen = -999.;
+        _longest_trk_smeared_wiggle = -999.;
         _second_longest_trk_len = -999.;
         _longest_trk_cosy = -999;
         _longest_trk_theta = -999.;
         _longest_trk_phi = -999.;
         _longest_trk_MCS_mom = -999.;
         _longest_trk_MCS_mom_chopped = -999.;
+        _matched_longest_trk_MCS_mom = -999.;
+        _matched_longest_trk_MCS_mom_chopped = -999.;
+        _longest_trk_MCS_mom_smeared_MC = -999.;
         _longest_trk_spline_mom = -999.;
         _longest_trk_avg_calo = -999.;
         _second_longest_trk_avg_calo = -999.;
@@ -232,7 +254,6 @@ namespace larlite {
 
     bool XiaoEventAna::analyze(storage_manager* storage) {
 
-
         // if (!(storage->run_id() == 5411 && storage->subrun_id() == 114 && storage->event_id() == 5718)) return false;
         total_events++;
         _n_reco_nu_in_evt = 0;
@@ -245,6 +266,13 @@ namespace larlite {
         //     _nu_E_calc.SetMCSBiasFactor(1.0186);
         // else
         //     _nu_E_calc.SetMCSBiasFactor(0.9900);
+
+
+        _nu_finder.setMinTrkLen(_min_trk_len);
+        _MCScalc->SetMinLength(_mcs_min_trk_len);
+        _MCScalc->SetStepSize(_MCS_seg_size);
+        _nu_E_calc.setMCSMinLen(_mcs_min_trk_len);
+        _nu_E_calc.setMCSSegSize(_MCS_seg_size);
 
         auto ev_vtx = storage->get_data<event_vertex>(_vtx_producer);
         if (!ev_vtx) {
@@ -432,11 +460,47 @@ namespace larlite {
                                                  ::geoalgo::Vector(asstd_trk.Vertex() - asstd_trk.End());
                     _longest_trk_contained = contained;
 
+                    /// DEBUG
+                    // if (_longest_trk_len_infidvol > 100.) {
+                    //     std::cout << "XIAO DEBUG:" << std::endl;
+                    //     std::cout << "chopped track start: ("
+                    //               << chopped_trk.Vertex().X() << ","
+                    //               << chopped_trk.Vertex().Y() << ","
+                    //               << chopped_trk.Vertex().Z() << "), end: ("
+                    //               << chopped_trk.End().X() << ","
+                    //               << chopped_trk.End().Y() << ","
+                    //               << chopped_trk.End().Z() << ")" << std::endl;
+                    //     _longest_trk_MCS_mom_chopped = _MCScalc->GetMomentumMultiScatterLLHD(chopped_trk, flip_longest_trk);
+                    //     std::cout<<" Final MCS momentum was "<<_longest_trk_MCS_mom_chopped<<std::endl;
+                    //     return false;
+                    // }
 
-                    _longest_trk_MCS_mom = _MCScalc.GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk);
-                    _longest_trk_MCS_mom_chopped = _MCScalc.GetMomentumMultiScatterLLHD(chopped_trk, flip_longest_trk);
-                    auto wiggle_info = _mcsbiasstudy->ComputeWiggle(chopped_trk);
-                    _longest_trk_wiggle = wiggle_info.first;
+                    _longest_trk_MCS_mom = _MCScalc->GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk);
+                    _longest_trk_MCS_mom_chopped = _MCScalc->GetMomentumMultiScatterLLHD(chopped_trk, flip_longest_trk);
+
+                    //debug
+
+                    auto const chopped_straightened_trk = _chopper.chopAndStraightenTrack(asstd_trk);
+                    _longest_trk_MCS_mom_chopped_straightened = _MCScalc->GetMomentumMultiScatterLLHD(chopped_straightened_trk);
+
+                    auto smeared_trk = chopped_trk;
+                    _longest_trk_MCS_mom_smeared_MC = _longest_trk_MCS_mom;
+                    if (!_running_on_data) {
+                        smeared_trk = _smearer.SmearTrack(chopped_trk);
+                        _longest_trk_MCS_mom_smeared_MC = _MCScalc->GetMomentumMultiScatterLLHD(smeared_trk, flip_longest_trk);
+                    }
+                    _longest_trk_Length_infidvol_smeared = smeared_trk.Length();
+                    _longest_trk_len_infidvol_smeared = (smeared_trk.End() - smeared_trk.Vertex()).Mag();
+
+                    auto wiggle_info = _mcsbiasstudy->ComputeWiggle(smeared_trk, _MCS_seg_size);
+                    _longest_trk_smeared_wiggle = wiggle_info.first;
+                    auto chopped_wiggle_info = _mcsbiasstudy->ComputeWiggle(chopped_trk, _MCS_seg_size);
+                    _longest_trk_wiggle = chopped_wiggle_info.first;
+
+                    _longest_trk_wiggle_5cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 5.).first;
+                    _longest_trk_wiggle_10cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 10.).first;
+                    _longest_trk_wiggle_15cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 15.).first;
+                    _longest_trk_wiggle_20cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 20.).first;
 
                     _longest_track_end_x = flip_longest_trk ? asstd_trk.Vertex().X() : asstd_trk.End().X();
                     _longest_track_end_y = flip_longest_trk ? asstd_trk.Vertex().Y() : asstd_trk.End().Y();
@@ -477,14 +541,56 @@ namespace larlite {
                     //         _longest_trk_avg_calo /= tmp_nhits;
                     //     }
                 }
+            } // end loop over associated tracks
+
+            // Let's find the cloest matching track from another producer
+            if (!_match_track_producer.empty()) {
+                auto ev_match_track = storage->get_data<event_track>(_match_track_producer);
+                if (!ev_match_track) {
+                    print(larlite::msg::kERROR, __FUNCTION__,
+                          Form("Did not find specified data product, track for matched track!"));
+                    return false;
+                }
+                if (!ev_match_track->size())
+                    return false;
+
+                try {
+                    auto const matched_longest_track = _trackmatcher.findSimilarTrack( longest_track, *ev_match_track );
+                    auto const chopped_matched_longest_track = _chopper.chopTrack( matched_longest_track );
+
+                    _matched_longest_trk_MCS_mom = _MCScalc->GetMomentumMultiScatterLLHD(matched_longest_track);
+                    _matched_longest_trk_MCS_mom_chopped = _MCScalc->GetMomentumMultiScatterLLHD(chopped_matched_longest_track);
+                    // std::cout<<"default longest track momentum is " 
+                    // << _longest_trk_MCS_mom << std::endl;
+                    // std::cout<<"chopped default longest track momentum is " 
+                    // << _longest_trk_MCS_mom_chopped << std::endl;
+
+                    // std::cout<<"matched longest track momentum is " 
+                    // << _MCScalc->GetMomentumMultiScatterLLHD(matched_longest_track) << std::endl;
+                    // std::cout<<"chopped matched longest track momentum is " 
+                    // << _MCScalc->GetMomentumMultiScatterLLHD(chopped_matched_longest_track) << std::endl;
+
+                }
+                catch (...) {
+                    // print(larlite::msg::kWARNING, __FUNCTION__,
+                    //       Form("Something went wrong with the FindSimilarTrack module... it didn't find a match."));
+                }
+
             }
+
+
 
             if (longest_trackdir_endpoints.Length() < 0.00001) {
                 std::cout << "length problem. " << longest_trackdir_endpoints.Length() << std::endl;
             }
 
-            if (_longest_trk_contained)
+            if (_longest_trk_contained) {
                 _mcsbiasstudy->AnalyzeTrack(longest_track);
+                if (_longest_trk_len_infidvol > 100.) {
+                    // Fill debug tree
+                    _MCScalc->GetMomentumMultiScatterLLHD(_chopper.chopTrack(longest_track), false, true);
+                }
+            }
 
             auto second_longest_trackdir = ::geoalgo::Vector(0., 0., 0.);
             auto second_longest_trackdir_endpoints = ::geoalgo::Vector(0., 0., 0.);
@@ -813,6 +919,7 @@ namespace larlite {
             _hcorrect_ID->Write();
             _tree->Write();
             _mcsbiasstudy->GetTree()->Write();
+            _MCScalc->GetTree()->Write();
         }
 
         _nu_finder.printNumbers();
