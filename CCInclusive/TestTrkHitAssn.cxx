@@ -22,17 +22,17 @@ namespace larlite {
     bool TestTrkHitAssn::analyze(storage_manager* storage) {
 
 
-        auto ev_mctrack = storage->get_data<event_mctrack>("mcreco");
-        if (!ev_mctrack) {
-            print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mctrack!"));
-            return false;
-        }
-        if (ev_mctrack->size() != 1) {
-            print(larlite::msg::kERROR, __FUNCTION__, Form("# of MCTracks in this event is not 1. Run this on single muons!"));
-            return false;
-        }
+        // auto ev_mctrack = storage->get_data<event_mctrack>("mcreco");
+        // if (!ev_mctrack) {
+        //     print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mctrack!"));
+        //     return false;
+        // }
+        // if (ev_mctrack->size() != 1) {
+        //     print(larlite::msg::kERROR, __FUNCTION__, Form("# of MCTracks in this event is not 1. Run this on single muons!"));
+        //     return false;
+        // }
 
-        auto ev_track = storage->get_data<event_track>("pandoraNuPMA");
+        auto ev_track = storage->get_data<event_track>("trackkalmanhit");
         if (!ev_track) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, track!"));
             return false;
@@ -78,7 +78,7 @@ namespace larlite {
             _sum_hit_ADC += ihit.SummedADC();
         }
 
-        _mct_depE = ev_mctrack->at(0).front().E() - ev_mctrack->at(0).back().E();
+        // _mct_depE = ev_mctrack->at(0).front().E() - ev_mctrack->at(0).back().E();
 
         // std::cout << "MCTrack truth start kinetic energy is roughly : " << ev_mctrack->at(0).front().E() - 106. << std::endl;
         // std::cout << "MCTrack deposited energy is : " << ev_mctrack->at(0).front().E() - ev_mctrack->at(0).back().E() << " MEV." << std::endl;

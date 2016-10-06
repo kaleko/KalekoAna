@@ -17,6 +17,8 @@
 
 #include "Analysis/ana_base.h"
 #include "TTree.h"
+#include "FidvolBox.h"
+#include "TrackMomentumCalculator.h"
 
 namespace larlite {
 
@@ -25,7 +27,7 @@ namespace larlite {
   public:
 
     /// Default constructor
-    TestTrkSPSAssn() { _name = "TestTrkSPSAssn"; _fout = 0; _tree = 0;}
+    TestTrkSPSAssn() { _name = "TestTrkSPSAssn"; _fout = 0; _tree = 0; _tmc = 0; _track_producer = ""; _sps1track0 = 0; _seglen = 10.;}
 
     /// Default destructor
     virtual ~TestTrkSPSAssn() {}
@@ -36,7 +38,15 @@ namespace larlite {
 
     virtual bool finalize();
 
+    void SetTrackProducer(std::string prod) { _track_producer = prod; }
+    void SetSPS1Track0(int flag) { _sps1track0 = flag; }
+    void SetSeglen(double seglen) { _seglen = seglen; }
+
   protected:
+
+    std::string _track_producer;
+    int _sps1track0;
+    double _seglen;
 
     TTree *_tree;
     size_t _n_total_sps;
@@ -44,6 +54,15 @@ namespace larlite {
     size_t _n_track_traj_pts;
     double _dist_firstsps_trackstart;
     double _dist_firstsps_trackend;
+    double _track_true_E;
+    double _mct_MCS_E;
+    double _track_MCS_E;
+    double _sps_MCS_E;
+    double _trk_len;
+    double _sps_trk_len;
+
+    FidVolBox _fidvol;
+    kaleko::TrackMomentumCalculator *_tmc;
 
   };
 }

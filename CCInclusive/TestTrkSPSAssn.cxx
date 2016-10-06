@@ -10,12 +10,22 @@ namespace larlite {
 
     bool TestTrkSPSAssn::initialize() {
 
+        _tmc = new kaleko::TrackMomentumCalculator();
+        _tmc->SetStepSize(_seglen);
+
         _tree = new TTree("tree", "tree");
         _tree->Branch("n_total_sps", &_n_total_sps, "n_total_sps/I");
         _tree->Branch("n_asstd_sps", &_n_asstd_sps, "n_asstd_sps/I");
         _tree->Branch("n_track_traj_pts", &_n_track_traj_pts, "n_track_traj_pts/I");
         _tree->Branch("dist_firstsps_trackstart", &_dist_firstsps_trackstart, "dist_firstsps_trackstart/D");
         _tree->Branch("dist_firstsps_trackend", &_dist_firstsps_trackend, "dist_firstsps_trackend/D");
+        _tree->Branch("track_true_E", &_track_true_E, "track_true_E/D");
+        _tree->Branch("mct_MCS_E", &_mct_MCS_E, "mct_MCS_E/D");
+        _tree->Branch("track_MCS_E", &_track_MCS_E, "track_MCS_E/D");
+        _tree->Branch("sps_MCS_E", &_sps_MCS_E, "sps_MCS_E/D");
+        _tree->Branch("trk_len", &_trk_len, "trk_len/D");
+        _tree->Branch("sps_trk_len", &_sps_trk_len, "sps_trk_len/D");
+
         return true;
     }
 
@@ -28,19 +38,31 @@ namespace larlite {
             return false;
         }
         if (ev_mctrack->size() != 1) {
-            print(larlite::msg::kERROR, __FUNCTION__, Form("# of MCTracks in this event is not 1. Run this on single muons!"));
+            // print(larlite::msg::kERROR, __FUNCTION__, Form("# of MCTracks in this event is not 1. Run this on single muons!"));
             return false;
         }
 
-        auto ev_track = storage->get_data<event_track>("pandoraNuKHit");
+        auto ev_track = storage->get_data<event_track>(_track_producer);
         if (!ev_track) {
             print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, track!"));
             return false;
         }
         if (!ev_track->size()) {
-            print(larlite::msg::kERROR, __FUNCTION__, Form("Zero reconstructed tracks in this event!"));
+            // print(larlite::msg::kERROR, __FUNCTION__, Form("Zero reconstructed tracks in this event!"));
             return false;
         }
+
+        if ( !_fidvol.Contain(ev_mctrack->at(0).front().Position().Vect()) || !_fidvol.Contain(ev_mctrack->at(0).back().Position().Vect()) ) {
+            // print(larlite::msg::kERROR, __FUNCTION__, Form("MC track not fully contained in fiducial volume."));
+            return false;
+        }
+        if ( !_fidvol.Contain(ev_track->at(0).Vertex()) || !_fidvol.Contain(ev_track->at(0).End()) ) {
+            // print(larlite::msg::kERROR, __FUNCTION__, Form("Reco track not fully contained in fiducial volume."));
+            return false;
+        }
+
+        _trk_len = (ev_track->at(0).End() - ev_track->at(0).Vertex()).Mag();
+        if (_trk_len < 100.) return false;
 
         _n_track_traj_pts = ev_track->at(0).NumberTrajectoryPoints();
 
@@ -58,6 +80,14 @@ namespace larlite {
             return false;
         }
 
+        if (!ass_sps_v.size()) {
+            std::cout << "ass_sps_v no size??" << std::endl;
+            return false;
+        }
+        if (!ass_sps_v.at(0).size()) {
+            std::cout << "ass_sps_v.at(0) no size??" << std::endl;
+            return false;
+        }
         _n_total_sps = ev_sps->size();
         // std::cout << "ev_hit size is " << _n_tothits << std::endl;
         // std::cout << "ev_hit id is std::pair<"
@@ -78,18 +108,15 @@ namespace larlite {
         // std::cout<<"dist first sps to track start is "<<_dist_firstsps_trackstart<<std::endl;
         // std::cout<<"dist first sps to track end is "<<_dist_firstsps_trackend<<std::endl;
 
-        std::cout << "sps flipped is " << sps_flipped << std::endl;
+        // std::cout << "sps flipped is " << sps_flipped << std::endl;
         size_t reco_track_idx = 0; //since there is only one track, otherwise choose the index in ev_track you care about
 
         // get the hits associated with this track
         _n_asstd_sps = ass_sps_v.at(reco_track_idx).size();
 
-        // std::cout << "ass_hit_v has size " << ass_hit_v.size() << std::endl;
-        // std::cout << "ass_hit_v.at(0) has size " << _n_asstd_hits << std::endl;
-        std::cout << "Reco Track start Z is " << ev_track->at(0).Vertex().Z() << std::endl;
-        std::cout << "Reco Track end Z is " << ev_track->at(0).End().Z() << std::endl;
-        std::cout << "Reco track has " << _n_track_traj_pts << " trajectory points." << std::endl;
-
+        // std::cout << "Reco Track start Z is " << ev_track->at(0).Vertex().Z() << std::endl;
+        // std::cout << "Reco Track end Z is " << ev_track->at(0).End().Z() << std::endl;
+        // std::cout << "Reco track has " << _n_track_traj_pts << " trajectory points." << std::endl;
 
         //  std::cout << "The first ten (of "<<_n_track_traj_pts<<" total) traj points on the track are:" << std::endl;
         // for (size_t i = 0; i < 10; ++i)
@@ -123,9 +150,15 @@ namespace larlite {
 
         }
 
-        std::cout << "Created Track from SPS start Z is " << ev_track->at(0).Vertex().Z() << std::endl;
-        std::cout << "Created Track from SPS end Z is " << ev_track->at(0).End().Z() << std::endl;
-        std::cout << "Created Track from SPS has " << sps_track.NumberTrajectoryPoints() << " trajectory points." << std::endl;
+        _sps_trk_len = (sps_track.End() - sps_track.Vertex()).Mag();
+        // std::cout << "Created Track from SPS start Z is " << ev_track->at(0).Vertex().Z() << std::endl;
+        // std::cout << "Created Track from SPS end Z is " << ev_track->at(0).End().Z() << std::endl;
+        // std::cout << "Created Track from SPS has " << sps_track.NumberTrajectoryPoints() << " trajectory points." << std::endl;
+        //  std::cout << "The first ten (of "<<_n_track_traj_pts<<" total) traj points on the track are:" << std::endl;
+        // for (size_t i = 0; i < 10; ++i)
+        //     std::cout << "(" << sps_track.LocationAtPoint(i).X()
+        //               << ", " << sps_track.LocationAtPoint(i).Y()
+        //               << ", " << sps_track.LocationAtPoint(i).Z() << ")" << std::endl;
         // for (auto const& asstd_sps_idx : ass_sps_v.at(reco_track_idx))
         // {
         //     // counter++;
@@ -149,6 +182,48 @@ namespace larlite {
         // std::cout << "MCTrack deposited energy is : " << ev_mctrack->at(0).front().E() - ev_mctrack->at(0).back().E() << " MEV." << std::endl;
         // std::cout << "Summed ADC of associated hits is : "<<_sum_hit_ADC<<std::endl;
 
+
+
+        // _mct_MCS_E = _tmc->GetMomentumMultiScatterLLHD(ev_mctrack->at(0));
+        _track_true_E = ev_mctrack->at(0).front().E() / 1000.;
+        if (_sps1track0 == 0)
+            _track_MCS_E = _tmc->GetMomentumMultiScatterLLHD(ev_track->at(0), false, true);
+        else
+            _sps_MCS_E = _tmc->GetMomentumMultiScatterLLHD(sps_track, false, true);
+
+
+
+        // if (_sps_trk_len - _trk_len < -100) {
+        //     std::cout << "found a fucking weird SPS track. let's print out info:" << std::endl;
+        //     std::cout << "Reco track has " << _n_track_traj_pts << " trajectory points." << std::endl;
+
+        //     std::cout << "The first ten (of " << _n_track_traj_pts << " total) traj points on the track are:" << std::endl;
+        //     for (size_t i = 0; i < 10; ++i)
+        //         std::cout << "(" << ev_track->at(0).LocationAtPoint(i).X()
+        //                   << ", " << ev_track->at(0).LocationAtPoint(i).Y()
+        //                   << ", " << ev_track->at(0).LocationAtPoint(i).Z() << ")" << std::endl;
+
+        //        std::cout << "The last ten (of " << _n_track_traj_pts << " total) traj points on the track are:" << std::endl;
+        //     for (size_t i = _n_track_traj_pts - 1; i > _n_track_traj_pts - 10; --i)
+        //         std::cout << "(" << ev_track->at(0).LocationAtPoint(i).X()
+        //                   << ", " << ev_track->at(0).LocationAtPoint(i).Y()
+        //                   << ", " << ev_track->at(0).LocationAtPoint(i).Z() << ")" << std::endl;
+
+        //     std::cout << "The first ten (of " << sps_track.NumberTrajectoryPoints() << " total) traj points on the track are:" << std::endl;
+        //     for (size_t i = 0; i < 10; ++i)
+        //         std::cout << "(" << sps_track.LocationAtPoint(i).X()
+        //                   << ", " << sps_track.LocationAtPoint(i).Y()
+        //                   << ", " << sps_track.LocationAtPoint(i).Z() << ")" << std::endl;
+
+        // std::cout << "The last ten (of " << sps_track.NumberTrajectoryPoints() << " total) traj points on the track are:" << std::endl;
+        //     for (size_t i = sps_track.NumberTrajectoryPoints() - 1; i > sps_track.NumberTrajectoryPoints() - 10; --i)
+        //         std::cout << "(" << sps_track.LocationAtPoint(i).X()
+        //                   << ", " << sps_track.LocationAtPoint(i).Y()
+        //                   << ", " << sps_track.LocationAtPoint(i).Z() << ")" << std::endl;
+        // }
+
+
+
         _tree->Fill();
 
         return true;
@@ -159,6 +234,7 @@ namespace larlite {
         if (_fout) {
             _fout->cd();
             _tree->Write();
+            _tmc->GetTree()->Write();
         }
 
         return true;
