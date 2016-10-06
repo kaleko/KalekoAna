@@ -38,7 +38,15 @@ namespace larlite {
     /// Default destructor
     virtual ~TrackChopper() {}
 
+    /// Function that makes a new track that is a subset of the input tracks' trajectory points
+    /// that are contained inside of the fiducial ("active") volume
     larlite::track chopTrack(const larlite::track &trk);
+
+    /// Function that chops a track as above, but also has hard-coded z-portions
+    /// of the volume that it removes portions of tracks from
+    /// (basically replacing them with straight lines)
+    larlite::track chopAndStraightenTrack(const larlite::track &trk);
+
 
   protected:
 
