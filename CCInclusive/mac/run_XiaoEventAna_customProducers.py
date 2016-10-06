@@ -31,6 +31,7 @@ my_proc.enable_filter(True)
 
 # Specify output root file name
 anaoutname = 'ana_out_trk%s_vtx%s_mcc71ext2bnb3_%d.root'%(track_producer,vtx_producer,mcc71_ext2_bnb3)
+#anaoutname = 'fuck.root'
 my_proc.set_ana_output_file(outdir+'/'+anaoutname)
 
 myxiao = fmwk.XiaoEventAna()
@@ -47,6 +48,16 @@ myxiao.setInputType(mytype)
 myxiao.setTrackProducer(track_producer)
 myxiao.setVtxProducer(vtx_producer)
 myxiao.setCaloProducer(calo_producer)
+
+
+myxiao.setMatchTrackProducer('pandoraNuKHit')
+
+seg_size = 10.
+if run_on_data: seg_size = 10.
+
+myxiao.setMCSSegSize(seg_size)
+myxiao.setMCSMinLen(100.)
+#myxiao.setExtendTrackProducer('pandoraCosmic')
 my_proc.add_process(myxiao)
 
 
