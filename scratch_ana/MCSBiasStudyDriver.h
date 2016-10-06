@@ -17,8 +17,9 @@
 
 #include "Analysis/ana_base.h"
 #include "DataFormat/track.h"
+#include "DataFormat/mctrack.h"
 #include "MCSBiasStudy.h"
-
+#include "FidVolBox.h"
 
 namespace larlite {
   /**
@@ -44,6 +45,8 @@ namespace larlite {
   protected:
 
     MCSBiasStudy *_module;
+
+    FidVolBox _fidvol;
   };
 }
 #endif
