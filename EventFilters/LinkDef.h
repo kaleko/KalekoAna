@@ -9,7 +9,7 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class larlite::MCTracksContainedFilter+;
+#pragma link C++ class larlite::kaleko::MCTracksContainedFilter+;
 #pragma link C++ class larlite::OnlyOneHighEMCTrackFilter+;
 
 #pragma link C++ class larlite::CCQEMCFilter+;
