@@ -41,7 +41,7 @@
 #include <math.h>
 #include <cmath>
 #include "TTree.h"
-
+#include "TF1.h"
  #include "TrackMomentumSplines.h"
 
 /**
@@ -77,6 +77,7 @@ namespace larlite {
         Float_t steps_size2; // I think this is the actual step size that is used
         Float_t kcal;
         std::vector<Float_t> dthij; std::vector<Float_t> dEi; std::vector<Float_t> dEj; std::vector<Float_t> ind;
+        std::vector<Float_t> smeared_dthij;
 
         double max_len_to_analyze;
     public:
@@ -120,12 +121,12 @@ namespace larlite {
 
         Double_t my_g( Double_t xx, Double_t Q, Double_t s );
 
-        Double_t my_mcs_llhd( Double_t x0, Double_t x1 );
+        Double_t my_mcs_llhd( Double_t x0, Double_t x1, bool reweight = false );
 
         // double my_mcs_chi2( const double *x );
 
         Double_t GetMomentumMultiScatterLLHD( const larlite::mctrack &trk );
-        Double_t GetMomentumMultiScatterLLHD( const larlite::track   &trk, bool flip = false, bool debug = false );
+        Double_t GetMomentumMultiScatterLLHD( const larlite::track   &trk, bool flip = false, bool debug = false, bool reweight= false );
         Double_t GetMomentumMultiScatterChi2( const larlite::mctrack &trk );
 
         Double_t p_mcs_2; Double_t LLbf;
@@ -160,8 +161,14 @@ namespace larlite {
         int    _counter;
         double _segment_E;
         double _predicted_RMS;
+        double _segment_E_fromMCS;
+        double _predicted_RMS_fromMCS;
         double _true_segment_E;
         double _true_predicted_RMS;
+
+        TGraph *weight_graph;
+
+        TF1 *gaus_smear;
 
     };
 } // end namespace kaleko

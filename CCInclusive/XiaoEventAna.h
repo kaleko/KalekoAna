@@ -205,6 +205,7 @@ namespace larlite {
         double _longest_trk_phi;
         double _longest_trk_MCS_mom;
         double _longest_trk_MCS_mom_chopped;
+        double _longest_trk_MCS_mom_reweighted;
         double _matched_longest_trk_MCS_mom;
         double _matched_longest_trk_MCS_mom_chopped;
 

@@ -100,6 +100,7 @@ namespace larlite {
             _tree->Branch("longest_trk_phi", &_longest_trk_phi, "longest_trk_phi/D");
             _tree->Branch("longest_trk_MCS_mom", &_longest_trk_MCS_mom, "longest_trk_MCS_mom/D");
             _tree->Branch("longest_trk_MCS_mom_chopped", &_longest_trk_MCS_mom_chopped, "longest_trk_MCS_mom_chopped/D");
+            _tree->Branch("longest_trk_MCS_mom_reweighted", &_longest_trk_MCS_mom_reweighted, "longest_trk_MCS_mom_reweighted/D");
             _tree->Branch("matched_longest_trk_MCS_mom", &_matched_longest_trk_MCS_mom, "matched_longest_trk_MCS_mom/D");
             _tree->Branch("matched_longest_trk_MCS_mom_chopped", &_matched_longest_trk_MCS_mom_chopped, "matched_longest_trk_MCS_mom_chopped/D");
             _tree->Branch("longest_trk_MCS_mom_chopped_straightened", &_longest_trk_MCS_mom_chopped_straightened, "longest_trk_MCS_mom_chopped_straightened/D");
@@ -210,6 +211,7 @@ namespace larlite {
         _longest_trk_phi = -999.;
         _longest_trk_MCS_mom = -999.;
         _longest_trk_MCS_mom_chopped = -999.;
+        _longest_trk_MCS_mom_reweighted = -999.;
         _matched_longest_trk_MCS_mom = -999.;
         _matched_longest_trk_MCS_mom_chopped = -999.;
         _longest_trk_MCS_mom_smeared_MC = -999.;
@@ -474,8 +476,9 @@ namespace larlite {
                     //     std::cout<<" Final MCS momentum was "<<_longest_trk_MCS_mom_chopped<<std::endl;
                     //     return false;
                     // }
-
-                    _longest_trk_MCS_mom = _MCScalc->GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk);
+                        // track, flip, debug, reweight
+                    _longest_trk_MCS_mom = _MCScalc->GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk,false,false);
+                    _longest_trk_MCS_mom_reweighted = _MCScalc->GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk, false, true);
                     _longest_trk_MCS_mom_chopped = _MCScalc->GetMomentumMultiScatterLLHD(chopped_trk, flip_longest_trk);
 
                     //debug
@@ -588,7 +591,7 @@ namespace larlite {
                 _mcsbiasstudy->AnalyzeTrack(longest_track);
                 if (_longest_trk_len_infidvol > 100.) {
                     // Fill debug tree
-                    _MCScalc->GetMomentumMultiScatterLLHD(_chopper.chopTrack(longest_track), false, true);
+                    _MCScalc->GetMomentumMultiScatterLLHD(longest_track, false, true,false);//, false, true,false);
                 }
             }
 

@@ -77,6 +77,7 @@ namespace larlite {
         double _chopped_full_length;
         double _MCS_energy;
         double _full_MCS_energy;
+        double _full_MCS_energy_reweighted;
         double _full_MCS_energy_someflipped;
         double _full_MCS_energy_chopped;
         double _full_MCS_energy_smeared;

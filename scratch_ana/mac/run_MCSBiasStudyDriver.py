@@ -2,7 +2,7 @@ import sys
 
 if len(sys.argv) < 2:
     msg  = '\n'
-    msg += "Usage 1: %s $INPUT_ROOT_FILE\n" % sys.argv[0]
+    msg += "Usage 1: %s $INPUT_ROOT_FILE OUTPUT_FILE\n" % sys.argv[0]
     msg += '\n'
     sys.stderr.write(msg)
     sys.exit(1)
@@ -17,13 +17,13 @@ my_proc = fmwk.ana_processor()
 my_proc.set_io_mode(fmwk.storage_manager.kREAD)
 
 #multiple input files
-for x in xrange(len(sys.argv)):
+for x in xrange(len(sys.argv)-1):
     if x == 0:
         continue
     my_proc.add_input_file(sys.argv[x])
 
 # Specify output root file name
-my_proc.set_ana_output_file("MCSBiasStudyDriver_ana_out.root")
+my_proc.set_ana_output_file(sys.argv[-1])
 
 # Attach a template process
 my_proc.add_process(fmwk.MCSBiasStudyDriver());

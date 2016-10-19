@@ -110,7 +110,36 @@ namespace kaleko {
 		_debug_tree->Branch("true_predicted_RMS",&_true_predicted_RMS,"true_predicted_RMS/D");
 		_debug_tree->Branch("segment_E",&_segment_E,"segment_E/D");
 		_debug_tree->Branch("predicted_RMS",&_predicted_RMS,"predicted_RMS/D");
+		_debug_tree->Branch("segment_E_fromMCS",&_segment_E_fromMCS,"segment_E_fromMCS/D");
+		_debug_tree->Branch("predicted_RMS_fromMCS",&_predicted_RMS_fromMCS,"predicted_RMS_fromMCS/D");
 		_counter = 0;
+
+
+		//X is delta_theta/RMS
+		double weight_x[89] = 
+		{-2.9663,-2.8989,-2.8315,-2.7640,-2.6966,-2.6292,-2.5618,-2.4944,-2.4270,-2.3596,
+-2.2921,-2.2247,-2.1573,-2.0899,-2.0225,-1.9551,-1.8876,-1.8202,-1.7528,-1.6854,
+-1.6180,-1.5506,-1.4831,-1.4157,-1.3483,-1.2809,-1.2135,-1.1461,-1.0787,-1.0112,
+-0.9438,-0.8764,-0.8090,-0.7416,-0.6742,-0.6067,-0.5393,-0.4719,-0.4045,-0.3371,
+-0.2697,-0.2022,-0.1348,-0.0674,0.0000,0.0674,0.1348,0.2022,0.2697,0.3371,
+0.4045,0.4719,0.5393,0.6067,0.6742,0.7416,0.8090,0.8764,0.9438,1.0112,
+1.0787,1.1461,1.2135,1.2809,1.3483,1.4157,1.4831,1.5506,1.6180,1.6854,
+1.7528,1.8202,1.8876,1.9551,2.0225,2.0899,2.1573,2.2247,2.2921,2.3596,
+2.4270,2.4944,2.5618,2.6292,2.6966,2.7640,2.8315,2.8989,2.9663};
+		//Y is weight
+		double weight_y[89]	= {1.2948,0.9531,0.8876,1.0950,1.0707,1.3776,1.0803,0.9767,1.0002,1.1140,
+1.1392,0.9604,0.9440,0.8483,0.9565,0.9652,0.8497,1.0676,1.0675,1.0576,
+0.9237,1.0168,1.0425,1.0277,0.8664,0.9676,0.9572,0.9914,0.9495,0.8838,
+0.9582,0.9178,0.9754,0.8876,1.0000,1.0689,0.9648,0.9589,0.9842,1.0007,
+1.0031,1.0850,1.0267,0.9189,0.8550,0.9668,1.0200,1.1274,1.0625,1.0505,
+1.0808,1.0473,1.0191,0.9933,1.0230,1.0017,0.9370,0.9068,0.9211,0.9291,
+1.0140,0.9653,0.9494,0.9658,0.9390,1.0275,1.0173,1.0064,1.0097,1.0828,
+1.0959,1.1180,1.0526,0.9352,1.0393,1.0099,1.0762,1.2356,1.1929,1.1611,
+1.0467,1.1004,1.0995,1.1981,1.1229,1.1621,1.4986,1.1541,1.3291};
+
+	  weight_graph = new TGraph(89,weight_x,weight_y);
+
+	  gaus_smear = new TF1("gaus_smear","TMath::Gaus(x,0,20,true)",-200,200);
 
 	}
 
@@ -814,7 +843,7 @@ namespace kaleko {
 
 	}
 
-	Double_t TrackMomentumCalculator::my_mcs_llhd( Double_t x0, Double_t x1 )
+	Double_t TrackMomentumCalculator::my_mcs_llhd( Double_t x0, Double_t x1, bool reweight )
 	{
 		_delta_theta_x = -99999.;
 		_delta_theta_y = -99999.;
@@ -832,20 +861,38 @@ namespace kaleko {
 
 		Double_t addth = 0;
 
+
+		size_t non_outlier_deflection_counter = 0;
+
 		for ( Int_t i = 0; i < nnn1; i++ )
 		{
-
-			//kaleko smearing:
 			double mydthij = dthij.at( i );
+			// if you want to use smeared stuff!
+			// double mydthij = smeared_dthij.at( i );
+
 			//mydthij *= 1.06;
 			// kaleko trying cutting on the tails of the distribution
-			// if (TMath::Abs( mydthij ) > 50. || TMath::Abs( mydthij ) < 10. ) continue;
+			//if (TMath::Abs( mydthij ) > 150. ) continue; //continue;
+			// kaleko cutting out the very center bin of the distribution
+			//if (TMath::Abs( mydthij ) < 0.005 ) continue;
+			// kaleko doing some bullshit
+			//if (TMath::Abs( mydthij ) < 10. ) mydthij = 10.;
 
 			Double_t Ei = p - dEi.at( i );
 
 			Double_t Ej = p - dEj.at( i );
 
-			if ( Ei > 0 && Ej < 0 ) addth = 3.14 * 1000.0;
+			// this should be a break? Ej is energy of this segment, Ei is energy of previous segment
+			// this means the particle as ranged out. why make it go backwards?!
+			if ( Ei > 0 && Ej < 0 ) {
+				// std::cout<<"SETTING RESULT ENORMOUS AND BREAKING"<<std::endl;
+				//i set result enormous because we're stopping looping over segments prematurely
+				//each segment ADDS positive things to the result, so stopping early makes result
+				//artificially small.
+				result = 9999999999.;
+				break;
+				addth = 3.14 * 1000.0;
+			}
 
 			Ei = TMath::Abs( Ei );
 
@@ -853,18 +900,37 @@ namespace kaleko {
 
 			Double_t tH0 = ( 13.6 / sqrt( Ei * Ej ) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length );
 
+			// Kaleko adding this ... if deltatheta/RMS is more than 3 (3 standard deviations away), skip this
+			// NOTE!!! this doesn't work. this will just end up telling you all of your muons are very high energy
+			// (doesn't fix data/MC discrepancy either)
+			//if(TMath::Abs( mydthij ) / tH0 > 3.) continue;
+
 			Double_t rms = -1.0;
 
-			if ( ind.at( i ) == 1 ) //kaleko: why only use x- scatter?
+			if ( ind.at( i ) == 2 ) //kaleko: why only use x- scatter? ( 1 is x, 2 is y )
 			{
 				rms = sqrt( tH0 * tH0 + pow( theta0x, 2.0 ) );
 
-				Double_t DT = mydthij + addth; //kaleko tried to remove addth, didn't fix
-				// (you just get very small MCS energy, both in data and MC)
+				Double_t DT = mydthij;// + addth; //addth functionaliy depricated
+
+				// If this deflection is too large (theta/RMS more than 2.3 sigma), skip it
+				// if(TMath::Abs(DT/rms) > 2.3) continue;
+				// non_outlier_deflection_counter++;
+
 
 				Double_t prob = my_g( DT, 0., rms );
 				// std::cout<<"addth is "<<addth<<" and DT is "<<DT<<" and prob is "<<prob<<std::endl;
 
+				// std::cout<<"DT is "
+				// <<DT<<", RMS is "
+				// <<rms<<", ratio is "
+				// <<DT/rms<<", weight is "
+				// <<weight_graph->Eval(DT/tH0)
+				// <<std::endl;
+				//if(reweight && TMath::Abs(DT/tH0) < 3.) prob *= weight_graph->Eval(DT/tH0);
+
+				// note prob is NEGATIVE so you're adding stuff to result making it more positive
+				// ultimately you take the smallest (positive) result
 				result = result - 2.0 * prob;
 
 			}
@@ -873,6 +939,15 @@ namespace kaleko {
 
 		if ( isnan( float( result ) ) || isinf( float( result ) ) ) { std::cout << " Is nan ! my_mcs_llhd ( 1 ) ! " << std::endl; getchar(); }
 
+		// If only one segment went into this calculation, return a huge result (low likelihood)
+		// if(non_outlier_deflection_counter < 2) result = 9999999999.;
+		// std::cout<<"my_mcs_llhd returning a result of "<<result<<" / "<<non_outlier_deflection_counter
+		// <<" = "<<result/non_outlier_deflection_counter<<std::endl;
+		// Divide the result by the # of segments that went into it
+		// Kaleko is adding this because when skipping deflections that are outliers, this skews the "result"
+		// so it needs to be normalized by the number of segments that were considered in the likelihood
+		// result /= non_outlier_deflection_counter;
+		// std::cout<<"my_mcs_llhd returning a result of "<<result<<std::endl;
 		return result;
 
 	}
@@ -885,12 +960,16 @@ namespace kaleko {
 
 		else std::cout << " Error : The code tries to divide by zero ! " << std::endl;
 
+		// std::cout<<"arg is "<<arg<<std::endl;		
+
 		Double_t result = 0.0;
 
 		if ( s != 0 ) result = -0.5 * TMath::Log( 2.0 * TMath::Pi() ) - TMath::Log( s ) - 0.5 * arg * arg;
 
 		if ( isnan( float( result ) ) || isinf( float( result ) ) ) { std::cout << " Is nan ! my_g ! " << - TMath::Log( s ) << ", " << s << std::endl; getchar(); }
 
+		// std::cout<<"my_g returning "<<result<<std::endl;
+		// note my_g returns something NEGATIVE
 		return result;
 
 	}
@@ -1211,6 +1290,10 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 					_segment_E = _full_range_E - 0.106 - (segstart - trk.front().Position().Vect()).Mag() * kcal;
 					_predicted_RMS = ( 13.6 / (_segment_E+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
 
+					_segment_E_fromMCS = _full_MCS_E - 0.106 - (segstart - trk.front().Position().Vect()).Mag() * kcal;
+					_predicted_RMS_fromMCS = ( 13.6 / (_segment_E_fromMCS+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
+
+
 // std::cout<<"For this segment, the "<<this_idx<<"th point on the mctrack is closest, at "<<mindist<<"cm away."<<std::endl;
 					// std::cout<<"segend x is "<<segend.X()<<std::endl;
 					// std::cout<<"segstart x is "<<segstart.X()<<std::endl;
@@ -1242,7 +1325,7 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 	}
 
-	Double_t TrackMomentumCalculator::GetMomentumMultiScatterLLHD( const larlite::track &trk, bool flip, bool debug )
+	Double_t TrackMomentumCalculator::GetMomentumMultiScatterLLHD( const larlite::track &trk, bool flip, bool debug, bool reweight )
 	{
 	// 	std::cout<<"Start of GetMomentumMultiScatterLLHD!"<<std::endl;
 	// 	std::cout<<"Track Start: ("<<trk.Vertex().X()<<","<<trk.Vertex().Y()<<","<<trk.Vertex().Z()<<"), ";
@@ -1329,6 +1412,12 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 		Int_t check2 = GetDeltaThetaij( dEi, dEj, dthij, seg_size, ind );
 
+		// fill a smeared dthij vector so you don't have to re-draw random for every raster scan step
+		smeared_dthij.clear();
+		for(size_t david = 0; david < dthij.size(); david++)
+			smeared_dthij.push_back( dthij.at(david) + gaus_smear->GetRandom() );
+
+
 		// std::cout<<"end of GetDeltaThetaij. dthij is :"<<std::endl;
 		// std::cout<<" (";
 		// for(auto const david : dthij)
@@ -1354,15 +1443,16 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 		Double_t start2 = 0.0; Int_t end2 = 0.0; // 800.0;
 
-		for ( Int_t k = start1; k <= end1; k++ )
+		for ( Int_t k = start1; k <= end1; k++ )// += 100)//k++)
 		{
 			Double_t p_test = 0.001 + k * 0.01;
+			// std::cout<<"this p_test is "<<p_test<<std::endl;
 
 			for ( Int_t l = start2; l <= end2; l++ )
 			{
 				Double_t res_test = 2.0; // 0.001+l*1.0; // is this the resolution parameter?
 
-				Double_t fv = my_mcs_llhd( p_test, res_test );
+				Double_t fv = my_mcs_llhd( p_test, res_test, reweight );
 
 				if ( fv < logL )
 				{
@@ -1377,12 +1467,13 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 			}
 
 		}
-
+		// std::cout<<"best p was found to be "<<bf<<std::endl;
 		p_mcs_2 = bf; LLbf = logL;
 
 		p = p_mcs_2;
 
-		
+		// std::cout<<"MCS decided this track has momentum "<<p<<std::endl;
+
 		// Fill debug tree
 		if(debug){
 		// 	std::cout<<"huzzah!"<<std::endl;
@@ -1425,7 +1516,10 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 					_segment_E = _full_range_E - 0.106 - (segstart - trk.Vertex()).Mag() * kcal;
 					_predicted_RMS = ( 13.6 / (_segment_E+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
 
-			
+					_segment_E_fromMCS = _full_MCS_E - 0.106 - (segstart - trk.Vertex()).Mag() * kcal;
+					_predicted_RMS_fromMCS = ( 13.6 / (_segment_E_fromMCS+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
+
+
 				// }
 				// else{
 				// 	_n_traj_points = 999999;

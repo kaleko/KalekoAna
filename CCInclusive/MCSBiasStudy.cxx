@@ -12,7 +12,7 @@ namespace larlite {
         _myspline = TrackMomentumSplines();
         _tmc = 0;
         _tmc = new kaleko::TrackMomentumCalculator();
-        _tmc->SetStepSize(10.0);
+        _tmc->SetStepSize(20.0);
 
         _chopper = TrackChopper();
         _smearer = TrackSmearer();
@@ -27,6 +27,7 @@ namespace larlite {
         _tree->Branch("full_MCS_energy_someflipped", &_full_MCS_energy_someflipped, "full_MCS_energy_someflipped/D");
         _tree->Branch("full_MCS_energy_chopped", &_full_MCS_energy_chopped, "full_MCS_energy_chopped/D");
         _tree->Branch("full_MCS_energy_smeared", &_full_MCS_energy_smeared, "full_MCS_energy_smeared/D");
+        _tree->Branch("full_MCS_energy_reweighted", &_full_MCS_energy_reweighted, "full_MCS_energy_reweighted/D");
         _tree->Branch("full_MCS_energy_chopped_smeared", &_full_MCS_energy_chopped_smeared, "full_MCS_energy_chopped_smeared/D");
         _tree->Branch("track_start_x", &_track_start_x, "track_start_x/D");
         _tree->Branch("track_start_y", &_track_start_y, "track_start_y/D");
@@ -69,95 +70,99 @@ namespace larlite {
 
     void MCSBiasStudy::AnalyzeTrack(const larlite::track &track) {
 
-        _length_analyzed = -999.;
-        _MCS_energy = -999.;
-        _full_MCS_energy = -999.;
-        _full_MCS_energy_smeared = -999.;
-        _full_MCS_energy_chopped_smeared = -999.;
-        _full_MCS_energy_chopped = -999.;
-        _chopped_wiggle = -999.;
-        _chopped_std = -999.;
-        _chopped_smeared_wiggle = -999.;
-        _chopped_smeared_std = -999.;
-        _smeared_wiggle = -999.;
-        _smeared_std = -999.;
+        bool apply_reweight = false;
+        _full_MCS_energy = _tmc->GetMomentumMultiScatterLLHD(track, false, true, apply_reweight);
 
-        _full_length = (track.End() - track.Vertex()).Mag();
-        _full_range_energy = _myspline.GetMuMomentum(_full_length) / 1000. + 0.106;
+        // _length_analyzed = -999.;
+        // _MCS_energy = -999.;
+        //_full_MCS_energy = _tmc->GetMomentumMultiScatterLLHD(track, false, false, false);
+        //_full_MCS_energy_reweighted = _tmc->GetMomentumMultiScatterLLHD(track, false, false, true);
+        // _full_MCS_energy_smeared = -999.;
+        // _full_MCS_energy_chopped_smeared = -999.;
+        // _full_MCS_energy_chopped = -999.;
+        // _chopped_wiggle = -999.;
+        // _chopped_std = -999.;
+        // _chopped_smeared_wiggle = -999.;
+        // _chopped_smeared_std = -999.;
+        // _smeared_wiggle = -999.;
+        // _smeared_std = -999.;
+
+        // _full_length = (track.End() - track.Vertex()).Mag();
+        // _full_range_energy = _myspline.GetMuMomentum(_full_length) / 1000. + 0.106;
         // _full_MCS_energy = _tmc->GetMomentumMultiScatterLLHD(track);
-        _track_start_x = track.Vertex().X();
-        _track_start_y = track.Vertex().Y();
-        _track_start_z = track.Vertex().Z();
-        _track_end_x = track.End().X();
-        _track_end_y = track.End().Y();
-        _track_end_z = track.End().Z();
-        _full_track_tree_entry = true;
-        _n_traj_points = track.NumberTrajectoryPoints();
+        // _track_start_x = track.Vertex().X();
+        // _track_start_y = track.Vertex().Y();
+        // _track_start_z = track.Vertex().Z();
+        // _track_end_x = track.End().X();
+        // _track_end_y = track.End().Y();
+        // _track_end_z = track.End().Z();
+        // _full_track_tree_entry = true;
+        // _n_traj_points = track.NumberTrajectoryPoints();
 
-        bool flip_trk = _track_start_y < _track_end_y;
-        // _full_MCS_energy_someflipped = _tmc->GetMomentumMultiScatterLLHD(track, flip_trk);
+        // bool flip_trk = _track_start_y < _track_end_y;
+        // // _full_MCS_energy_someflipped = _tmc->GetMomentumMultiScatterLLHD(track, flip_trk);
 
-        TVector3 zdir(0., 0., -1.);
-        _track_dot_z = !flip_trk ? (track.End() - track.Vertex()).Unit().Dot(zdir) :
-                       (track.Vertex() - track.End()).Unit().Dot(zdir);
+        // TVector3 zdir(0., 0., -1.);
+        // _track_dot_z = !flip_trk ? (track.End() - track.Vertex()).Unit().Dot(zdir) :
+        //                (track.Vertex() - track.End()).Unit().Dot(zdir);
 
-        auto const chopped_trk = _chopper.chopTrack(track);
-        _chopped_full_length = (chopped_trk.End() - chopped_trk.Vertex()).Mag();
+        // // auto const chopped_trk = _chopper.chopTrack(track);
+        // // _chopped_full_length = (chopped_trk.End() - chopped_trk.Vertex()).Mag();
 
-        if (_chopped_full_length > 100.)
-            _full_MCS_energy_chopped = _tmc->GetMomentumMultiScatterLLHD(chopped_trk, false, true);
+        // // if (_chopped_full_length > 100.)
+        // //     _full_MCS_energy_chopped = _tmc->GetMomentumMultiScatterLLHD(chopped_trk, false, true);
 
-        // auto const smeared_trk = _smearer.SmearTrack(track);
-        // _full_MCS_energy_smeared = _tmc->GetMomentumMultiScatterLLHD(smeared_trk);
-        // auto const chopped_smeared_trk = _smearer.SmearTrack(chopped_trk);
-        // _full_MCS_energy_chopped_smeared = _tmc->GetMomentumMultiScatterLLHD(chopped_smeared_trk);
+        // // auto const smeared_trk = _smearer.SmearTrack(track);
+        // // _full_MCS_energy_smeared = _tmc->GetMomentumMultiScatterLLHD(smeared_trk);
+        // // auto const chopped_smeared_trk = _smearer.SmearTrack(chopped_trk);
+        // // _full_MCS_energy_chopped_smeared = _tmc->GetMomentumMultiScatterLLHD(chopped_smeared_trk);
 
-        // auto wiggle = ComputeWiggle(chopped_trk, 10.);
-        // _chopped_wiggle = wiggle.first;
-        // _chopped_std = wiggle.second;
+        // // auto wiggle = ComputeWiggle(chopped_trk, 10.);
+        // // _chopped_wiggle = wiggle.first;
+        // // _chopped_std = wiggle.second;
 
-        // auto smeared_wiggle = ComputeWiggle(smeared_trk, 10.);
-        // _smeared_wiggle = smeared_wiggle.first;
-        // _smeared_std = smeared_wiggle.second;
+        // // auto smeared_wiggle = ComputeWiggle(smeared_trk, 10.);
+        // // _smeared_wiggle = smeared_wiggle.first;
+        // // _smeared_std = smeared_wiggle.second;
 
-        // auto chopped_smeared_wiggle = ComputeWiggle(chopped_smeared_trk, 10.);
-        // _chopped_smeared_wiggle = chopped_smeared_wiggle.first;
-        // _chopped_smeared_std = chopped_smeared_wiggle.second;
+        // // auto chopped_smeared_wiggle = ComputeWiggle(chopped_smeared_trk, 10.);
+        // // _chopped_smeared_wiggle = chopped_smeared_wiggle.first;
+        // // _chopped_smeared_std = chopped_smeared_wiggle.second;
 
-        _long_curve_dotprod = -999.;
-        // if (_chopped_full_length > 200.)
-        //     _long_curve_dotprod = ComputeLongCurve(chopped_trk);
+        // _long_curve_dotprod = -999.;
+        // // if (_chopped_full_length > 200.)
+        // //     _long_curve_dotprod = ComputeLongCurve(chopped_trk);
 
         _tree->Fill();
 
 
-        _full_track_tree_entry = false;
+        // _full_track_tree_entry = false;
 
 
-        // // slowly build up a copy of the initial track with increasing length
-        // // and compute MCS energy as length increases
-        // larlite::track dummy_trk;
+        // // // slowly build up a copy of the initial track with increasing length
+        // // // and compute MCS energy as length increases
+        // // larlite::track dummy_trk;
 
-        // double length_increment = 10.; //cm
+        // // double length_increment = 10.; //cm
 
-        // double current_min_len = 100.;
-        // size_t n_points = track.NumberTrajectoryPoints();
+        // // double current_min_len = 100.;
+        // // size_t n_points = track.NumberTrajectoryPoints();
 
-        // for (int i = 1; i < n_points; ++i) {
+        // // for (int i = 1; i < n_points; ++i) {
 
-        //   dummy_trk.add_vertex(track.LocationAtPoint(i - 1));
-        //   dummy_trk.add_direction(track.LocationAtPoint(i - 1));
+        // //   dummy_trk.add_vertex(track.LocationAtPoint(i - 1));
+        // //   dummy_trk.add_direction(track.LocationAtPoint(i - 1));
 
-        //   _length_analyzed = (track.LocationAtPoint(i) - track.LocationAtPoint(0)).Mag();
-        //   if ( _length_analyzed < current_min_len ) continue;
+        // //   _length_analyzed = (track.LocationAtPoint(i) - track.LocationAtPoint(0)).Mag();
+        // //   if ( _length_analyzed < current_min_len ) continue;
 
-        //   _MCS_energy = _tmc->GetMomentumMultiScatterLLHD(dummy_trk);
+        // //   _MCS_energy = _tmc->GetMomentumMultiScatterLLHD(dummy_trk);
 
-        //   current_min_len += length_increment;
+        // //   current_min_len += length_increment;
 
-        //   _tree->Fill();
+        // //   _tree->Fill();
 
-        // }
+        // // }
 
     }
 
