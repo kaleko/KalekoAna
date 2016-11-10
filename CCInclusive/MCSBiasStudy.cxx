@@ -9,69 +9,104 @@ namespace larlite {
 
     MCSBiasStudy::MCSBiasStudy() {
 
+
+        _ana_type = kANALYSIS_TYPE_MAX;
+
+
         _myspline = TrackMomentumSplines();
         _tmc = 0;
         _tmc = new kaleko::TrackMomentumCalculator();
-        _tmc->SetStepSize(20.0);
+        _tmc->SetStepSize(20);
 
-        _chopper = TrackChopper();
-        _smearer = TrackSmearer();
+        // _chopper = TrackChopper();
+        // _smearer = TrackSmearer();
 
         _tree = new TTree("MCS_bias_tree", "MCS_bias_tree");
-        _tree->Branch("length_analyzed", &_length_analyzed, "length_analyzed/D");
+        // _tree->Branch("length_analyzed", &_length_analyzed, "length_analyzed/D");
         _tree->Branch("full_length", &_full_length, "full_length/D");
-        _tree->Branch("chopped_full_length", &_chopped_full_length, "chopped_full_length/D");
+        // _tree->Branch("chopped_full_length", &_chopped_full_length, "chopped_full_length/D");
         _tree->Branch("full_range_energy", &_full_range_energy, "full_range_energy/D");
-        _tree->Branch("MCS_energy", &_MCS_energy, "MCS_energy/D");
+        // _tree->Branch("MCS_energy", &_MCS_energy, "MCS_energy/D");
         _tree->Branch("full_MCS_energy", &_full_MCS_energy, "full_MCS_energy/D");
-        _tree->Branch("full_MCS_energy_someflipped", &_full_MCS_energy_someflipped, "full_MCS_energy_someflipped/D");
-        _tree->Branch("full_MCS_energy_chopped", &_full_MCS_energy_chopped, "full_MCS_energy_chopped/D");
-        _tree->Branch("full_MCS_energy_smeared", &_full_MCS_energy_smeared, "full_MCS_energy_smeared/D");
-        _tree->Branch("full_MCS_energy_reweighted", &_full_MCS_energy_reweighted, "full_MCS_energy_reweighted/D");
-        _tree->Branch("full_MCS_energy_chopped_smeared", &_full_MCS_energy_chopped_smeared, "full_MCS_energy_chopped_smeared/D");
-        _tree->Branch("track_start_x", &_track_start_x, "track_start_x/D");
-        _tree->Branch("track_start_y", &_track_start_y, "track_start_y/D");
-        _tree->Branch("track_start_z", &_track_start_z, "track_start_z/D");
-        _tree->Branch("track_end_x", &_track_end_x, "track_end_x/D");
-        _tree->Branch("track_end_y", &_track_end_y, "track_end_y/D");
-        _tree->Branch("track_end_z", &_track_end_z, "track_end_z/D");
-        _tree->Branch("track_dot_z", &_track_dot_z, "track_dot_z/D");
-        _tree->Branch("n_traj_points", &_n_traj_points, "n_traj_points/I");
-        _tree->Branch("chopped_wiggle", &_chopped_wiggle, "chopped_wiggle/D");
-        _tree->Branch("chopped_std", &_chopped_std, "chopped_std/D");
-        _tree->Branch("smeared_wiggle", &_smeared_wiggle, "smeared_wiggle/D");
-        _tree->Branch("smeared_std", &_smeared_std, "smeared_std/D");
-        _tree->Branch("chopped_smeared_wiggle", &_chopped_smeared_wiggle, "chopped_smeared_wiggle/D");
-        _tree->Branch("chopped_smeared_std", &_chopped_smeared_std, "chopped_smeared_std/D");
-        _tree->Branch("long_curve_dotprod", &_long_curve_dotprod, "long_curve_dotprod/D");
-        _tree->Branch("full_track_tree_entry", &_full_track_tree_entry, "full_track_tree_entry/O");
+        _tree->Branch("true_E", &_true_E, "true_E/D");
+        _tree->Branch("run", &_run, "run/I");
+        _tree->Branch("subrun", &_subrun, "subrun/I");
+        _tree->Branch("eventid", &_eventid, "eventid/I");
+        // _tree->Branch("full_MCS_energy_someflipped", &_full_MCS_energy_someflipped, "full_MCS_energy_someflipped/D");
+        // _tree->Branch("full_MCS_energy_chopped", &_full_MCS_energy_chopped, "full_MCS_energy_chopped/D");
+        // _tree->Branch("full_MCS_energy_smeared", &_full_MCS_energy_smeared, "full_MCS_energy_smeared/D");
+        // _tree->Branch("full_MCS_energy_reweighted", &_full_MCS_energy_reweighted, "full_MCS_energy_reweighted/D");
+        // _tree->Branch("full_MCS_energy_chopped_smeared", &_full_MCS_energy_chopped_smeared, "full_MCS_energy_chopped_smeared/D");
+        // _tree->Branch("track_start_x", &_track_start_x, "track_start_x/D");
+        // _tree->Branch("track_start_y", &_track_start_y, "track_start_y/D");
+        // _tree->Branch("track_start_z", &_track_start_z, "track_start_z/D");
+        // _tree->Branch("track_end_x", &_track_end_x, "track_end_x/D");
+        // _tree->Branch("track_end_y", &_track_end_y, "track_end_y/D");
+        // _tree->Branch("track_end_z", &_track_end_z, "track_end_z/D");
+        // _tree->Branch("track_dot_z", &_track_dot_z, "track_dot_z/D");
+        // _tree->Branch("n_traj_points", &_n_traj_points, "n_traj_points/I");
+        // _tree->Branch("chopped_wiggle", &_chopped_wiggle, "chopped_wiggle/D");
+        // _tree->Branch("chopped_std", &_chopped_std, "chopped_std/D");
+        // _tree->Branch("smeared_wiggle", &_smeared_wiggle, "smeared_wiggle/D");
+        // _tree->Branch("smeared_std", &_smeared_std, "smeared_std/D");
+        // _tree->Branch("chopped_smeared_wiggle", &_chopped_smeared_wiggle, "chopped_smeared_wiggle/D");
+        // _tree->Branch("chopped_smeared_std", &_chopped_smeared_std, "chopped_smeared_std/D");
+        // _tree->Branch("long_curve_dotprod", &_long_curve_dotprod, "long_curve_dotprod/D");
+        // _tree->Branch("full_track_tree_entry", &_full_track_tree_entry, "full_track_tree_entry/O");
 
-        _seg_tree = new TTree("MCS_segment_tree", "MCS_segment_tree");
-        _seg_tree->Branch("seg_start_x", &_seg_start_x, "seg_start_x/D");
-        _seg_tree->Branch("seg_start_y", &_seg_start_y, "seg_start_y/D");
-        _seg_tree->Branch("seg_start_z", &_seg_start_z, "seg_start_z/D");
-        _seg_tree->Branch("seg_end_x", &_seg_end_x, "seg_end_x/D");
-        _seg_tree->Branch("seg_end_y", &_seg_end_y, "seg_end_y/D");
-        _seg_tree->Branch("seg_end_z", &_seg_end_z, "seg_end_z/D");
-        _seg_tree->Branch("n_seg_traj_points", &_n_seg_traj_points, "n_seg_traj_points/I");
-        _seg_tree->Branch("seg_avg_perp_dist", &_seg_avg_perp_dist, "seg_avg_perp_dist/D");
-        _seg_tree->Branch("seg_std_perp_dist", &_seg_std_perp_dist, "seg_std_perp_dist/D");
-
-    }
-
-
-    void MCSBiasStudy::AnalyzeTrack(const larlite::mctrack &mct) {
-
-        // _full_length = (mct.back().Position().Vect() - mct.front().Position().Vect()).Mag();
-        // _full_range_energy = _myspline.GetMuMomentum(_full_length) / 1000. + 0.106;
-        _full_MCS_energy_chopped = _tmc->GetMomentumMultiScatterLLHD(mct);
+        // _seg_tree = new TTree("MCS_segment_tree", "MCS_segment_tree");
+        // _seg_tree->Branch("seg_start_x", &_seg_start_x, "seg_start_x/D");
+        // _seg_tree->Branch("seg_start_y", &_seg_start_y, "seg_start_y/D");
+        // _seg_tree->Branch("seg_start_z", &_seg_start_z, "seg_start_z/D");
+        // _seg_tree->Branch("seg_end_x", &_seg_end_x, "seg_end_x/D");
+        // _seg_tree->Branch("seg_end_y", &_seg_end_y, "seg_end_y/D");
+        // _seg_tree->Branch("seg_end_z", &_seg_end_z, "seg_end_z/D");
+        // _seg_tree->Branch("n_seg_traj_points", &_n_seg_traj_points, "n_seg_traj_points/I");
+        // _seg_tree->Branch("seg_avg_perp_dist", &_seg_avg_perp_dist, "seg_avg_perp_dist/D");
+        // _seg_tree->Branch("seg_std_perp_dist", &_seg_std_perp_dist, "seg_std_perp_dist/D");
 
     }
 
-    void MCSBiasStudy::AnalyzeTrack(const larlite::track &track) {
 
+    void MCSBiasStudy::AnalyzeTrack(const larlite::mctrack &mct, int run, int subrun, int eventid, bool flip) {
+
+        if (_ana_type == kANALYSIS_TYPE_MAX) {
+            std::cout<< "Did not set what kind of analysis you are doing in MCSBiasStudy!!! Bahhh!" << std::endl;
+            return;
+        }
+        _run = run;
+        _subrun = subrun;
+        _eventid = eventid;
+
+        _full_length = (mct.back().Position().Vect() - mct.front().Position().Vect()).Mag();
+        _full_range_energy = _myspline.GetMuMomentum(_full_length) / 1000. + 0.106;
+        _full_MCS_energy = _tmc->GetMomentumMultiScatterLLHD(mct);
+        // true E is including mass and is in GEV
+        _true_E = mct.front().E() / 1000.;
+        _tree->Fill();
+
+    }
+
+    void MCSBiasStudy::AnalyzeTrack(const larlite::track &track, int run, int subrun, int eventid, bool flip) {
+
+        if (_ana_type == kANALYSIS_TYPE_MAX) {
+            std::cout<< "Did not set what kind of analysis you are doing in MCSBiasStudy!!! Bahhh!" << std::endl;
+            return;
+        }
+
+        _full_length = -999999.;
+        _full_range_energy = -999999.;
+        _full_MCS_energy = -999999.;
+        _true_E = -999999.;
+        _run = run;
+        _subrun = subrun;
+        _eventid = eventid;
+
+//GetMomentumMultiScatterLLHD( const larlite::track   &trk, bool flip = false, bool debug = false, bool reweight= false );
         bool apply_reweight = false;
-        _full_MCS_energy = _tmc->GetMomentumMultiScatterLLHD(track, false, true, apply_reweight);
+        bool debug_tree = true;
+
+        _full_MCS_energy = _tmc->GetMomentumMultiScatterLLHD(track, flip, debug_tree, apply_reweight, run, subrun, eventid);
 
         // _length_analyzed = -999.;
         // _MCS_energy = -999.;
@@ -87,8 +122,10 @@ namespace larlite {
         // _smeared_wiggle = -999.;
         // _smeared_std = -999.;
 
-        // _full_length = (track.End() - track.Vertex()).Mag();
-        // _full_range_energy = _myspline.GetMuMomentum(_full_length) / 1000. + 0.106;
+        _full_length = (track.End() - track.Vertex()).Mag();
+        _full_range_energy = _myspline.GetMuMomentum(_full_length) / 1000. + 0.106;
+
+
         // _full_MCS_energy = _tmc->GetMomentumMultiScatterLLHD(track);
         // _track_start_x = track.Vertex().X();
         // _track_start_y = track.Vertex().Y();

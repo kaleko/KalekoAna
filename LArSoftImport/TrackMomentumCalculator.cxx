@@ -112,6 +112,11 @@ namespace kaleko {
 		_debug_tree->Branch("predicted_RMS",&_predicted_RMS,"predicted_RMS/D");
 		_debug_tree->Branch("segment_E_fromMCS",&_segment_E_fromMCS,"segment_E_fromMCS/D");
 		_debug_tree->Branch("predicted_RMS_fromMCS",&_predicted_RMS_fromMCS,"predicted_RMS_fromMCS/D");
+		_debug_tree->Branch("resid_dist",&_resid_dist,"resid_dist/D");
+		_debug_tree->Branch("llbf",&_llbf,"llbf/D");
+		_debug_tree->Branch("run",&_run,"run/I");
+		_debug_tree->Branch("subrun",&_subrun,"subrun/I");
+		_debug_tree->Branch("eventid",&_eventid,"eventid/I");
 		_counter = 0;
 
 
@@ -139,7 +144,11 @@ namespace kaleko {
 
 	  weight_graph = new TGraph(89,weight_x,weight_y);
 
-	  gaus_smear = new TF1("gaus_smear","TMath::Gaus(x,0,20,true)",-200,200);
+	  gaus_smear = new TF1("gaus_smear","TMath::Gaus(x,0,10,true)",-200,200);
+
+	  _run = -99999;
+	  _subrun = -99999;
+	  _eventid = -99999;
 
 	}
 
@@ -907,8 +916,8 @@ namespace kaleko {
 
 			Double_t rms = -1.0;
 
-			if ( ind.at( i ) == 2 ) //kaleko: why only use x- scatter? ( 1 is x, 2 is y )
-			{
+			// if ( ind.at( i ) == 1 ) //kaleko: why only use x- scatter? ( 1 is x, 2 is y )
+			// {
 				rms = sqrt( tH0 * tH0 + pow( theta0x, 2.0 ) );
 
 				Double_t DT = mydthij;// + addth; //addth functionaliy depricated
@@ -933,7 +942,7 @@ namespace kaleko {
 				// ultimately you take the smallest (positive) result
 				result = result - 2.0 * prob;
 
-			}
+			// }
 			
 		}
 
@@ -1253,6 +1262,8 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 		// 	std::cout<<david<<", ";
 		// std::cout<<")"<<std::endl;
 
+		_llbf = LLbf;
+
 			_full_track_len = (trk.back().Position().Vect() - trk.front().Position().Vect()).Mag();
 			_full_range_E = _myspline->GetMuMomentum(_full_track_len) / 1000. + 0.106;
 			_full_MCS_E = p;
@@ -1293,6 +1304,7 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 					_segment_E_fromMCS = _full_MCS_E - 0.106 - (segstart - trk.front().Position().Vect()).Mag() * kcal;
 					_predicted_RMS_fromMCS = ( 13.6 / (_segment_E_fromMCS+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
 
+					_resid_dist = (segstart - trk.back().Position().Vect()).Mag();
 
 // std::cout<<"For this segment, the "<<this_idx<<"th point on the mctrack is closest, at "<<mindist<<"cm away."<<std::endl;
 					// std::cout<<"segend x is "<<segend.X()<<std::endl;
@@ -1325,7 +1337,13 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 	}
 
-	Double_t TrackMomentumCalculator::GetMomentumMultiScatterLLHD( const larlite::track &trk, bool flip, bool debug, bool reweight )
+	Double_t TrackMomentumCalculator::GetMomentumMultiScatterLLHD( const larlite::track &trk, 
+		bool flip, 
+	bool debug, 
+	bool reweight,
+	int run,
+	int subrun,
+	int eventid)
 	{
 	// 	std::cout<<"Start of GetMomentumMultiScatterLLHD!"<<std::endl;
 	// 	std::cout<<"Track Start: ("<<trk.Vertex().X()<<","<<trk.Vertex().Y()<<","<<trk.Vertex().Z()<<"), ";
@@ -1450,7 +1468,7 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 			for ( Int_t l = start2; l <= end2; l++ )
 			{
-				Double_t res_test = 2.0; // 0.001+l*1.0; // is this the resolution parameter?
+				Double_t res_test = 2; // 0.001+l*1.0; // is this the resolution parameter?
 
 				Double_t fv = my_mcs_llhd( p_test, res_test, reweight );
 
@@ -1476,6 +1494,13 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 		// Fill debug tree
 		if(debug){
+
+			_run = run;
+			_subrun = subrun;
+			_eventid = eventid;
+
+			_llbf = LLbf;
+
 		// 	std::cout<<"huzzah!"<<std::endl;
 		// 	std::cout<<"ind size is "<<ind.size()<<std::endl;
 		// 			for (auto const& david : ind)
@@ -1519,6 +1544,7 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 					_segment_E_fromMCS = _full_MCS_E - 0.106 - (segstart - trk.Vertex()).Mag() * kcal;
 					_predicted_RMS_fromMCS = ( 13.6 / (_segment_E_fromMCS+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
 
+					_resid_dist = (segstart - trk.End()).Mag();
 
 				// }
 				// else{

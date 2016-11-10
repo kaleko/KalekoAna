@@ -41,29 +41,41 @@ namespace larlite {
         /// Default constructor
         MCSBiasStudy();
 
+        enum AnalysisType_t {
+            kSingleMuonMCTrack,
+            kSingleMuonRecoTrack,
+            kMCBNBSelectedRecoTrack,
+            kDataBNBSelectedRecoTrack,
+            kANALYSIS_TYPE_MAX
+        };
+
         /// Default destructor
         virtual ~MCSBiasStudy() {};
 
-        /// Should be handed a chopped track, and it should be in the correct orienation (no flip needed)
-        /// note track chopper does the orientation automatically
-        void AnalyzeTrack(const larlite::track &track);
+        void AnalyzeTrack(const larlite::track &track, int run, int subrun, int eventid, bool flip = false);
 
-        void AnalyzeTrack(const larlite::mctrack &mct);
+        void AnalyzeTrack(const larlite::mctrack &mct, int run, int subrun, int eventid, bool flip = false);
 
         /// Getter for the ttree so the user can write it to a file, for example
         TTree* GetTree() { return _tree; }
 
-        TTree* GetSegTree() { return _seg_tree; }
+        // TTree* GetSegTree() { return _seg_tree; }
 
         TTree* GetTMCTree() { return _tmc->GetTree(); }
-        
+
         /// Function to compute the average angle deviation for custom-segmented tracks
         std::pair<double, double> ComputeWiggle(const larlite::track &track, double seg_size);
 
         /// Takes the dot product between the first 50cm of the track direction and the start-to-end direction
         double ComputeLongCurve(const larlite::track &track);
 
+        void SetAnalysisType(AnalysisType_t mytype) { _ana_type = mytype; }
+
     private:
+
+        
+
+        AnalysisType_t _ana_type;
 
         TrackMomentumSplines _myspline;
         kaleko::TrackMomentumCalculator *_tmc;
@@ -99,6 +111,11 @@ namespace larlite {
         double _smeared_std;
         double _long_curve_dotprod;
         bool _full_track_tree_entry;
+        double _true_E;
+
+        int _run;
+        int _subrun;
+        int _eventid;
 
         TTree *_seg_tree;
         double _seg_start_x;

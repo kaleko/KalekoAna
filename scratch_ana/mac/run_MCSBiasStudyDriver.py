@@ -26,14 +26,22 @@ for x in xrange(len(sys.argv)-1):
 my_proc.set_ana_output_file(sys.argv[-1])
 
 # Attach a template process
-my_proc.add_process(fmwk.MCSBiasStudyDriver());
+myunit = fmwk.MCSBiasStudyDriver()
+#myunit.SetAnalysisType(fmwk.MCSBiasStudy.kSingleMuonMCTrack)
+#myunit.SetAnalysisType(fmwk.MCSBiasStudy.kSingleMuonRecoTrack)
+myunit.SetAnalysisType(fmwk.MCSBiasStudy.kMCBNBSelectedRecoTrack)
+#myunit.SetAnalysisType(fmwk.MCSBiasStudy.kDataBNBSelectedRecoTrack)
+
+my_proc.add_process(myunit)
+
+
 
 print
 print  "Finished configuring ana_processor. Start event loop!"
 print
 
 # Let's run it.
-my_proc.run();
+my_proc.run()
 
 # done!
 print

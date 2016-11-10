@@ -20,6 +20,7 @@
 #include "DataFormat/mctrack.h"
 #include "MCSBiasStudy.h"
 #include "FidVolBox.h"
+#include "TTree.h"
 
 namespace larlite {
   /**
@@ -31,7 +32,13 @@ namespace larlite {
   public:
 
     /// Default constructor
-    MCSBiasStudyDriver() { _name = "MCSBiasStudyDriver"; _fout = 0; _module = 0;}
+    MCSBiasStudyDriver() { 
+      _name = "MCSBiasStudyDriver";
+     _fout = 0;
+     _module = 0;
+     _ana_type = MCSBiasStudy::kANALYSIS_TYPE_MAX;
+     _driver_tree = 0;
+     }
 
     /// Default destructor
     virtual ~MCSBiasStudyDriver() {}
@@ -42,11 +49,23 @@ namespace larlite {
 
     virtual bool finalize();
 
+    void SetAnalysisType(MCSBiasStudy::AnalysisType_t mytype) { _ana_type = mytype; }
+
   protected:
+
+    MCSBiasStudy::AnalysisType_t _ana_type;
 
     MCSBiasStudy *_module;
 
     FidVolBox _fidvol;
+
+    TTree *_driver_tree;
+    int _MCT_PDG;
+    int _MCT_origin; //1 neutrino, 2 cosmic
+    int _run;
+    int _subrun;
+    int _eventid;
+    size_t counter;
   };
 }
 #endif

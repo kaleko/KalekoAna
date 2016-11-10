@@ -258,6 +258,8 @@ namespace larlite {
 
         // if (!(storage->run_id() == 5411 && storage->subrun_id() == 114 && storage->event_id() == 5718)) return false;
         total_events++;
+        // if(total_events != 188) return false;
+
         _n_reco_nu_in_evt = 0;
         resetTTreeVars();
 
@@ -345,12 +347,23 @@ namespace larlite {
             return false;
         }
 
+
+
+        //// WRITE THE LONGEST TRACK AND SELECTED VERTEX TO OUTPUT FILE FOR HAND SCANNING
+        // Time to make my own track producer output.
+        // Start by copying the base producer tracks, then stitch on potential additional tracks
+        larlite::event_track *ev_saved_track = storage->get_data<event_track>("savedlongesttrack");
+        larlite::event_vertex *ev_saved_vertex = storage->get_data<event_vertex>("savedvertex");
+        // Set the event ID's and such correctly for my new tracks
+        storage->set_id(ev_track->run(), ev_track->subrun(), ev_track->event_id());
+
+
         _n_reco_nu_in_evt = reco_neutrinos.size();
 
         // Loop over the reconstructed neutrinos and fill TTree one per neutrino
         for (auto & reco_neutrino : reco_neutrinos) {
 
-
+            ev_saved_vertex->push_back(reco_neutrino.Vertex());
             // Let's "boost" the interaction by potentially adding more tracks:
             // _intxn_booster.BoostIntxn(reco_neutrino, ev_track);
 
@@ -476,8 +489,12 @@ namespace larlite {
                     //     std::cout<<" Final MCS momentum was "<<_longest_trk_MCS_mom_chopped<<std::endl;
                     //     return false;
                     // }
-                        // track, flip, debug, reweight
-                    _longest_trk_MCS_mom = _MCScalc->GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk,false,false);
+                    // track, flip, debug, reweight
+                    _longest_trk_MCS_mom = _MCScalc->GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk, false, false);
+                    // if(_longest_trk_MCS_mom > 7){
+
+                    // std::cout<<"LONGEST TRACK MOM IS "<<_longest_trk_MCS_mom<<", total_events is "<<total_events<<std::endl;
+
                     _longest_trk_MCS_mom_reweighted = _MCScalc->GetMomentumMultiScatterLLHD(asstd_trk, flip_longest_trk, false, true);
                     _longest_trk_MCS_mom_chopped = _MCScalc->GetMomentumMultiScatterLLHD(chopped_trk, flip_longest_trk);
 
@@ -495,15 +512,15 @@ namespace larlite {
                     _longest_trk_Length_infidvol_smeared = smeared_trk.Length();
                     _longest_trk_len_infidvol_smeared = (smeared_trk.End() - smeared_trk.Vertex()).Mag();
 
-                    auto wiggle_info = _mcsbiasstudy->ComputeWiggle(smeared_trk, _MCS_seg_size);
-                    _longest_trk_smeared_wiggle = wiggle_info.first;
-                    auto chopped_wiggle_info = _mcsbiasstudy->ComputeWiggle(chopped_trk, _MCS_seg_size);
-                    _longest_trk_wiggle = chopped_wiggle_info.first;
+                    // auto wiggle_info = _mcsbiasstudy->ComputeWiggle(smeared_trk, _MCS_seg_size);
+                    // _longest_trk_smeared_wiggle = wiggle_info.first;
+                    // auto chopped_wiggle_info = _mcsbiasstudy->ComputeWiggle(chopped_trk, _MCS_seg_size);
+                    // _longest_trk_wiggle = chopped_wiggle_info.first;
 
-                    _longest_trk_wiggle_5cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 5.).first;
-                    _longest_trk_wiggle_10cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 10.).first;
-                    _longest_trk_wiggle_15cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 15.).first;
-                    _longest_trk_wiggle_20cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 20.).first;
+                    // _longest_trk_wiggle_5cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 5.).first;
+                    // _longest_trk_wiggle_10cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 10.).first;
+                    // _longest_trk_wiggle_15cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 15.).first;
+                    // _longest_trk_wiggle_20cm_seglen = _mcsbiasstudy->ComputeWiggle(chopped_trk, 20.).first;
 
                     _longest_track_end_x = flip_longest_trk ? asstd_trk.Vertex().X() : asstd_trk.End().X();
                     _longest_track_end_y = flip_longest_trk ? asstd_trk.Vertex().Y() : asstd_trk.End().Y();
@@ -563,14 +580,14 @@ namespace larlite {
 
                     _matched_longest_trk_MCS_mom = _MCScalc->GetMomentumMultiScatterLLHD(matched_longest_track);
                     _matched_longest_trk_MCS_mom_chopped = _MCScalc->GetMomentumMultiScatterLLHD(chopped_matched_longest_track);
-                    // std::cout<<"default longest track momentum is " 
+                    // std::cout<<"default longest track momentum is "
                     // << _longest_trk_MCS_mom << std::endl;
-                    // std::cout<<"chopped default longest track momentum is " 
+                    // std::cout<<"chopped default longest track momentum is "
                     // << _longest_trk_MCS_mom_chopped << std::endl;
 
-                    // std::cout<<"matched longest track momentum is " 
+                    // std::cout<<"matched longest track momentum is "
                     // << _MCScalc->GetMomentumMultiScatterLLHD(matched_longest_track) << std::endl;
-                    // std::cout<<"chopped matched longest track momentum is " 
+                    // std::cout<<"chopped matched longest track momentum is "
                     // << _MCScalc->GetMomentumMultiScatterLLHD(chopped_matched_longest_track) << std::endl;
 
                 }
@@ -588,10 +605,11 @@ namespace larlite {
             }
 
             if (_longest_trk_contained) {
-                _mcsbiasstudy->AnalyzeTrack(longest_track);
+                // _mcsbiasstudy->AnalyzeTrack(longest_track);
                 if (_longest_trk_len_infidvol > 100.) {
                     // Fill debug tree
-                    _MCScalc->GetMomentumMultiScatterLLHD(longest_track, false, true,false);//, false, true,false);
+                    // std::cout<<storage->run_id()<<" "<<storage->subrun_id()<<" "<<storage->event_id()<<std::endl;
+                    _MCScalc->GetMomentumMultiScatterLLHD(_chopper.chopTrack(longest_track), false, true, false); //, false, true,false);
                 }
             }
 
@@ -857,15 +875,33 @@ namespace larlite {
             //     _longest_tracks_dotprod_trkendpoints = 999.;
             // }
 
+            //     if(_longest_trk_MCS_mom / (_longest_trk_spline_mom/1000.) > 3){
+            //     std::cout<<"Found an interesting event (total_events is "<<total_events<<")."<<std::endl;
+            //     std::cout << " "<< storage->run_id() << " " << storage->subrun_id() << " " << storage->event_id() << std::endl;
+            //     std::cout<<" MCS mom "<<_longest_trk_MCS_mom<<", range mom "<<_longest_trk_spline_mom <<std::endl;
+            //     std::cout<<" nu vtx z is "<<_reco_nu_z<<std::endl;
+
+            // }
+
             _tree->Fill();
             passed_events++;
+
+            ev_saved_track->push_back(longest_track);
+
+            // std::cout << total_events-1 << " "
+            //       << storage->run_id() << " "
+            //       << storage->subrun_id() << " "
+            //       << storage->event_id() << " "
+            //       << (int)longest_track.Vertex().Z()
+            //       << std::endl;
+
         } // Done loop over all neutrinos in this event
         // std::cout << storage->run_id() << " " << storage->subrun_id() << " " << storage->event_id() << std::endl;
         // if(_longest_trk_contained && _longest_trk_len_infidvol > 100. && _longest_trk_spline_mom < 500 && _longest_trk_MCS_mom > 0.75){//
         //     std::cout << storage->run_id() << " " << storage->subrun_id() << " " << storage->event_id() << std::endl;
         // }
 
-        // std::cout << storage->run_id() << " " << storage->subrun_id() << " " << storage->event_id() << std::endl;
+
         // if (_n_reco_nu_in_evt == 1 && _all_trks_contained &&  !_true_nu_CCNC && _correct_ID && _longest_trk_len > 100.) {
         //     if (_true_nu_E / _nu_E_estimate > 2) {
         //         std::cout << "Found weird fully contained event." << std::endl;

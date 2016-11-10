@@ -126,8 +126,16 @@ namespace larlite {
         // double my_mcs_chi2( const double *x );
 
         Double_t GetMomentumMultiScatterLLHD( const larlite::mctrack &trk );
-        Double_t GetMomentumMultiScatterLLHD( const larlite::track   &trk, bool flip = false, bool debug = false, bool reweight= false );
+        //Double_t GetMomentumMultiScatterLLHD( const larlite::track   &trk, bool flip = false, bool debug = false, bool reweight= false );
         Double_t GetMomentumMultiScatterChi2( const larlite::mctrack &trk );
+        Double_t GetMomentumMultiScatterLLHD( const larlite::track   &trk, 
+            bool flip = false, 
+            bool debug = false, 
+            bool reweight= false,
+            int run = -99999,
+            int subrun = -99999,
+            int eventid = -99999);
+        
 
         Double_t p_mcs_2; Double_t LLbf;
 
@@ -165,6 +173,11 @@ namespace larlite {
         double _predicted_RMS_fromMCS;
         double _true_segment_E;
         double _true_predicted_RMS;
+        double _resid_dist;
+        double _llbf;
+        int _run;
+        int _subrun;
+        int _eventid;
 
         TGraph *weight_graph;
 
