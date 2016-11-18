@@ -12,7 +12,6 @@
 #pragma link C++ enum larlite::InputFileType_t+;
 
 #pragma link C++ class larlite::EfficiencyStudy+;
-#pragma link C++ class larlite::TrackMomentumSplines+;
 #pragma link C++ class larlite::NuEnergyCalc+;
 #pragma link C++ class larlite::TestCCQECalc+;
 #pragma link C++ class larlite::TestSpline+;

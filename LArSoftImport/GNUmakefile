@@ -30,7 +30,7 @@ include $(LARLITE_BASEDIR)/Makefile/Makefile.${OSNAME}
 LDFLAGS += -L$(shell root-config --libdir) -lMinuit2
 LDFLAGS += $(shell basictool-config --libs)
 LDFLAGS += $(shell larlite-config --libs)
-LDFLAGS += -lKalekoAna_CCInclusive
+#LDFLAGS += -lKalekoAna_CCInclusive
 
 # call the common GNUmakefile
 include $(LARLITE_BASEDIR)/Makefile/GNUmakefile.CORE
