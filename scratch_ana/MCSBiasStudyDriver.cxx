@@ -249,6 +249,168 @@ namespace larlite {
         }
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// Simulated BNB only events. They are pre-selected to be numuCC interaction inside of the
+        /// fiducial volume with one long muon MC track that is also fully contained
+        ////////////////////////////////////////////////////////////////////////////////////
+        else if (_ana_type == MCSBiasStudy::kMCBNBRecoTrack)
+        {
+
+            ev_track = storage->get_data<event_track>("pandoraNuPMA");
+            if (!ev_track) {
+                print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, track!"));
+                return false;
+            }
+
+            if (!ev_track->size()) {
+                // std::cout << "No reco tracks in event :( Skipping..." << std::endl;
+                return false;
+            }
+
+            // Grab the MCTruth
+            auto ev_mctruth = storage->get_data<event_mctruth>("generator");
+            if (!ev_mctruth) {
+                print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mctruth!"));
+                return false;
+            }
+            if (ev_mctruth->size() != 1) {
+                // Sometimes size is 2 if there are two neutrinos... let's just throw out these events since we
+                // have high stats and I don't feel like writing the code to handle them
+                if (ev_mctruth->size() == 2) return false;
+
+                // If the size is 0 or more than 2 something is wrong.
+                print(larlite::msg::kERROR, __FUNCTION__,
+                      Form("MCTruth size is not 1! More than two neutrinos? Cosmics? Size is %zu!", ev_mctruth->size())
+                     );
+                return false;
+            }
+
+            auto const &mctruth = ev_mctruth->at(0);
+
+            // Make sure the event is numuCC inside of the fiducial volume
+
+            //Enforce CC interaction channel
+            if ( mctruth.GetNeutrino().CCNC() != 0 ) return false;
+
+            // If neutrino interacts outside of fiducial volume, skip event
+            auto const nu_vtx = mctruth.GetNeutrino().Nu().Trajectory().back().Position().Vect();
+            if (!_fidvol.Contain(nu_vtx)) return false;
+
+            // If neutrino is not a numu, skip event
+            if (mctruth.GetNeutrino().Nu().PdgCode() != 14) return false;
+
+
+            ev_mctrack = storage->get_data<event_mctrack>("mcreco");
+            if (!ev_mctrack) {
+                print(larlite::msg::kERROR, __FUNCTION__, Form("Did not find specified data product, mctrack!"));
+                return false;
+            }
+            if (!ev_mctrack->size()) {
+                std::cout << "No MCTracks in event :( Skipping..." << std::endl;
+                return false;
+            }
+
+            _run = ev_mctrack->run();
+            _subrun = ev_mctrack->subrun();
+            _eventid = ev_mctrack->event_id();
+
+
+            larlite::mctrack the_mctrack;
+            // Find the mctrack that is a muon starting from the neutrino interaction
+            // We also require it is 1m long at least... might want to remove this if you are using this
+            // filter for some reason other than a multiple coloumb scattering analysis which requires 1m
+            size_t n_found_MCTs = 0;
+            for (auto const& mct : *ev_mctrack) {
+
+                // Sometimes mctracks have zero size. No idea why. Skip them.
+                if ( mct.size() < 3 ) continue;
+
+                // origin == 1 means comes from neutrino interaction (IE not cosmic)
+                if (mct.Origin() != 1 ) continue;
+
+                // MCTrack has to be truly a muon
+                if (mct.PdgCode() != 13 ) continue;
+
+                //MCTrack should start VERY CLOSE to nu vtx
+                // (we're talking like 10^-28 or smaller ... below floating point precision)
+                if ( (mct.front().Position().Vect() - nu_vtx).Mag2() > 0.0001) continue;
+
+                // Enforce the muon is fully contained in fiducial volume.
+                // (note we already checked the front of it is close to the nu vtx, and we already checked
+                // the nu vtx is in the fidicial volume... so we only need to check the back here)
+                if (!_fidvol.Contain(mct.back().Position().Vect())) continue;
+
+                // Require the muon is at least one meter in length.
+                if ((mct.back().Position().Vect() - mct.front().Position().Vect()).Mag() < 100.) continue;
+
+                // Save this mctrack!
+                the_mctrack = mct;
+                // At this point you have found a viable muon!
+                n_found_MCTs++;
+
+            }
+
+            // If you didn't find any viable muons, skip the event
+            if (!n_found_MCTs) return false;
+
+            // If somehow you found more than one muon, something has gone wrong. Skip the event.
+            if (n_found_MCTs > 1) {
+                print(larlite::msg::kWARNING, __FUNCTION__, Form("More than one viable muon in the event?!"));
+                return false;
+            }
+
+
+            // Now "the_mctrack" is the one MCTrack we care about. It should have length > 1 and be
+            // the muon from a true numuCC interaction
+            auto const mct_start = the_mctrack.front().Position().Vect();
+            auto const mct_end   = the_mctrack.back().Position().Vect();
+
+            bool found_track = false;
+
+            for (auto const& trk : *ev_track) {
+
+                // Make sure the track is contained in the fiducial volume
+                if ( !_fidvol.Contain(trk.Vertex()) || !_fidvol.Contain(trk.End()) ) continue;
+
+                // Make sure the track is at least 1m long
+                if ( (trk.End() - trk.Vertex()).Mag() < 100. ) continue;
+
+
+                // Check if this track matches the already-found mctrack we care about ("the_mctrack")
+                auto const trk_start = trk.Vertex();
+                auto const trk_end   = trk.End();
+
+                // Track well recod and in the correct direction
+                if ( (mct_start - trk_start).Mag() < 3 && (mct_end - trk_end).Mag() < 3 ) {
+                    flip = false;
+                    found_track = true;
+                    track = trk;
+                    break;
+                }
+                // Track well recod and in the flipped direction
+                else if ( (mct_start - trk_end).Mag() < 3 && (mct_end - trk_start).Mag() < 3 ) {
+                    flip = true;
+                    found_track = true;
+                    track = trk;
+                    break;
+                }
+                else continue;
+            }
+
+            // If there was no good reco track matching the MCTrack
+            if ( !found_track ) return false;
+
+            _MCT_PDG = the_mctrack.PdgCode();
+            _MCT_origin = the_mctrack.Origin();
+
+            counter++;
+            _module->AnalyzeTrack(track, _run, _subrun, _eventid, flip);
+
+            ///////////////////////////////////////////
+            // END kMCBNBRecoTrack case
+            ///////////////////////////////////////////
+        }
+
+        ////////////////////////////////////////////////////////////////////////////////////
         /// Actual data BNB selected events. One reco track is saved per event to the input file
         /// Also one reconstructed vertex is saved to the input file (to determine track direction)
         /// Any hand-scanning information is merged in in later analysis, not in this code.
@@ -315,7 +477,7 @@ namespace larlite {
 
     bool MCSBiasStudyDriver::finalize() {
 
-        std::cout << "counter = " << counter << std::endl;
+        std::cout<< " counter = "<<counter<<std::endl;
         if (_fout) {
             _fout->cd();
             _module->GetTree()->Write();

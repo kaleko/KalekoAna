@@ -18,6 +18,7 @@
 #include "Analysis/ana_base.h"
 #include "DataFormat/track.h"
 #include "DataFormat/mctrack.h"
+#include "DataFormat/mctruth.h"
 #include "MCSBiasStudy.h"
 #include "FidVolBox.h"
 #include "TTree.h"
