@@ -84,7 +84,7 @@ namespace kaleko {
 
 		p_mcs_2 = -1.0; LLbf = -1.0;
 
-		kcal = 0.0022;
+		kcal = .002105;//1.508*1.396//kaleko changing this to see impact0.0022;
 
 		// This pretty much has to be 100. If you use 20, you will find many events with low neutrino energy
 		// that get reconstructed as having high neutrino energy becuase the muon only has 30cm in the
@@ -871,7 +871,7 @@ namespace kaleko {
 		Double_t addth = 0;
 
 
-		size_t non_outlier_deflection_counter = 0;
+		// size_t non_outlier_deflection_counter = 0;
 
 		for ( Int_t i = 0; i < nnn1; i++ )
 		{
@@ -891,24 +891,65 @@ namespace kaleko {
 
 			Double_t Ej = p - dEj.at( i );
 
-			// this should be a break? Ej is energy of this segment, Ei is energy of previous segment
-			// this means the particle as ranged out. why make it go backwards?!
-			if ( Ei > 0 && Ej < 0 ) {
-				// std::cout<<"SETTING RESULT ENORMOUS AND BREAKING"<<std::endl;
-				//i set result enormous because we're stopping looping over segments prematurely
-				//each segment ADDS positive things to the result, so stopping early makes result
-				//artificially small.
-				result = 9999999999.;
-				break;
-				addth = 3.14 * 1000.0;
-			}
+			// // this should be a break? Ej is energy of this segment, Ei is energy of previous segment
+			// // this means the particle as ranged out. why make it go backwards?!
+			// if ( Ei > 0 && Ej < 0 ) {
+			// 	// std::cout<<"SETTING RESULT ENORMOUS AND BREAKING"<<std::endl;
+			// 	//i set result enormous because we're stopping looping over segments prematurely
+			// 	//each segment ADDS positive things to the result, so stopping early makes result
+			// 	//artificially small.
+			// 	result = 9999999999.;
+			// 	// std::cout<<"breaking because Ei > 0 and Ej < 0. they are "<<Ei<<" and "<<Ej<<" respectively."<<std::endl;
+			// 	break;
+			// 	addth = 3.14 * 1000.0;
+			// }
 
+			// Ei and Ej are in GeV and are the energy deposited
 			Ei = TMath::Abs( Ei );
 
 			Ej = TMath::Abs( Ej );
 
-			Double_t tH0 = ( 13.6 / sqrt( Ei * Ej ) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length );
+			//Double_t tH0 = ( 13.6 / sqrt( Ei * Ej ) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length );
+			// Kaleko removing the assumption of relativistic limit...
+			// Leo had sqrt(Ei*Ej) which is sort of the average energy between the start of the segment and the end
+			// instead I will use just the energy at the start of the segment
+			// also Leo basically has the denominator as "E", but it should be p*\beta*c, which is "p" in
+			// the relativistic limit (where beta == 1), and "p" is also "E" in the relativistic limit
+			// Double_t tH0 = ( 13.6 / sqrt( Ei * Ej ) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length );
+			double m_muon = 0.106;
+			// Total initial energy of the muon (converting the input "p" into energy with muon mass)
+			double nonrel_Etot = sqrt(p*p + m_muon*m_muon);
+			// Total energy of the muon including energy lost upstream of this segment (using sqrt avg in segment )
+			double nonrel_Eij = nonrel_Etot - sqrt(dEi.at( i )*dEi.at( i ));
 
+			if ( nonrel_Eij < m_muon ) {
+				result = 9999999999.;
+				// std::cout<<"breaking because nonrel_Eij is less than m_muon. it is "<<nonrel_Eij<<std::endl;
+				break;
+				addth = 3.14 * 1000.0;
+			}
+
+			// Total momentum of the muon including momentum lost upstream of this segment (converting nonrel_Eij to momentum)
+			double nonrel_pij = sqrt(nonrel_Eij*nonrel_Eij - m_muon*m_muon);
+			// The actual highland denominator is p*beta, which has a solvable analytic form
+			// if ((m_muon*m_muon)/(nonrel_pij*nonrel_pij + m_muon*m_muon) < 1) {
+			// 	result = 9999999999.;
+			// 	std::cout<<"breaking because beta will be nan..."<<std::endl;
+			// 	break;
+			// 	addth = 3.14 * 1000.0;
+			// }
+			double beta = sqrt( 1 - ((m_muon*m_muon)/(nonrel_pij*nonrel_pij + m_muon*m_muon)) );
+			// Now the actual highland without relativistic approcimations
+			Double_t tH0 = ( 13.6 / (nonrel_pij*beta) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length );
+
+			// std::cout<<"p = "<<p<<std::endl;
+			// std::cout<<"nonrel_Etot = "<<nonrel_Etot<<std::endl;
+			// std::cout<<"nonrel_Eij = "<<nonrel_Eij<<std::endl;
+			// std::cout<<"nonrel_pij = "<<nonrel_pij<<std::endl;
+			// std::cout<<"beta = "<<beta<<std::endl;
+
+			// std::cout<<"new TH0 is "<<tH0<<" while old th0 was "
+			// <<( 13.6 / sqrt( Ei * Ej ) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length ) <<std::endl;
 			// Kaleko adding this ... if deltatheta/RMS is more than 3 (3 standard deviations away), skip this
 			// NOTE!!! this doesn't work. this will just end up telling you all of your muons are very high energy
 			// (doesn't fix data/MC discrepancy either)

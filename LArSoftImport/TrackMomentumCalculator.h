@@ -63,7 +63,7 @@ namespace larlite {
         // ..
 
         Int_t n;
-        Double_t x[50000]; Double_t y[50000]; Double_t z[50000];
+        // Double_t x[50000]; Double_t y[50000]; Double_t z[50000];
         Int_t n_reco;
         Float_t x_reco[50000]; Float_t y_reco[50000]; Float_t z_reco[50000];
         Float_t seg_size; Float_t seg_stop; Int_t n_seg;
