@@ -10,12 +10,16 @@ namespace larlite {
         _n_total_events = 0;
         _n_kept_events = 0;
 
+        for (size_t i = 0; i < 10; ++i)
+            _counters.push_back(0);
+
         return true;
     }
 
     bool MC_CCnumu_MuonMCTrackContainedFilter::analyze(storage_manager* storage) {
 
         _n_total_events++;
+        _counters[0]++;
 
         // Grab the MCTruth
         auto ev_mctruth = storage->get_data<event_mctruth>("generator");
@@ -24,9 +28,9 @@ namespace larlite {
             return false;
         }
         if (ev_mctruth->size() != 1) {
-            // Sometimes size is 2 if there are two neutrinos... let's just throw out these events since we 
+            // Sometimes size is 2 if there are two neutrinos... let's just throw out these events since we
             // have high stats and I don't feel like writing the code to handle them
-            if(ev_mctruth->size() == 2) return false;
+            if (ev_mctruth->size() == 2) return false;
 
             // If the size is 0 or more than 2 something is wrong.
             print(larlite::msg::kERROR, __FUNCTION__,
@@ -34,6 +38,7 @@ namespace larlite {
                  );
             return false;
         }
+        _counters[1]++;
 
         auto const &mctruth = ev_mctruth->at(0);
 
@@ -42,13 +47,16 @@ namespace larlite {
 
         //Enforce CC interaction channel
         if ( mctruth.GetNeutrino().CCNC() != 0 ) return false;
+        _counters[2]++;
 
         // If neutrino interacts outside of fiducial volume, skip event
         auto const nu_vtx = mctruth.GetNeutrino().Nu().Trajectory().back().Position().Vect();
         if (!_fidvol.Contain(nu_vtx)) return false;
+        _counters[3]++;
 
         // If neutrino is not a numu, skip event
         if (mctruth.GetNeutrino().Nu().PdgCode() != 14) return false;
+        _counters[4]++;
 
 
         // Now we make sure the muon mctrack from the interaction is fully contained in the fiducial volume
@@ -73,7 +81,7 @@ namespace larlite {
 
             // Sometimes mctracks have zero size. No idea why. Skip them.
             if ( mct.size() < 3 ) continue;
-            
+
             // origin == 1 means comes from neutrino interaction (IE not cosmic)
             if (mct.Origin() != 1 ) continue;
 
@@ -99,6 +107,7 @@ namespace larlite {
 
         // If you didn't find any viable muons, skip the event
         if (!n_found_muons) return false;
+        _counters[5]++;
 
         // If somehow you found more than one muon, something has gone wrong. Skip the event.
         if (n_found_muons > 1) {
@@ -115,6 +124,10 @@ namespace larlite {
 
         std::cout << _n_total_events << " total events analyzed, "
                   << _n_kept_events << " events passed MC_CCnumu_MuonMCTrackContainedFilter." << std::endl;
+
+        std::cout << "Printing out the _counters vector:"<<std::endl;
+        for (size_t i = 0; i < _counters.size(); ++i)
+            std::cout << "_counters[" << i << "] = " << _counters[i] << std::endl;
 
         return true;
     }

@@ -56,6 +56,7 @@ namespace larlite {
 
     FidVolBox _fidvol;
 
+    std::vector<size_t> _counters;
 
     size_t _n_total_events;
     size_t _n_kept_events;
