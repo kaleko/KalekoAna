@@ -12,6 +12,7 @@
 
 #pragma link C++ class larlite::kaleko::TrackMomentumCalculator+;
 #pragma link C++ class larlite::TrackMomentumSplines+;
+#pragma link C++ class larlite::StoppingPowerSpline+;
 #pragma link C++ class larlite::TestMultiScatterPID+;
 #pragma link C++ class larlite::TestMultiScatterMomentum+;
 //ADD_NEW_CLASS ... do not change this line
