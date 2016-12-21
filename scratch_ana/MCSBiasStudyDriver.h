@@ -60,13 +60,15 @@ namespace larlite {
 
     FidVolBox _fidvol;
 
+    std::vector<size_t> _stat_decrease_counters;
+
     TTree *_driver_tree;
     int _MCT_PDG;
     int _MCT_origin; //1 neutrino, 2 cosmic
     int _run;
     int _subrun;
     int _eventid;
-    size_t counter;
+
   };
 }
 #endif

@@ -14,20 +14,31 @@ namespace larlite {
         _myspline = TrackMomentumSplines();
         _tmc = 0;
         _tmc = new kaleko::TrackMomentumCalculator();
-        _tmc->SetStepSize(20);
+        _tmc->SetStepSize(10);
+
 
         _tree = new TTree("MCS_bias_tree", "MCS_bias_tree");
         // _tree->Branch("length_analyzed", &_length_analyzed, "length_analyzed/D");
         _tree->Branch("full_length", &_full_length, "full_length/D");
+        _tree->Branch("full_integrated_length", &_full_integrated_length, "full_integrated_length/D");
         _tree->Branch("full_range_energy", &_full_range_energy, "full_range_energy/D");
         _tree->Branch("full_range_momentum",&_full_range_momentum, "full_range_momentum/D");
+        _tree->Branch("full_integrated_range_energy", &_full_integrated_range_energy, "full_integrated_range_energy/D");
+        _tree->Branch("full_integrated_range_momentum",&_full_integrated_range_momentum, "full_integrated_range_momentum/D");
         _tree->Branch("full_MCS_energy", &_full_MCS_energy, "full_MCS_energy/D");
         _tree->Branch("full_MCS_momentum", &_full_MCS_momentum, "full_MCS_momentum/D");
         _tree->Branch("true_E", &_true_E, "true_E/D");
+        _tree->Branch("true_momentum", &_true_momentum, "true_momentum/D");
+        _tree->Branch("theta",&_theta,"theta/D");
+        _tree->Branch("angle_wrt_x",&_angle_wrt_x,"angle_wrt_x/D");
+        _tree->Branch("angle_wrt_y",&_angle_wrt_y,"angle_wrt_y/D");
         _tree->Branch("run", &_run, "run/I");
         _tree->Branch("subrun", &_subrun, "subrun/I");
         _tree->Branch("eventid", &_eventid, "eventid/I");
        
+
+        xdir = TVector3(1.,0.,0.);
+        ydir = TVector3(0.,1.,0.);
     }
 
 
@@ -45,11 +56,25 @@ namespace larlite {
         _full_range_energy = _myspline.GetMuMomentum(_full_length) / 1000. + 0.106;
         _full_range_momentum = std::sqrt(_full_range_energy*_full_range_energy - 0.106*0.106);
 
-        _full_MCS_momentum = _tmc->GetMomentumMultiScatterLLHD(mct);
+        _full_integrated_length = 0;
+        for (size_t i = 0; i < mct.size() - 1; ++i)
+            _full_integrated_length += (mct.at(i).Position().Vect() - mct.at(i+1).Position().Vect()).Mag();
+        
+        _full_integrated_range_energy = _myspline.GetMuMomentum(_full_integrated_length) / 1000. + 0.106;
+        _full_integrated_range_momentum = std::sqrt(_full_integrated_range_energy*_full_integrated_range_energy - 0.106*0.106);
+
+
+        _full_MCS_momentum = _tmc->GetMomentumMultiScatterLLHD(mct,_run,_subrun,_eventid);
         _full_MCS_energy = std::sqrt(_full_MCS_momentum*_full_MCS_momentum + 0.106*0.106);
       
         // true E is including mass and is in GEV
         _true_E = mct.front().E() / 1000.;
+        _true_momentum = mct.front().Momentum().Vect().Mag() / 1000.;
+        _theta = mct.front().Momentum().Vect().Theta();
+
+        _angle_wrt_x = mct.front().Momentum().Vect().Angle(xdir) * (180./3.14159);
+        _angle_wrt_y = mct.front().Momentum().Vect().Angle(ydir) * (180./3.14159);
+
         _tree->Fill();
 
     }
@@ -67,6 +92,7 @@ namespace larlite {
         _full_MCS_energy = -999999.;
         _full_MCS_momentum = -999999.;
         _true_E = -999999.;
+        _true_momentum = -999999.;
         _run = run;
         _subrun = subrun;
         _eventid = eventid;
@@ -83,6 +109,16 @@ namespace larlite {
         _full_length = (track.End() - track.Vertex()).Mag();
         _full_range_energy = _myspline.GetMuMomentum(_full_length) / 1000. + 0.106;
         _full_range_momentum = std::sqrt(_full_range_energy*_full_range_energy - 0.106*0.106);
+
+         _full_integrated_length = 0;
+        for (size_t i = 0; i < track.NumberTrajectoryPoints() - 1; ++i)
+            _full_integrated_length += (track.LocationAtPoint(i) - track.LocationAtPoint(i+1)).Mag();
+        _full_integrated_range_energy = _myspline.GetMuMomentum(_full_integrated_length) / 1000. + 0.106;
+        _full_integrated_range_momentum = std::sqrt(_full_integrated_range_energy*_full_integrated_range_energy - 0.106*0.106);
+
+        _theta = (track.End() - track.Vertex()).Theta();
+        _angle_wrt_x = (track.End() - track.Vertex()).Angle(xdir) * (180./3.14159);
+        _angle_wrt_y = (track.End() - track.Vertex()).Angle(ydir) * (180./3.14159);
 
         _tree->Fill();
 

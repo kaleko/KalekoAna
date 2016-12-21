@@ -47,7 +47,9 @@ namespace larlite {
             kSingleMuonRecoTrack,
             kMCBNBSelectedRecoTrack,
             kMCBNBRecoTrack,
+            kMCBNBMCTrack,
             kDataBNBSelectedRecoTrack,
+            kMCBNBMCTrackExiting,
             kANALYSIS_TYPE_MAX
         };
 
@@ -83,17 +85,29 @@ namespace larlite {
         kaleko::TrackMomentumCalculator *_tmc;
         // ::geoalgo::GeoAlgo _geoalg;
 
+        std::vector<size_t> _stat_decrease_counters;
+
         TTree *_tree;
         // double _length_analyzed;
         double _full_length;
+        double _full_integrated_length;
         double _full_MCS_energy;
         double _full_MCS_momentum;
         double _full_range_energy;
         double _full_range_momentum;
+        double _full_integrated_range_energy;
+        double _full_integrated_range_momentum;
         double _true_E;
+        double _true_momentum;
+        double _theta;
+        double _angle_wrt_x;
+        double _angle_wrt_y;
         int _run;
         int _subrun;
         int _eventid;
+
+        TVector3 xdir;
+        TVector3 ydir;
 
     };
 
