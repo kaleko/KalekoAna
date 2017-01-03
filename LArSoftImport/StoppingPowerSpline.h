@@ -44,11 +44,32 @@ namespace larlite {
 
 		TGraph* GetGraph() { return stopping_power_vs_momentum; }
 
+		/// Given an initial muon momentum in GeV and a length, this function will tell you the remaining momentum
+		/// after that length. For example a 1 GeV muon is roughly MIP so after 10cm it will have lost
+		/// about 22 MeV of energy, so its momentum will be about 0.978 GeV (assuming p = E in this comment, which this
+		/// function does not)
+		/// This function uses the spline to determine the dE/dx at ten evenly spaced points along the length travelled,
+		/// then adds up the total dE/dx lost (this is roughly integrating the stopping power spline)
+		double Getp(const double initial_muon_momentum, const double length_travelled);
+
+		double GetE(const double initial_muon_momentum, const double length_travelled){
+			return p_to_E(Getp(initial_muon_momentum, length_travelled));
+		}
+		
 	private:
+
+		/// Some utility conversion functions to go between momentum and energy
+		/// ALWAYS ASSUMING THE PARTICLE IS A MUON (USES MUON MASS)
+		double p_to_E(const double p_GEV) { return std::sqrt(p_GEV * p_GEV + _mu_mass_GEV_squared); }
+		double E_to_p(const double E_GEV) { return std::sqrt(E_GEV * E_GEV - _mu_mass_GEV_squared); }
 
 		TGraph *stopping_power_vs_momentum;
 		TSpline3 *stopping_power_vs_momentum_spline3;
-		
+
+		double _argon_density;
+		double _mu_mass_GEV;
+		double _mu_mass_GEV_squared;
+
 	};
 
 }
