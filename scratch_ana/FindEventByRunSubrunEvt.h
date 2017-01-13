@@ -54,6 +54,9 @@ namespace larlite {
     unsigned int subrunno;
     unsigned int evtno;
 
+    bool _found_event;
+    size_t _file_index;
+
   };
 }
 #endif
