@@ -43,6 +43,7 @@
 #include "TTree.h"
 #include "TF1.h"
  #include "TrackMomentumSplines.h"
+#include "StoppingPowerSpline.h"
 
 /**
    \class TrackMomentumCalculator
@@ -81,8 +82,11 @@ namespace larlite {
 
         double max_len_to_analyze;
     public:
-
+        std::vector<Float_t> GetDTHIJ() { return dthij; }
+        
         TrackMomentumSplines *_myspline;
+
+        StoppingPowerSpline *_dedxspline;
 
         // Constructor and destructor  //
         TrackMomentumCalculator();
@@ -92,6 +96,10 @@ namespace larlite {
         void SetMinLength(double minlen) { minLength = minlen; }
 
         void SetStepSize(double stepsize) { steps_size2 = stepsize; }
+
+        // default is false (so dedx used is assumed MIP everywhere)
+        // if you set to true, uses the PDG stopping power spline to get a realistic dedx
+        void SetUseRealisticdEdx(bool flag) { _use_realistic_dEdx = flag; }
 
         void SetMaxLengthToAnalyze(double maxlen) { max_len_to_analyze = maxlen; }
 
@@ -125,7 +133,10 @@ namespace larlite {
 
         // double my_mcs_chi2( const double *x );
 
-        Double_t GetMomentumMultiScatterLLHD( const larlite::mctrack &trk );
+        Double_t GetMomentumMultiScatterLLHD( const larlite::mctrack &trk,
+            int run = -99999,
+            int subrun = -99999,
+            int eventid = -99999);
         //Double_t GetMomentumMultiScatterLLHD( const larlite::track   &trk, bool flip = false, bool debug = false, bool reweight= false );
         Double_t GetMomentumMultiScatterChi2( const larlite::mctrack &trk );
         Double_t GetMomentumMultiScatterLLHD( const larlite::track   &trk, 
@@ -171,7 +182,9 @@ namespace larlite {
         double _predicted_RMS;
         double _segment_E_fromMCS;
         double _predicted_RMS_fromMCS;
+        double _true_predicted_RMS_momentumdependentconstant;
         double _true_segment_E;
+        double _true_segment_p;
         double _true_predicted_RMS;
         double _resid_dist;
         double _llbf;
@@ -183,6 +196,15 @@ namespace larlite {
 
         TF1 *gaus_smear;
 
+
+        bool _use_realistic_dEdx;
+
+
+        double MomentumDependentConstant(const double p){
+            double a = 0.1049;
+            double c = 11.0038;
+            return (a/(p*p)) + c;
+        }
     };
 } // end namespace kaleko
 } // end namespace larlite

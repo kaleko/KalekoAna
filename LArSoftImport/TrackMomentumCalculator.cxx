@@ -62,7 +62,12 @@ namespace kaleko {
 	TrackMomentumCalculator::TrackMomentumCalculator()
 	{
 
+		_use_realistic_dEdx = false;
+
 		_myspline = new TrackMomentumSplines();
+
+		_dedxspline = new StoppingPowerSpline();
+
 		n = 0;
 
 		n_reco = 0;
@@ -84,7 +89,7 @@ namespace kaleko {
 
 		p_mcs_2 = -1.0; LLbf = -1.0;
 
-		kcal = .002105;//1.508*1.396//kaleko changing this to see impact0.0022;
+		kcal = 0.002105;//1.508*1.396//kaleko changing this to see impact0.0022;
 
 		// This pretty much has to be 100. If you use 20, you will find many events with low neutrino energy
 		// that get reconstructed as having high neutrino energy becuase the muon only has 30cm in the
@@ -107,11 +112,13 @@ namespace kaleko {
 		_debug_tree->Branch("seg_phi",&_seg_phi,"seg_phi/D");
 		_debug_tree->Branch("counter",&_counter,"counter/I");
 		_debug_tree->Branch("true_segment_E",&_true_segment_E,"true_segment_E/D");
+		_debug_tree->Branch("true_segment_p",&_true_segment_p,"true_segment_p/D");
 		_debug_tree->Branch("true_predicted_RMS",&_true_predicted_RMS,"true_predicted_RMS/D");
 		_debug_tree->Branch("segment_E",&_segment_E,"segment_E/D");
 		_debug_tree->Branch("predicted_RMS",&_predicted_RMS,"predicted_RMS/D");
 		_debug_tree->Branch("segment_E_fromMCS",&_segment_E_fromMCS,"segment_E_fromMCS/D");
 		_debug_tree->Branch("predicted_RMS_fromMCS",&_predicted_RMS_fromMCS,"predicted_RMS_fromMCS/D");
+		_debug_tree->Branch("true_predicted_RMS_momentumdependentconstant",&_true_predicted_RMS_momentumdependentconstant,"true_predicted_RMS_momentumdependentconstant/D");
 		_debug_tree->Branch("resid_dist",&_resid_dist,"resid_dist/D");
 		_debug_tree->Branch("llbf",&_llbf,"llbf/D");
 		_debug_tree->Branch("run",&_run,"run/I");
@@ -153,7 +160,7 @@ namespace kaleko {
 	}
 
 
-	Double_t TrackMomentumCalculator::GetMuMultiScatterLLHD2( const larlite::mctrack &trk )
+	Double_t TrackMomentumCalculator::GetMuMultiScatterLLHD2( const larlite::mctrack &trk)
 	{
 		Double_t LLHD = -1.0;
 
@@ -872,8 +879,9 @@ namespace kaleko {
 
 
 		// size_t non_outlier_deflection_counter = 0;
-
-		for ( Int_t i = 0; i < nnn1; i++ )
+		// std::vector<double> realistic_dEi;
+		// std::vector<double> realistic_dEj;
+		for ( Int_t i = 0; i < nnn1; i++ ) //change this to (nnn1-6) to remove last 3 segments, (nnn1-4) for last 2, etc.
 		{
 			double mydthij = dthij.at( i );
 			// if you want to use smeared stuff!
@@ -922,6 +930,18 @@ namespace kaleko {
 			// Total energy of the muon including energy lost upstream of this segment (using sqrt avg in segment )
 			double nonrel_Eij = nonrel_Etot - sqrt(dEi.at( i )*dEi.at( i ));
 
+			// std::cout<<"using MIP dedx stuff, nonrel_Eij right now is "<<nonrel_Eij<<std::endl;
+
+			// double start_E = _dedxspline->GetE(p,(i/2)*steps_size2);
+			
+			// std::cout<<"instead, using realistic dEdx stuff, nonrel_Eij would be "
+			// << start_E <<std::endl;
+
+			if(_use_realistic_dEdx)
+				nonrel_Eij = _dedxspline->GetE(p,(i/2)*steps_size2);
+
+
+
 			if ( nonrel_Eij < m_muon ) {
 				result = 9999999999.;
 				// std::cout<<"breaking because nonrel_Eij is less than m_muon. it is "<<nonrel_Eij<<std::endl;
@@ -931,6 +951,17 @@ namespace kaleko {
 
 			// Total momentum of the muon including momentum lost upstream of this segment (converting nonrel_Eij to momentum)
 			double nonrel_pij = sqrt(nonrel_Eij*nonrel_Eij - m_muon*m_muon);
+
+
+			// KALEKO TRYING REALISTIC DEDX STUFF HERE, WATCH OUT!
+			// std::cout<<" p is "<<p<<std::endl;
+			// std::cout<<" i is "<<i<<std::endl;
+			// std::cout<<" length of segL is "<<segL.size()<<std::endl;
+			
+
+
+
+
 			// The actual highland denominator is p*beta, which has a solvable analytic form
 			// if ((m_muon*m_muon)/(nonrel_pij*nonrel_pij + m_muon*m_muon) < 1) {
 			// 	result = 9999999999.;
@@ -940,8 +971,14 @@ namespace kaleko {
 			// }
 			double beta = sqrt( 1 - ((m_muon*m_muon)/(nonrel_pij*nonrel_pij + m_muon*m_muon)) );
 			// Now the actual highland without relativistic approcimations
-			Double_t tH0 = ( 13.6 / (nonrel_pij*beta) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length );
+			// note the constant 0.038 is used instead of 0.088 (which you might find in literature)
+			// because 0.038*ln is the same as 0.088*log (and TMath::Log is natural logarithm)
+			// Double_t tH0 = ( 13.6 / (nonrel_pij*beta) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length );
+			Double_t tH0 = ( MomentumDependentConstant(nonrel_pij) / (nonrel_pij*beta) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length );
+			// Double_t tH0 = ( 12.265 / (nonrel_pij*beta) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length );
+			// Double_t tH0 = ( 11.17 / (nonrel_pij*beta) ) * ( 1.0 + 0.038 * TMath::Log( red_length ) ) * sqrt( red_length );
 
+				
 			// std::cout<<"p = "<<p<<std::endl;
 			// std::cout<<"nonrel_Etot = "<<nonrel_Etot<<std::endl;
 			// std::cout<<"nonrel_Eij = "<<nonrel_Eij<<std::endl;
@@ -961,11 +998,22 @@ namespace kaleko {
 			// {
 				rms = sqrt( tH0 * tH0 + pow( theta0x, 2.0 ) );
 
+				//negative resolution possibility! if you get imaginary RMS then just use the resolution = 0
+				if(theta0x < 0){
+					if ( tH0 * tH0 > pow( theta0x, 2.0 ) ){
+						rms = sqrt( tH0 * tH0 - pow( theta0x, 2.0 ) );
+					}
+					else{
+						rms = fabs(theta0x);
+					}
+				}
+
 				Double_t DT = mydthij;// + addth; //addth functionaliy depricated
 
-				// If this deflection is too large (theta/RMS more than 2.3 sigma), skip it
-				// if(TMath::Abs(DT/rms) > 2.3) continue;
+				// If this deflection is too large (theta/highland more than 2.3 sigma), skip it
+				// if(TMath::Abs(DT/tH0) > 2.3) continue;
 				// non_outlier_deflection_counter++;
+
 
 
 				Double_t prob = my_g( DT, 0., rms );
@@ -1203,7 +1251,10 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 	}
 
-	Double_t TrackMomentumCalculator::GetMomentumMultiScatterLLHD( const larlite::mctrack &trk )
+	Double_t TrackMomentumCalculator::GetMomentumMultiScatterLLHD( const larlite::mctrack &trk,
+	int run,
+	int subrun,
+	int eventid )
 	{
 		Double_t p = -1.0;
 
@@ -1245,7 +1296,13 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 		Double_t recoL = segL.at(seg_steps0);
 
-		if ( recoL < minLength || recoL > maxLength ) return -1;
+
+		if ( recoL < minLength || recoL > maxLength ) {
+			// std::cout<<"length problem. recoL is "<<recoL<<std::endl;
+			// std::cout<<"note track len is "<<(trk.front().Position().Vect()-trk.back().Position().Vect()).Mag()<<std::endl;
+			return -1;
+		}
+
 
 		Int_t check2 = GetDeltaThetaij( dEi, dEj, dthij, seg_size, ind );
 
@@ -1265,7 +1322,7 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 			for ( Int_t l = start2; l <= end2; l++ )
 			{
-				Double_t res_test = 2.0; // 0.001+l*1.0;
+				Double_t res_test = 0; // 0.001+l*1.0;
 
 				Double_t fv = my_mcs_llhd( p_test, res_test );
 
@@ -1305,9 +1362,15 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 		_llbf = LLbf;
 
+		_run = run;
+			_subrun = subrun;
+			_eventid = eventid;
+
+
 			_full_track_len = (trk.back().Position().Vect() - trk.front().Position().Vect()).Mag();
+
 			_full_range_E = _myspline->GetMuMomentum(_full_track_len) / 1000. + 0.106;
-			_full_MCS_E = p;
+			_full_MCS_E = sqrt(p*p + 0.106*0.106);
 
 			for(int david = 0; david < ind.size(); david+=2){
 				_seg_end_x = segx.at(size_t(david/2.)+1);
@@ -1336,15 +1399,20 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 						}
 					}
 					_true_segment_E = (trk.at(this_idx).E() - 106.)/1000.;
+					_true_segment_p = trk.at(this_idx).Momentum().Vect().Mag() / 1000.;
+
+					double beta = sqrt( 1 - ((0.106*0.106)/(_true_segment_p * _true_segment_p + 0.106*0.106)) );
 					double redlen = steps_size2 / 14.;
-					_true_predicted_RMS = ( 13.6 / (_true_segment_E + 0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
+					// _true_predicted_RMS = ( 13.6 / (_true_segment_E + 0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
+					_true_predicted_RMS = ( 13.6 / (_true_segment_p*beta) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
 
 					_segment_E = _full_range_E - 0.106 - (segstart - trk.front().Position().Vect()).Mag() * kcal;
 					_predicted_RMS = ( 13.6 / (_segment_E+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
 
 					_segment_E_fromMCS = _full_MCS_E - 0.106 - (segstart - trk.front().Position().Vect()).Mag() * kcal;
-					_predicted_RMS_fromMCS = ( 13.6 / (_segment_E_fromMCS+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
 
+					_predicted_RMS_fromMCS = ( 13.6 / (_segment_E_fromMCS+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
+					_true_predicted_RMS_momentumdependentconstant = ( MomentumDependentConstant(_true_segment_p) / (_true_segment_p*beta) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
 					_resid_dist = (segstart - trk.back().Position().Vect()).Mag();
 
 // std::cout<<"For this segment, the "<<this_idx<<"th point on the mctrack is closest, at "<<mindist<<"cm away."<<std::endl;
@@ -1434,7 +1502,7 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 		Int_t check0 = GetRecoTracks( recoX, recoY, recoZ );
 		// std::cout<<" check0 = "<<check0<<std::endl;
 		if ( check0 != 0 ) {
-			// std::cout<<" check0 = "<<check0<<std::endl;
+			std::cout<<" check0 = "<<check0<<std::endl;
 			return -1.0;
 		}
 
@@ -1443,7 +1511,7 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 		Int_t check1 = GetSegTracks2( recoX, recoY, recoZ );
 		// std::cout<<"check1 = "<<check1<<std::endl;
 		if ( check1 != 0 ) {
-			// std::cout<<"check1 = "<<check1<<std::endl;
+			std::cout<<"check1 = "<<check1<<std::endl;
 			return -1.0;
 		}
 
@@ -1476,7 +1544,6 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 		for(size_t david = 0; david < dthij.size(); david++)
 			smeared_dthij.push_back( dthij.at(david) + gaus_smear->GetRandom() );
 
-
 		// std::cout<<"end of GetDeltaThetaij. dthij is :"<<std::endl;
 		// std::cout<<" (";
 		// for(auto const david : dthij)
@@ -1499,6 +1566,8 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 		Double_t bf = -666.0; // Double_t errs = -666.0;
 
 		Double_t start1 = 0.0; Double_t end1 = 750.0;
+		// std::cout<<"ASSUMING THE MUON IS 1 GEV!"<<std::endl;
+		// Double_t start1 = 100.; Double_t end1 = 100.; // KALEKO DEBUG UNIT TESTING
 
 		Double_t start2 = 0.0; Int_t end2 = 0.0; // 800.0;
 
@@ -1509,7 +1578,7 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 			for ( Int_t l = start2; l <= end2; l++ )
 			{
-				Double_t res_test = 2; // 0.001+l*1.0; // is this the resolution parameter?
+				Double_t res_test = 3; // 0.001+l*1.0; // is this the resolution parameter?
 
 				Double_t fv = my_mcs_llhd( p_test, res_test, reweight );
 
@@ -1557,7 +1626,7 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 		// std::cout<<")"<<std::endl;
 
 			_full_track_len = (trk.End() - trk.Vertex()).Mag();
-			_full_MCS_E = p;
+			_full_MCS_E = sqrt(p*p + 0.106*0.106);
 			_full_range_E = _myspline->GetMuMomentum(_full_track_len) / 1000. + 0.106;
 
 			for(int david = 0; david < ind.size(); david+=2){
@@ -1580,11 +1649,14 @@ void TrackMomentumCalculator::GetDeltaThetaRMS( Double_t &mean, Double_t &rms, D
 
 					double redlen = steps_size2 / 14.;
 					_segment_E = _full_range_E - 0.106 - (segstart - trk.Vertex()).Mag() * kcal;
+
 					_predicted_RMS = ( 13.6 / (_segment_E+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
 
 					_segment_E_fromMCS = _full_MCS_E - 0.106 - (segstart - trk.Vertex()).Mag() * kcal;
-					_predicted_RMS_fromMCS = ( 13.6 / (_segment_E_fromMCS+0.106) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
+					double segment_p = sqrt( ((_segment_E_fromMCS + 0.106)*(_segment_E_fromMCS + 0.106)) - (0.106*0.106) );
+					double beta = sqrt( 1 - ((0.106*0.106)/(segment_p*segment_p + 0.106*0.106)) );
 
+					_predicted_RMS_fromMCS = ( MomentumDependentConstant(segment_p) / (segment_p*beta) ) * ( 1.0 + 0.038 * TMath::Log( redlen ) ) * sqrt( redlen );
 					_resid_dist = (segstart - trk.End()).Mag();
 
 				// }
