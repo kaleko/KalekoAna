@@ -349,13 +349,13 @@ namespace larlite {
 
 
 
-        //// WRITE THE LONGEST TRACK AND SELECTED VERTEX TO OUTPUT FILE FOR HAND SCANNING
-        // Time to make my own track producer output.
-        // Start by copying the base producer tracks, then stitch on potential additional tracks
-        larlite::event_track *ev_saved_track = storage->get_data<event_track>("savedlongesttrack");
-        larlite::event_vertex *ev_saved_vertex = storage->get_data<event_vertex>("savedvertex");
-        // Set the event ID's and such correctly for my new tracks
-        storage->set_id(ev_track->run(), ev_track->subrun(), ev_track->event_id());
+        // //// WRITE THE LONGEST TRACK AND SELECTED VERTEX TO OUTPUT FILE FOR HAND SCANNING
+        // // Time to make my own track producer output.
+        // // Start by copying the base producer tracks, then stitch on potential additional tracks
+        // larlite::event_track *ev_saved_track = storage->get_data<event_track>("savedlongesttrack");
+        // larlite::event_vertex *ev_saved_vertex = storage->get_data<event_vertex>("savedvertex");
+        // // Set the event ID's and such correctly for my new tracks
+        // storage->set_id(ev_track->run(), ev_track->subrun(), ev_track->event_id());
 
 
         _n_reco_nu_in_evt = reco_neutrinos.size();
@@ -363,7 +363,7 @@ namespace larlite {
         // Loop over the reconstructed neutrinos and fill TTree one per neutrino
         for (auto & reco_neutrino : reco_neutrinos) {
 
-            ev_saved_vertex->push_back(reco_neutrino.Vertex());
+            // ev_saved_vertex->push_back(reco_neutrino.Vertex());
             // Let's "boost" the interaction by potentially adding more tracks:
             // _intxn_booster.BoostIntxn(reco_neutrino, ev_track);
 
@@ -886,7 +886,7 @@ namespace larlite {
             _tree->Fill();
             passed_events++;
 
-            ev_saved_track->push_back(longest_track);
+            // ev_saved_track->push_back(longest_track);
 
             // std::cout << total_events-1 << " "
             //       << storage->run_id() << " "
